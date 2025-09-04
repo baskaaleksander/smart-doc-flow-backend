@@ -50,7 +50,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String getEmailFromAccessToken(String accessToken) {
+    public String getUsernameFromAccessToken(String accessToken) {
         return Jwts.parserBuilder()
                 .setSigningKey(accessKey).build()
                 .parseClaimsJwt(accessToken)
