@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.service.TestService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class TestController {
     }
 
     @GetMapping("/get-all-users")
-    public List<User> getAllUsers(){
+    public List<UserResponse> getAllUsers(){
         return testService.getAllUsers();
     }
 }
