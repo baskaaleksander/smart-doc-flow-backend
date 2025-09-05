@@ -8,6 +8,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,16 +17,19 @@ public class AuthSevice {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     public AuthSevice(
             AuthenticationManager authenticationManager,
             UserRepository userRepository,
-            JwtUtil jwtUtil
+            JwtUtil jwtUtil,
+            PasswordEncoder passwordEncoder
     ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public String loginUser(User user) {
@@ -42,5 +46,18 @@ public class AuthSevice {
         return jwtUtil.generateAccessToken(userDetails.getUsername());
     }
 
+    public String registerUser(User user) {
+        String password = user.getPassword();
+        String encodedPassword = passwordEncoder.encode(password);
 
+        User newUser = new User(
+                user.getUsername(),
+                encodedPassword
+        );
+
+        User userCreated = userRepository.save(newUser);
+        System.out.println(userCreated);
+
+        return "User registered";
+    }
 }

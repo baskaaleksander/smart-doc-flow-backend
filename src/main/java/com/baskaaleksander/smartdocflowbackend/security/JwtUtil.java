@@ -53,7 +53,7 @@ public class JwtUtil {
     public String getUsernameFromAccessToken(String accessToken) {
         return Jwts.parserBuilder()
                 .setSigningKey(accessKey).build()
-                .parseClaimsJwt(accessToken)
+                .parseClaimsJws(accessToken)
                 .getBody()
                 .getSubject();
     }

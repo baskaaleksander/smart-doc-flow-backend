@@ -1,13 +1,12 @@
 package com.baskaaleksander.smartdocflowbackend.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
+@RequiredArgsConstructor
 @Data
 @Table(name = "users")
 public class User {
@@ -16,7 +15,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+    @NonNull
     private String username;
 
+    @NonNull
     private String password;
+
 }
