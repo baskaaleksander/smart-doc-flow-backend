@@ -1,11 +1,11 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -33,20 +33,10 @@ public class DocumentService {
         UUID docId = UUID.randomUUID();
         String originalFilename = file.getOriginalFilename();
         String filename = docId + "_" + originalFilename;
-        String extension = StringUtils.getFilenameExtension(originalFilename);
 
-        Document document = new Document(
-                docId,
-                originalFilename,
-                extension,
-                file.getSize(),
-                filename,
-                1,
-                DocumentStatus.PROCESSING,
-                LocalDateTime.now()
-        );
-
-        documentRepository.save(document);
+        if (!"application/pdf".equalsIgnoreCase(String.valueOf(file.getContentType()))) {
+            System.out.println("Incorrect filetype");;
+        }
 
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(s3Bucket)
@@ -54,10 +44,24 @@ public class DocumentService {
                 .contentType(file.getContentType())
                 .build();
 
-        s3Client.putObject(request, RequestBody.fromBytes(file.getBytes()));
+        try (var in = file.getInputStream()) {
+            s3Client.putObject(request, RequestBody.fromInputStream(in, file.getSize()));
+        } catch (Exception e) {
+            throw new S3UploadException("Upload to object store failed");
+        }
 
+        Document document = new Document(
+                docId,
+                originalFilename,
+                "pdf",
+                file.getSize(),
+                filename,
+                1,
+                DocumentStatus.UPLOADED,
+                LocalDateTime.now()
+        );
 
-        return document;
+        return documentRepository.save(document);
     }
 
 }
