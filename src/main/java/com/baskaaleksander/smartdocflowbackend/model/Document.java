@@ -2,6 +2,8 @@ package com.baskaaleksander.smartdocflowbackend.model;
 
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,6 +25,7 @@ public class Document {
     private double size;
     private String storageKey;
     private int pageSize;
-    private Enum<DocumentStatus> status;
+    @Enumerated(EnumType.ORDINAL)
+    private DocumentStatus status;
     private LocalDateTime createdAt;
 }
