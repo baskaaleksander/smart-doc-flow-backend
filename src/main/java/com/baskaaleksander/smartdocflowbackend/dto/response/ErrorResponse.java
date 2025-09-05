@@ -13,7 +13,7 @@ public class ErrorResponse {
 
     private int status;
     private String message;
-    private String details;
+    private Object details;
     private String path;
     private LocalDateTime timestamp;
 }

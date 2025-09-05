@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.security.JwtUtil;
@@ -32,7 +33,7 @@ public class AuthSevice {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public String loginUser(User user) {
+    public String loginUser(UserRequest user) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getUsername(),
@@ -46,7 +47,7 @@ public class AuthSevice {
         return jwtUtil.generateAccessToken(userDetails.getUsername());
     }
 
-    public String registerUser(User user) {
+    public String registerUser(UserRequest user) {
         String password = user.getPassword();
         String encodedPassword = passwordEncoder.encode(password);
 
