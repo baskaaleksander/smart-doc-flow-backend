@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
+import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.security.JwtUtil;
@@ -11,6 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class AuthSevice {
@@ -48,6 +51,11 @@ public class AuthSevice {
     }
 
     public String registerUser(UserRequest user) {
+
+        Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
+        if (existingUser.isPresent()) {
+            throw new ResourceConflictException("User with " + user.getUsername() + " username already exists");
+        }
         String password = user.getPassword();
         String encodedPassword = passwordEncoder.encode(password);
 
