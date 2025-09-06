@@ -72,4 +72,8 @@ public class AuthSevice {
 
         return "User registered";
     }
+
+    public String refreshAccessToken(String refreshToken) {
+        return jwtUtil.refreshAccessToken(refreshToken);
+    }
 }

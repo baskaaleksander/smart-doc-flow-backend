@@ -50,7 +50,24 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String refreshAccessToken(String refreshToken) {
+        if (validateRefreshToken(refreshToken)) {
+            return generateAccessToken(getUsernameFromRefreshToken(refreshToken));
+        } else {
+            throw new InvalidJwtTokenException("Invalid refresh token");
+        }
+
+    }
+
     public String getUsernameFromAccessToken(String accessToken) {
+        return Jwts.parserBuilder()
+                .setSigningKey(accessKey).build()
+                .parseClaimsJws(accessToken)
+                .getBody()
+                .getSubject();
+    }
+
+    public String getUsernameFromRefreshToken(String accessToken) {
         return Jwts.parserBuilder()
                 .setSigningKey(accessKey).build()
                 .parseClaimsJws(accessToken)
