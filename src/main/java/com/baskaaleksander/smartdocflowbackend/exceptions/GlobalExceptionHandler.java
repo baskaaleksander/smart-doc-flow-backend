@@ -35,6 +35,45 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(PdfProcessingException.class)
+    public ResponseEntity<ErrorResponse> handlePdfProcessingException(PdfProcessingException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                422,
+                HttpStatus.UNPROCESSABLE_ENTITY.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    @ExceptionHandler(S3UploadException.class)
+    public ResponseEntity<ErrorResponse> handleS3UploadException(S3UploadException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                500,
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(S3DownloadException.class)
+    public ResponseEntity<ErrorResponse> handleS3DownloadException(S3DownloadException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                502,
+                HttpStatus.BAD_GATEWAY.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_GATEWAY);
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
@@ -74,18 +113,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(S3UploadException.class)
-    public ResponseEntity<ErrorResponse> handleS3UploadException(S3UploadException ex, HttpServletRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse(
-                500,
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                ex.getMessage(),
-                request.getRequestURI(),
-                LocalDateTime.now()
-        );
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
