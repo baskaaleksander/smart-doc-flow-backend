@@ -8,19 +8,29 @@ import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.model.Media;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.core.sync.ResponseTransformer;
+import org.springframework.util.MimeTypeUtils;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -31,22 +41,26 @@ public class OcrService {
 
     @Value(value = "${minio.bucket.name}")
     private String bucket;
+    @Value(value = "${spring.ai.openai.chat.options.model}")
+    private String model;
     private final S3Client s3Client;
     private final DocumentRepository documentRepository;
+    private final OpenAiChatModel chatModel;
 
     @Autowired
     public OcrService(
             S3Client s3Client,
-            DocumentRepository documentRepository
+            DocumentRepository documentRepository,
+            OpenAiChatModel chatModel
     ) {
         this.s3Client = s3Client;
         this.documentRepository = documentRepository;
+        this.chatModel = chatModel;
     }
 
-    @Async
+    @Async("ocrExecutor")
     public CompletableFuture<Void> startAsync(UUID documentId) {
 
-        return CompletableFuture.runAsync(() ->{
             Document doc = documentRepository.getDocumentById(documentId);
 
             if (doc == null) {
@@ -55,10 +69,24 @@ public class OcrService {
 
             String documentKey = doc.getStorageKey();
 
-            File file = getPdfFromS3(documentKey);
+            if (documentKey == null) {
+                throw new ResourceNotFoundException("Document " + documentId + " has no key");
+            }
+            File file = null;
 
-            List<BufferedImage> imageList =  convertPdfToImages(file);
-        });
+            try {
+                file = getPdfFromS3(documentKey);
+
+                List<BufferedImage> imageList = convertPdfToImages(file);
+
+                List<Media> mediaList = convertImages(imageList);
+
+                performOcr(mediaList);
+
+                return CompletableFuture.completedFuture(null);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
     }
 
     private File getPdfFromS3(String documentKey) {
@@ -69,7 +97,10 @@ public class OcrService {
                     .build();
 
             File tempFile = File.createTempFile("s3-", "-" + documentKey.replace("/", "_"));
-            s3Client.getObject(getObjectRequest, ResponseTransformer.toFile(tempFile));
+            try (ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);) {
+                FileOutputStream fos = new FileOutputStream(tempFile);
+                s3Object.transferTo(fos);
+            }
 
             return tempFile;
         } catch (Exception e) {
@@ -84,18 +115,51 @@ public class OcrService {
             List<BufferedImage> imageList = new ArrayList<>();
 
             for (int i = 0; i < pagesCount; i++) {
-                BufferedImage image = renderer.renderImageWithDPI(i, 300);
-                imageList.add(image);
-                ImageIO.write(image, "JPEG", new File("image" + i + ".jpg"));
-
-                System.out.println("added page " + 1);
+                imageList.add(renderer.renderImageWithDPI(i, 300));
             }
-
-            pdDocument.close();
 
             return imageList;
         } catch (Exception ex) {
             throw new PdfProcessingException("Failed to process PDF file");
         }
+    }
+
+    public List<Media> convertImages(List<BufferedImage> images) {
+        List<Media> mediaList = new ArrayList<>();
+
+        for (BufferedImage img : images) {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                ImageIO.write(img, "png", baos);
+                baos.flush();
+
+                byte[] bytes = baos.toByteArray();
+                ByteArrayResource resource = new ByteArrayResource(bytes) {
+                    @Override
+                    public String getFilename() {
+                        return "test.png";
+                    }
+                };
+
+                mediaList.add(new Media(MimeTypeUtils.IMAGE_PNG, resource));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to convert BufferedImage to Resource", e);
+            }
+        }
+
+        return mediaList;
+    }
+
+    private String performOcr(List<Media> images) {
+        UserMessage userMessage = new UserMessage("perform an ocr on pasted pictures", images);
+
+        ChatResponse response = chatModel.call(
+                new Prompt(
+                        List.of(userMessage),
+                        OpenAiChatOptions.builder().model(model).build()
+                )
+        );
+
+        System.out.println(response.getResult().getOutput().getText());
+        return null;
     }
 }
