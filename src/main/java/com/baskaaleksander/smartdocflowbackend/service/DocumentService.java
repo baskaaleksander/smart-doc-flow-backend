@@ -69,7 +69,8 @@ public class DocumentService {
 
         Document doc = documentRepository.save(document);
 
-        ocrService.startAsync(document.getId());
+        //FOR NOW DISABLED
+//        ocrService.startAsync(document.getId());
 
         return doc;
     }

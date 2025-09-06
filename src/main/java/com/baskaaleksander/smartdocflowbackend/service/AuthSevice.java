@@ -46,6 +46,7 @@ public class AuthSevice {
 
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername());
 
         return jwtUtil.generateAccessToken(userDetails.getUsername());
     }

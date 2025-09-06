@@ -5,10 +5,14 @@ import com.baskaaleksander.smartdocflowbackend.exceptions.PdfProcessingException
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
+import com.baskaaleksander.smartdocflowbackend.model.OcrResult;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
@@ -47,6 +51,7 @@ public class OcrService {
     private final S3Client s3Client;
     private final DocumentRepository documentRepository;
     private final OpenAiChatModel chatModel;
+    private final ObjectMapper MAPPER = new ObjectMapper();
 
     @Autowired
     public OcrService(
@@ -82,7 +87,9 @@ public class OcrService {
 
                 List<Media> mediaList = convertImages(imageList);
 
-                performOcr(mediaList);
+                OcrResult result = performOcr(mediaList);
+
+                System.out.println(result);
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
@@ -153,17 +160,42 @@ public class OcrService {
         return mediaList;
     }
 
-    private String performOcr(List<Media> images) {
-        UserMessage userMessage = new UserMessage("perform an ocr on pasted pictures", images);
+    private OcrResult performOcr(List<Media> images) throws JsonProcessingException {
+        var system = new SystemMessage("""
+        You are an OCR engine. Extract plain text from each provided image.
+        - Preserve original line breaks and spacing as much as possible.
+        - Do not hallucinate missing text. If unreadable, return an empty string.
+        - Use UTF-8 with diacritics intact.
+        - Return ONLY valid JSON (no markdown). Schema:
+          {
+            "pages": [
+              { "page": <integer>, "text": "<string>" }
+            ]
+          }
+        - Language hint: %s
+        """);
+
+        UserMessage userMessage = new UserMessage(
+                "Please OCR each page. Output must follow the schema above.",
+                images
+        );
+
+        var options = OpenAiChatOptions.builder()
+                .model(model)
+                .temperature(1.0)
+                .build();
 
         ChatResponse response = chatModel.call(
                 new Prompt(
-                        List.of(userMessage),
-                        OpenAiChatOptions.builder().model(model).build()
+                        List.of(system, userMessage),
+                        options
                 )
         );
 
-        System.out.println(response.getResult().getOutput().getText());
-        return null;
+        String raw = response.getResult().getOutput().getText();
+
+        System.out.println(raw);
+        return MAPPER.readValue(raw, OcrResult.class);
+
     }
 }
