@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3DownloadException;
@@ -83,8 +84,11 @@ public class OcrService {
 
                 performOcr(mediaList);
 
+                documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
+
                 return CompletableFuture.completedFuture(null);
             } catch (Exception e) {
+                documentRepository.updateStatus(documentId, DocumentStatus.FAILED);
                 throw new RuntimeException(e);
             }
     }
