@@ -3,7 +3,9 @@ package com.baskaaleksander.smartdocflowbackend.service;
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.model.Role;
 import com.baskaaleksander.smartdocflowbackend.model.User;
+import com.baskaaleksander.smartdocflowbackend.repository.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +17,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class AuthSevice {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
@@ -28,11 +32,13 @@ public class AuthSevice {
     public AuthSevice(
             AuthenticationManager authenticationManager,
             UserRepository userRepository,
+            RoleRepository roleRepository,
             JwtUtil jwtUtil,
             PasswordEncoder passwordEncoder
     ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
     }
@@ -61,10 +67,11 @@ public class AuthSevice {
         }
         String password = user.getPassword();
         String encodedPassword = passwordEncoder.encode(password);
-
+        Role role = roleRepository.findRoleByRole("USER");
         User newUser = new User(
                 user.getUsername(),
-                encodedPassword
+                encodedPassword,
+                Set.of(role)
         );
 
         User userCreated = userRepository.save(newUser);
