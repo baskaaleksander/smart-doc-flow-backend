@@ -13,4 +13,6 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
     @Query("update Document d set d.status = :status where d.id = :documentId")
     void updateStatus(UUID documentId, DocumentStatus status);
+
+    Document getDocumentById(UUID documentId);
 }

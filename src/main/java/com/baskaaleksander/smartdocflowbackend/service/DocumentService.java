@@ -20,13 +20,19 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
+    private final OcrService ocrService;
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
 
-    public DocumentService(DocumentRepository documentRepository, S3Client s3Client) {
+    public DocumentService(
+            DocumentRepository documentRepository,
+            S3Client s3Client,
+            OcrService ocrService
+    ) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
+        this.ocrService = ocrService;
     }
 
     public Document createAndSave(MultipartFile file) throws IOException {
@@ -61,7 +67,11 @@ public class DocumentService {
                 LocalDateTime.now()
         );
 
-        return documentRepository.save(document);
+        Document doc = documentRepository.save(document);
+
+        ocrService.startAsync(document.getId());
+
+        return doc;
     }
 
 }

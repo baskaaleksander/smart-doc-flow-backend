@@ -1,6 +1,11 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.model.Document;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -11,9 +16,14 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -34,8 +44,15 @@ public class OcrService {
     }
 
     @Async
-    public void startAsync(UUID documentId) {
+    public void startAsync(UUID documentId) throws IOException {
 
+        Document doc = documentRepository.getDocumentById(documentId);
+
+        String documentKey = doc.getStorageKey();
+
+        File file = getPdfFromS3(documentKey);
+
+        convertPdfToImages(file);
 
     }
 
@@ -52,5 +69,24 @@ public class OcrService {
         }
 
         return tempFile;
+    }
+
+    private List<BufferedImage> convertPdfToImages(File file) throws IOException {
+        PDDocument pdDocument = Loader.loadPDF(file);
+        PDFRenderer renderer = new PDFRenderer(pdDocument);
+        int pagesCount = pdDocument.getPages().getCount();
+        List<BufferedImage> imageList = new ArrayList<>();
+
+        for (int i = 0; i < pagesCount; i++) {
+            BufferedImage image = renderer.renderImageWithDPI(i, 300);
+            imageList.add(image);
+            ImageIO.write(image, "JPEG", new File("image" + i + ".jpg"));
+
+            System.out.println("added page " + 1);
+        }
+
+        pdDocument.close();
+
+        return imageList;
     }
 }
