@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
@@ -35,7 +36,7 @@ public class DocumentService {
         this.ocrService = ocrService;
     }
 
-    public Document createAndSave(MultipartFile file) throws IOException {
+    public DocumentResponse createAndSave(MultipartFile file) throws IOException {
         UUID docId = UUID.randomUUID();
         String originalFilename = file.getOriginalFilename();
         String filename = docId + "_" + originalFilename;
@@ -72,7 +73,15 @@ public class DocumentService {
         //FOR NOW DISABLED
 //        ocrService.startAsync(document.getId());
 
-        return doc;
+        return new DocumentResponse(
+                doc.getId(),
+                doc.getFilename(),
+                doc.getMime(),
+                doc.getSize(),
+                doc.getPageSize(),
+                doc.getStatus(),
+                doc.getCreatedAt()
+        );
     }
 
 }
