@@ -1,7 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
 import com.baskaaleksander.smartdocflowbackend.service.AuthSevice;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,8 +25,15 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    private String loginUser(@RequestBody @Valid UserRequest user){
-        return authSevice.loginUser(user);
+    private String loginUser(@RequestBody @Valid UserRequest user, HttpServletResponse response){
+        UserLoginResponse res = authSevice.loginUser(user);
+
+        Cookie cookie = new Cookie("refreshToken", res.refreshToken());
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        cookie.setPath("/");
+        response.addCookie(cookie);
+
+        return res.accessToken();
     }
 
     @PostMapping("/register")

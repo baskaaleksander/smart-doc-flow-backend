@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
@@ -36,7 +37,7 @@ public class AuthSevice {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public String loginUser(UserRequest user) {
+    public UserLoginResponse loginUser(UserRequest user) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getUsername(),
@@ -46,9 +47,10 @@ public class AuthSevice {
 
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String accessToken = jwtUtil.generateAccessToken(userDetails.getUsername());
         String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername());
 
-        return jwtUtil.generateAccessToken(userDetails.getUsername());
+        return new UserLoginResponse(accessToken, refreshToken);
     }
 
     public String registerUser(UserRequest user) {
