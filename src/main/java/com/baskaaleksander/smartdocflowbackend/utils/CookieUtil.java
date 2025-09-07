@@ -30,4 +30,15 @@ public class CookieUtil {
 
         return refreshCookie.getValue();
     }
+
+    public void clearRefreshTokenCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie("refreshToken", "");
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        cookie.setSecure(true);
+        cookie.setHttpOnly(true);
+        cookie.setAttribute("SameSite", "Strict");
+
+        response.addCookie(cookie);
+    }
 }

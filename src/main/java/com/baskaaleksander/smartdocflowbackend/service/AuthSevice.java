@@ -9,6 +9,8 @@ import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.security.JwtUtil;
+import com.baskaaleksander.smartdocflowbackend.utils.CookieUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,6 +32,7 @@ public class AuthSevice {
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final CookieUtil cookieUtil;
 
     @Autowired
     public AuthSevice(
@@ -37,13 +40,14 @@ public class AuthSevice {
             UserRepository userRepository,
             RoleRepository roleRepository,
             JwtUtil jwtUtil,
-            PasswordEncoder passwordEncoder
-    ) {
+            PasswordEncoder passwordEncoder,
+            CookieUtil cookieUtil) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
+        this.cookieUtil = cookieUtil;
     }
 
     public UserLoginResponse loginUser(UserRequest user) {
@@ -92,5 +96,11 @@ public class AuthSevice {
 
     public String refreshAccessToken(String refreshToken) {
         return jwtUtil.refreshAccessToken(refreshToken);
+    }
+
+    public String logoutUser(HttpServletResponse res) {
+        cookieUtil.clearRefreshTokenCookie(res);
+
+        return "Logout successful";
     }
 }
