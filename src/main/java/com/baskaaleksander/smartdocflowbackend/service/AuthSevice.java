@@ -9,6 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.security.JwtUtil;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -60,6 +62,7 @@ public class AuthSevice {
         return new UserLoginResponse(accessToken, refreshToken);
     }
 
+    @Transactional
     public UserResponse registerUser(UserRequest user) {
 
         Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
@@ -69,11 +72,13 @@ public class AuthSevice {
         String password = user.getPassword();
         String encodedPassword = passwordEncoder.encode(password);
         Role role = roleRepository.findRoleByRole("ROLE_USER");
+        Set<Role> roles = new HashSet<>();
+        roles.add(role);
 
         User newUser = new User(
                 user.getUsername(),
                 encodedPassword,
-                Set.of(role)
+                roles
         );
 
         User userCreated = userRepository.save(newUser);

@@ -9,8 +9,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @RequiredArgsConstructor
-@Data
 @Table(name = "users")
+@Getter @Setter
 public class User {
 
     @Id
@@ -32,5 +32,16 @@ public class User {
     @NonNull
     private Set<Role> roles;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof User other)) return false;
+        if (this.id == 0 || ((User) o).getId() == 0) return false;
+        return this.id == ((User) o).getId();
+    }
 
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

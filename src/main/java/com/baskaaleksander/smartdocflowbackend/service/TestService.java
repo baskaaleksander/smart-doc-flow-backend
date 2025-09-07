@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class TestService {
         this.chatModel = chatModel;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UserResponse> getAllUsers() {
         List<User> users = userRepository.findAll();
 

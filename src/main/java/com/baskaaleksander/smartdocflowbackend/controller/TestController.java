@@ -1,7 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.service.TestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;

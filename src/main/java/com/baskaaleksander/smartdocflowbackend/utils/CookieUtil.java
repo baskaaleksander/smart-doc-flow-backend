@@ -17,6 +17,7 @@ public class CookieUtil {
         cookie.setPath("/");
         cookie.setSecure(true);
         cookie.setHttpOnly(true);
+        cookie.setAttribute("SameSite", "Strict");
         response.addCookie(cookie);
 
     }

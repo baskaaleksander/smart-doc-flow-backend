@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,5 +21,6 @@ public class Role {
     private String role;
 
     @ManyToMany(mappedBy = "roles")
+    @JsonIgnore
     private Set<User> users = new HashSet<>();
 }
