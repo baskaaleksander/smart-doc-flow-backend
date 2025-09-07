@@ -5,9 +5,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -54,9 +54,8 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                         .getContext()
                         .setAuthentication(authentication);
             }
-            //TODO: handle this in better way
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
+            throw new AuthorizationDeniedException(ex.getMessage());
         }
         filterChain.doFilter(request, response);
     }

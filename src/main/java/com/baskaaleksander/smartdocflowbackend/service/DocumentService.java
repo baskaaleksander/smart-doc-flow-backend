@@ -19,6 +19,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -45,7 +46,7 @@ public class DocumentService {
 
     public DocumentResponse createAndSave(MultipartFile file) {
         UUID docId = UUID.randomUUID();
-        String originalFilename = file.getOriginalFilename();
+        String originalFilename = Objects.requireNonNull(file.getOriginalFilename()).replace(" ", "_");
         String filename = docId + "_" + originalFilename;
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();

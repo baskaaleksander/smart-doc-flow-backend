@@ -18,9 +18,11 @@ public class User {
     private long id;
 
     @NonNull
+    @Column(nullable = false)
     private String username;
 
     @NonNull
+    @Column(nullable = false)
     private String password;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -30,6 +32,7 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     @NonNull
+    @Column(nullable = false)
     private Set<Role> roles;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
