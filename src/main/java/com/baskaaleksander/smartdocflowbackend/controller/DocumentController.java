@@ -3,6 +3,8 @@ package com.baskaaleksander.smartdocflowbackend.controller;
 import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,7 +25,7 @@ public class DocumentController {
     }
 
     @PostMapping("/upload")
-    public DocumentResponse uploadDocument(@RequestBody MultipartFile file) throws IOException {
-        return documentService.createAndSave(file);
+    public ResponseEntity<DocumentResponse> uploadDocument(@RequestBody MultipartFile file) {
+        return new ResponseEntity<>(documentService.createAndSave(file), HttpStatus.CREATED);
     }
 }

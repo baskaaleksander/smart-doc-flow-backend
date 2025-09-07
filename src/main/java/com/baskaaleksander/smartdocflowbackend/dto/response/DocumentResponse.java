@@ -11,6 +11,7 @@ public record DocumentResponse (
         String mime,
         double size,
         int pageSize,
+        long ownerId,
         DocumentStatus status,
         LocalDateTime createdAt
 ) {

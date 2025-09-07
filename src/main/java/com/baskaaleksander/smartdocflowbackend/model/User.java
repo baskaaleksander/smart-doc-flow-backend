@@ -32,6 +32,9 @@ public class User {
     @NonNull
     private Set<Role> roles;
 
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Document> documents;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

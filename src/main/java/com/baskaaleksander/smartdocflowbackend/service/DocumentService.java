@@ -2,10 +2,15 @@ package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
+import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -22,6 +27,7 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
     private final OcrService ocrService;
+    private final UserRepository userRepository;
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
@@ -29,17 +35,21 @@ public class DocumentService {
     public DocumentService(
             DocumentRepository documentRepository,
             S3Client s3Client,
-            OcrService ocrService
-    ) {
+            OcrService ocrService,
+            UserRepository userRepository) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
+        this.userRepository = userRepository;
     }
 
-    public DocumentResponse createAndSave(MultipartFile file) throws IOException {
+    public DocumentResponse createAndSave(MultipartFile file) {
         UUID docId = UUID.randomUUID();
         String originalFilename = file.getOriginalFilename();
         String filename = docId + "_" + originalFilename;
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!"application/pdf".equalsIgnoreCase(String.valueOf(file.getContentType()))) {
             System.out.println("Incorrect filetype");;
@@ -65,7 +75,8 @@ public class DocumentService {
                 filename,
                 1,
                 DocumentStatus.UPLOADED,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                user
         );
 
         Document doc = documentRepository.save(document);
@@ -79,6 +90,7 @@ public class DocumentService {
                 doc.getMime(),
                 doc.getSize(),
                 doc.getPageSize(),
+                doc.getOwner().getId(),
                 doc.getStatus(),
                 doc.getCreatedAt()
         );
