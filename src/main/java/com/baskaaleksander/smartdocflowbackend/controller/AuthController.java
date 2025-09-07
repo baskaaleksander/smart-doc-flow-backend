@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.controller;
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
 import com.baskaaleksander.smartdocflowbackend.service.AuthSevice;
+import com.baskaaleksander.smartdocflowbackend.utils.CookieUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -21,10 +22,15 @@ import java.util.Optional;
 public class AuthController {
 
     private final AuthSevice authSevice;
+    private final CookieUtil cookieUtil;
 
     @Autowired
-    public AuthController(AuthSevice authSevice) {
+    public AuthController(
+            AuthSevice authSevice,
+            CookieUtil cookieUtil
+    ) {
         this.authSevice = authSevice;
+        this.cookieUtil = cookieUtil;
     }
 
 
@@ -32,12 +38,7 @@ public class AuthController {
     public String loginUser(@RequestBody @Valid UserRequest user, HttpServletResponse response){
         UserLoginResponse res = authSevice.loginUser(user);
 
-        Cookie cookie = new Cookie("refreshToken", res.refreshToken());
-        cookie.setMaxAge(7 * 24 * 60 * 60);
-        cookie.setPath("/");
-        cookie.setSecure(true);
-        cookie.setHttpOnly(true);
-        response.addCookie(cookie);
+        cookieUtil.sendRefreshTokenCookie(res.accessToken(), response);
 
         return res.accessToken();
     }
@@ -49,12 +50,10 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public String refreshAccessToken(HttpServletRequest request) {
-        Cookie refreshCookie = Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
-                .filter(cookie -> "refreshToken".equalsIgnoreCase(cookie.getName()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Refresh token cookie not found"));
 
-        return authSevice.refreshAccessToken(refreshCookie.getValue());
+        String refreshCookie = cookieUtil.parseRefreshTokenCookie(request);
+
+        return authSevice.refreshAccessToken(refreshCookie);
     }
 
 }
