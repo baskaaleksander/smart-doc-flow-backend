@@ -39,7 +39,7 @@ public class AuthController {
     public ResponseEntity<String> loginUser(@RequestBody @Valid UserRequest user, HttpServletResponse response){
         TokenResponse res = authSevice.loginUser(user);
 
-        cookieUtil.sendRefreshTokenCookie(res.accessToken(), response);
+        cookieUtil.sendRefreshTokenCookie(res.refreshToken(), response);
 
         return new ResponseEntity<>(res.accessToken(), HttpStatus.OK);
     }

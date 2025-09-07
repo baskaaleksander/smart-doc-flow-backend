@@ -28,7 +28,7 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked = false;
 
-    private UUID replacedBy;
+    private String replacedBy;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

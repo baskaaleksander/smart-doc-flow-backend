@@ -105,9 +105,16 @@ public class JwtUtil {
 
     public TokenResponse refreshAccessToken(String refreshToken) {
         if (validateRefreshToken(refreshToken)) {
-            invalidateRefreshToken(refreshToken);
+            String oldJti = getJtiFromRefreshToken(refreshToken);
+            RefreshToken oldToken = refreshTokenRepository.findByJtiAndRevokedFalse(oldJti)
+                    .orElseThrow(() -> new InvalidJwtTokenException("Refresh token not found or revoked"));
+            oldToken.setRevoked(true);
             String username = getUsernameFromRefreshToken(refreshToken);
-            return issueTokens(username);
+            TokenResponse tokensIssued = issueTokens(username);
+            String newJti = getJtiFromRefreshToken(tokensIssued.refreshToken());
+            oldToken.setReplacedBy(newJti);
+            refreshTokenRepository.save(oldToken);
+            return tokensIssued;
         } else {
             throw new InvalidJwtTokenException("Invalid refresh token");
         }
@@ -122,10 +129,10 @@ public class JwtUtil {
                 .getSubject();
     }
 
-    public String getUsernameFromRefreshToken(String accessToken) {
+    public String getUsernameFromRefreshToken(String refreshToken) {
         return Jwts.parserBuilder()
-                .setSigningKey(accessKey).build()
-                .parseClaimsJws(accessToken)
+                .setSigningKey(refreshKey).build()
+                .parseClaimsJws(refreshToken)
                 .getBody()
                 .getSubject();
     }
@@ -159,13 +166,18 @@ public class JwtUtil {
                     .findByJtiAndRevokedFalse(getJtiFromRefreshToken(refreshToken))
                     .orElseThrow(() -> new InvalidJwtTokenException("Refresh token not found or revoked"));
 
-            if (token.getExpiresAt().isBefore(LocalDateTime.now()) || token.isRevoked()) {
-                throw new InvalidJwtTokenException("Refresh token expired");
+            if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new InvalidJwtTokenException("Refresh token expired (DB)");
             }
-
             return true;
-        } catch (JwtException | IllegalArgumentException ex) {
-            throw new InvalidJwtTokenException("Invalid refresh token");
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new InvalidJwtTokenException("Refresh token expired (JWT)");
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            throw new InvalidJwtTokenException("Refresh token signature mismatch");
+        } catch (io.jsonwebtoken.MalformedJwtException e) {
+            throw new InvalidJwtTokenException("Malformed refresh token");
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidJwtTokenException("Invalid refresh token: " + e.getMessage());
         }
     }
 
