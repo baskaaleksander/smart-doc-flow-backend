@@ -1,4 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.dto.response;
 
 
-public record UserResponse (long id, String username) {}
+import java.util.List;
+
+public record UserResponse (long id, String username, List<String> roles) {}

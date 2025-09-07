@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.model.Role;
 import com.baskaaleksander.smartdocflowbackend.model.User;
@@ -59,7 +60,7 @@ public class AuthSevice {
         return new UserLoginResponse(accessToken, refreshToken);
     }
 
-    public String registerUser(UserRequest user) {
+    public UserResponse registerUser(UserRequest user) {
 
         Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
         if (existingUser.isPresent()) {
@@ -67,7 +68,8 @@ public class AuthSevice {
         }
         String password = user.getPassword();
         String encodedPassword = passwordEncoder.encode(password);
-        Role role = roleRepository.findRoleByRole("USER");
+        Role role = roleRepository.findRoleByRole("ROLE_USER");
+
         User newUser = new User(
                 user.getUsername(),
                 encodedPassword,
@@ -75,9 +77,12 @@ public class AuthSevice {
         );
 
         User userCreated = userRepository.save(newUser);
-        System.out.println(userCreated);
 
-        return "User registered";
+        return new UserResponse(
+                userCreated.getId(),
+                userCreated.getUsername(),
+                userCreated.getRoles().stream().map(Role::getRole).toList()
+        );
     }
 
     public String refreshAccessToken(String refreshToken) {

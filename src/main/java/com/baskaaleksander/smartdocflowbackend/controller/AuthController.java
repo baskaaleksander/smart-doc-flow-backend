@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.controller;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.service.AuthSevice;
 import com.baskaaleksander.smartdocflowbackend.utils.CookieUtil;
 import jakarta.servlet.http.Cookie;
@@ -44,7 +45,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@RequestBody @Valid UserRequest user) {
+    public UserResponse registerUser(@RequestBody @Valid UserRequest user) {
         return authSevice.registerUser(user);
     }
 
