@@ -10,6 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.repository.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.utils.CookieUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class AuthSevice {
@@ -58,10 +60,10 @@ public class AuthSevice {
                 )
         );
 
-
+        UUID jti = UUID.randomUUID();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String accessToken = jwtUtil.generateAccessToken(userDetails.getUsername());
-        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername());
+        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername(), jti.toString());
 
         return new UserLoginResponse(accessToken, refreshToken);
     }
@@ -98,8 +100,10 @@ public class AuthSevice {
         return jwtUtil.refreshAccessToken(refreshToken);
     }
 
-    public String logoutUser(HttpServletResponse res) {
-        cookieUtil.clearRefreshTokenCookie(res);
+    public String logoutUser(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = cookieUtil.parseRefreshTokenCookie(request);
+        cookieUtil.clearRefreshTokenCookie(response);
+        jwtUtil.invalidateRefreshToken(refreshToken);
 
         return "Logout successful";
     }
