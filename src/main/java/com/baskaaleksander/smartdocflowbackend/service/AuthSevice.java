@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
-import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.model.Role;
@@ -52,7 +52,7 @@ public class AuthSevice {
         this.cookieUtil = cookieUtil;
     }
 
-    public UserLoginResponse loginUser(UserRequest user) {
+    public TokenResponse loginUser(UserRequest user) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getUsername(),
@@ -60,12 +60,9 @@ public class AuthSevice {
                 )
         );
 
-        UUID jti = UUID.randomUUID();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String accessToken = jwtUtil.generateAccessToken(userDetails.getUsername());
-        String refreshToken = jwtUtil.generateRefreshToken(userDetails.getUsername(), jti.toString());
 
-        return new UserLoginResponse(accessToken, refreshToken);
+        return jwtUtil.issueTokens(userDetails.getUsername());
     }
 
     @Transactional
@@ -96,7 +93,7 @@ public class AuthSevice {
         );
     }
 
-    public String refreshAccessToken(String refreshToken) {
+    public TokenResponse refreshAccessToken(String refreshToken) {
         return jwtUtil.refreshAccessToken(refreshToken);
     }
 

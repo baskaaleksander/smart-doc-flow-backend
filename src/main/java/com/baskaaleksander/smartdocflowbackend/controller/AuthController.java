@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
-import com.baskaaleksander.smartdocflowbackend.dto.response.UserLoginResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.service.AuthSevice;
 import com.baskaaleksander.smartdocflowbackend.utils.CookieUtil;
@@ -37,7 +37,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<String> loginUser(@RequestBody @Valid UserRequest user, HttpServletResponse response){
-        UserLoginResponse res = authSevice.loginUser(user);
+        TokenResponse res = authSevice.loginUser(user);
 
         cookieUtil.sendRefreshTokenCookie(res.accessToken(), response);
 
@@ -50,11 +50,15 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<String> refreshAccessToken(HttpServletRequest request) {
+    public ResponseEntity<String> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
 
         String refreshCookie = cookieUtil.parseRefreshTokenCookie(request);
 
-        return new ResponseEntity<>(authSevice.refreshAccessToken(refreshCookie), HttpStatus.OK);
+        TokenResponse tokenResponse = authSevice.refreshAccessToken(refreshCookie);
+
+        cookieUtil.sendRefreshTokenCookie(tokenResponse.refreshToken(), response);
+
+        return new ResponseEntity<>(tokenResponse.accessToken(), HttpStatus.OK);
     }
 
     @PostMapping("/logout")
