@@ -39,6 +39,13 @@ public class DocumentController {
     @PreAuthorize("@docAccess.canView(#id, authentication)")
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponse> getDocumentById(@PathVariable UUID id) {
-        return new ResponseEntity<>(documentService.getDocumentById(id), HttpStatus.OK);
+        return new ResponseEntity<>(documentService.getById(id), HttpStatus.OK);
+    }
+
+    @PreAuthorize("@docAccess.canModify(#id, authentication)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteDocumentById(@PathVariable UUID id) {
+        documentService.deleteById(id);
+        return new ResponseEntity<>("Document with id " + id + " deleted successfully", HttpStatus.OK);
     }
 }

@@ -34,4 +34,15 @@ public class DocumentAccessEvaluation {
         return documentRepository.getOwnerUsernameById(UUID.fromString(docId)).map(ownerId -> ownerId.equals(user.getUsername())).orElse(false);
     }
 
+    public boolean canModify(String docId, Authentication authentication) {
+
+        List<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+
+        if (roles.contains("ROLE_ADMIN")) return true;
+
+        UserDetails user = (UserDetails) authentication.getPrincipal();
+
+        return documentRepository.getOwnerUsernameById(UUID.fromString(docId)).map(ownerId -> ownerId.equals(user.getUsername())).orElse(false);
+    }
+
 }

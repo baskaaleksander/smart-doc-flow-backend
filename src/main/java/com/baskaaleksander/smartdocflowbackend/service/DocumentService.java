@@ -9,6 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.model.Document;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,6 +48,7 @@ public class DocumentService {
         this.documentMapper = documentMapper;
     }
 
+    @Transactional
     public DocumentResponse createAndSave(MultipartFile file) {
         UUID docId = UUID.randomUUID();
         String originalFilename = Objects.requireNonNull(file.getOriginalFilename()).replace(" ", "_");
@@ -100,7 +102,7 @@ public class DocumentService {
         );
     }
 
-    public DocumentResponse getDocumentById(UUID id) {
+    public DocumentResponse getById(UUID id) {
         Document doc = documentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
 
         return new DocumentResponse(
@@ -119,5 +121,8 @@ public class DocumentService {
         return documentRepository.findAllByOwnerUsername(username).stream().map(documentMapper::toDocumentResponse).toList();
     }
 
+    public void deleteById(UUID id) {
+        documentRepository.deleteById(id);
+    }
 
 }
