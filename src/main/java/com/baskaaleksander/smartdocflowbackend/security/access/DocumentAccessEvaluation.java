@@ -15,14 +15,11 @@ import java.util.UUID;
 @Component("docAccess")
 public class DocumentAccessEvaluation {
 
-    private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
 
     @Autowired
     public DocumentAccessEvaluation(
-            UserRepository userRepository,
             DocumentRepository documentRepository) {
-        this.userRepository = userRepository;
         this.documentRepository = documentRepository;
     }
 
@@ -34,13 +31,7 @@ public class DocumentAccessEvaluation {
 
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
-        User dbUser = userRepository.findByUsername(user.getUsername()).orElse(null);
-
-        if (dbUser == null) return false;
-
-
-
-        return documentRepository.getOwnerUUIDById(UUID.fromString(docId)).map(ownerId -> ownerId.equals(dbUser.getId())).orElse(false);
+        return documentRepository.getOwnerUsernameById(UUID.fromString(docId)).map(ownerId -> ownerId.equals(user.getUsername())).orElse(false);
     }
 
 }

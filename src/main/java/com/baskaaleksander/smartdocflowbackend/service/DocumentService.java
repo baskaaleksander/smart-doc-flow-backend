@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
+import com.baskaaleksander.smartdocflowbackend.mapper.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
@@ -18,6 +19,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -28,6 +30,7 @@ public class DocumentService {
     private final S3Client s3Client;
     private final OcrService ocrService;
     private final UserRepository userRepository;
+    private final DocumentMapper documentMapper;
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
@@ -36,11 +39,12 @@ public class DocumentService {
             DocumentRepository documentRepository,
             S3Client s3Client,
             OcrService ocrService,
-            UserRepository userRepository) {
+            UserRepository userRepository, DocumentMapper documentMapper) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
         this.userRepository = userRepository;
+        this.documentMapper = documentMapper;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -95,5 +99,25 @@ public class DocumentService {
                 doc.getCreatedAt()
         );
     }
+
+    public DocumentResponse getDocumentById(UUID id) {
+        Document doc = documentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
+
+        return new DocumentResponse(
+                doc.getId(),
+                doc.getFilename(),
+                doc.getMime(),
+                doc.getSize(),
+                doc.getPageSize(),
+                doc.getOwner().getId(),
+                doc.getStatus(),
+                doc.getCreatedAt()
+        );
+    }
+
+    public List<DocumentResponse> getAllByOwnerUsername(String username) {
+        return documentRepository.findAllByOwnerUsername(username).stream().map(documentMapper::toDocumentResponse).toList();
+    }
+
 
 }
