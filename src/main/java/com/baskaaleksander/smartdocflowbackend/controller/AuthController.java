@@ -3,7 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.controller;
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.service.AuthSevice;
+import com.baskaaleksander.smartdocflowbackend.service.AuthService;
 import com.baskaaleksander.smartdocflowbackend.utils.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,22 +22,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private final AuthSevice authSevice;
+    private final AuthService authService;
     private final CookieUtil cookieUtil;
 
     @Autowired
     public AuthController(
-            AuthSevice authSevice,
+            AuthService authService,
             CookieUtil cookieUtil
     ) {
-        this.authSevice = authSevice;
+        this.authService = authService;
         this.cookieUtil = cookieUtil;
     }
 
 
     @PostMapping("/login")
     public ResponseEntity<String> loginUser(@RequestBody @Valid UserRequest user, HttpServletResponse response){
-        TokenResponse res = authSevice.loginUser(user);
+        TokenResponse res = authService.loginUser(user);
 
         cookieUtil.sendRefreshTokenCookie(res.refreshToken(), response);
 
@@ -46,7 +46,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> registerUser(@RequestBody @Valid UserRequest user) {
-        return new ResponseEntity<>(authSevice.registerUser(user), HttpStatus.CREATED);
+        return new ResponseEntity<>(authService.registerUser(user), HttpStatus.CREATED);
     }
 
     @PostMapping("/refresh")
@@ -54,7 +54,7 @@ public class AuthController {
 
         String refreshCookie = cookieUtil.parseRefreshTokenCookie(request);
 
-        TokenResponse tokenResponse = authSevice.refreshAccessToken(refreshCookie);
+        TokenResponse tokenResponse = authService.refreshAccessToken(refreshCookie);
 
         cookieUtil.sendRefreshTokenCookie(tokenResponse.refreshToken(), response);
 
@@ -63,7 +63,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(HttpServletRequest request, HttpServletResponse response) {
-        return new ResponseEntity<>(authSevice.logoutUser(request, response), HttpStatus.OK);
+        return new ResponseEntity<>(authService.logoutUser(request, response), HttpStatus.OK);
     }
 
 }

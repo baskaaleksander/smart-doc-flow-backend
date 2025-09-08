@@ -24,10 +24,9 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
-public class AuthSevice {
+public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -37,7 +36,7 @@ public class AuthSevice {
     private final CookieUtil cookieUtil;
 
     @Autowired
-    public AuthSevice(
+    public AuthService(
             AuthenticationManager authenticationManager,
             UserRepository userRepository,
             RoleRepository roleRepository,
