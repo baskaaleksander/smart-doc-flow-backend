@@ -67,11 +67,8 @@ public class OcrService {
     @Async("ocrExecutor")
     public CompletableFuture<Void> startAsync(UUID documentId) {
 
-            Document doc = documentRepository.getDocumentById(documentId);
-
-            if (doc == null) {
-                throw new ResourceNotFoundException("Document with ID " + documentId + " not found.");
-            }
+            Document doc = documentRepository.getDocumentById(documentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
 
             String documentKey = doc.getStorageKey();
 
