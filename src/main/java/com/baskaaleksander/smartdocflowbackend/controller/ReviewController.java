@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.service.ReviewService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,7 +27,12 @@ public class ReviewController {
     }
 
     @PostMapping("/{documentId}/claim")
-    public Review claimReview(@PathVariable("documentId") UUID documentId, @AuthenticationPrincipal UserDetails user) {
+    public ReviewResponse claimReview(@PathVariable("documentId") UUID documentId, @AuthenticationPrincipal UserDetails user) {
         return reviewService.claimReview(documentId, user.getUsername());
+    }
+
+    @PostMapping("/{documentId}/release")
+    public ReviewResponse releaseReview(@PathVariable("documentId") UUID documentId, @AuthenticationPrincipal UserDetails user) {
+        return reviewService.releaseReview(documentId, user.getUsername());
     }
 }

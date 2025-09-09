@@ -14,7 +14,7 @@ import java.util.UUID;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    @Query("select r from Review r left join fetch r.document where r.document.id = :documentId")
+    @Query("select r from Review r left join fetch r.document left join fetch r.reviewer where r.document.id = :documentId")
     Optional<Review> getReviewByDocId(UUID documentId);
 
     @Query("update Review r set r.status = :status where r.id = :reviewId")
