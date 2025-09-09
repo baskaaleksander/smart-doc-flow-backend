@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.repository;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
     @Query("update Document d set d.status = :status where d.id = :documentId")
+    @Modifying
     void updateStatus(UUID documentId, DocumentStatus status);
 
     Optional<Document> getDocumentById(UUID documentId);
