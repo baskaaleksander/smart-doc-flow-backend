@@ -2,12 +2,15 @@ package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.mapper.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
+import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +22,6 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -31,6 +33,7 @@ public class DocumentService {
     private final S3Client s3Client;
     private final OcrService ocrService;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
 
     @Value(value = "${minio.bucket.name}")
@@ -40,11 +43,14 @@ public class DocumentService {
             DocumentRepository documentRepository,
             S3Client s3Client,
             OcrService ocrService,
-            UserRepository userRepository, DocumentMapper documentMapper) {
+            UserRepository userRepository,
+            ReviewRepository reviewRepository,
+            DocumentMapper documentMapper) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
         this.userRepository = userRepository;
+        this.reviewRepository = reviewRepository;
         this.documentMapper = documentMapper;
     }
 
@@ -73,19 +79,26 @@ public class DocumentService {
             throw new S3UploadException("Upload to object store failed");
         }
 
-        Document document = new Document(
-                docId,
-                originalFilename,
-                "pdf",
-                file.getSize(),
-                filename,
-                1,
-                DocumentStatus.UPLOADED,
-                LocalDateTime.now(),
-                user
-        );
+        Document document = new Document();
+        document.setId(docId);
+        document.setFilename(originalFilename);
+        document.setStorageKey(filename);
+        document.setMime("pdf");
+        document.setSize(file.getSize());
+        document.setPageSize(1);
+        document.setStatus(DocumentStatus.UPLOADED);
+        document.setOwner(user);
 
         Document doc = documentRepository.save(document);
+
+        Review blankReview = new Review();
+        blankReview.setStatus(ReviewStatus.PENDING);
+        blankReview.setDocument(doc);
+        reviewRepository.save(blankReview);
+
+
+
+
 
         //FOR NOW DISABLED
 //        ocrService.startAsync(document.getId());

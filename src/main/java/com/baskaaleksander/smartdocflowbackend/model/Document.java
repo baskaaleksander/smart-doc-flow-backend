@@ -2,17 +2,18 @@ package com.baskaaleksander.smartdocflowbackend.model;
 
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Data
-@AllArgsConstructor
+@Getter @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(of = "id")
+@ToString(exclude = {"owner", "review"})
 public class Document {
 
     @Id
@@ -27,13 +28,19 @@ public class Document {
     private String storageKey;
     @Column(nullable = false)
     private int pageSize;
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DocumentStatus status;
 
     @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @CreationTimestamp
+    private Instant createdAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "owner_id")
     private User owner;
+
+    @OneToOne
+    @JoinColumn(nullable = true)
+    private Review review;
 }
