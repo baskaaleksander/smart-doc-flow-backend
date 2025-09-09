@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.mapper.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
@@ -20,13 +21,16 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
+    private final ReviewMapper reviewMapper;
 
     @Autowired
     public ReviewService(
             ReviewRepository reviewRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ReviewMapper reviewMapper) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
+        this.reviewMapper = reviewMapper;
     }
 
     @Transactional
@@ -45,15 +49,7 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
 
-        return new ReviewResponse(
-                review.getId(),
-                review.getDocument().getId(),
-                review.getStatus(),
-                review.getReviewer().getId(),
-                review.getCreatedAt(),
-                review.getUpdatedAt(),
-                review.getVersion()
-        );
+        return reviewMapper.toReviewResponse(review);
     }
 
     @Transactional
@@ -75,15 +71,7 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
 
-        return new ReviewResponse(
-                review.getId(),
-                review.getDocument().getId(),
-                review.getStatus(),
-                null,
-                review.getCreatedAt(),
-                review.getUpdatedAt(),
-                review.getVersion()
-        );
+        return reviewMapper.toReviewResponse(review);
 
     }
 }

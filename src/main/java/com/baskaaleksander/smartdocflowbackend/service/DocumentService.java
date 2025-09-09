@@ -89,14 +89,14 @@ public class DocumentService {
         document.setStatus(DocumentStatus.UPLOADED);
         document.setOwner(user);
 
-        Document doc = documentRepository.save(document);
+        document = documentRepository.save(document);
 
-        Review blankReview = new Review();
-        blankReview.setStatus(ReviewStatus.PENDING);
-        blankReview.setDocument(doc);
-        Review review = reviewRepository.save(blankReview);
+        Review review = new Review();
+        review.setStatus(ReviewStatus.PENDING);
+        review.setDocument(document);
+        review = reviewRepository.save(review);
 
-        doc.setReview(review);
+        document.setReview(review);
 
 
 
@@ -105,33 +105,13 @@ public class DocumentService {
         //FOR NOW DISABLED
 //        ocrService.startAsync(document.getId());
 
-        return new DocumentResponse(
-                doc.getId(),
-                doc.getFilename(),
-                doc.getMime(),
-                doc.getSize(),
-                doc.getPageSize(),
-                doc.getOwner().getId(),
-                review.getId(),
-                doc.getStatus(),
-                doc.getCreatedAt()
-        );
+        return documentMapper.toDocumentResponse(document);
     }
 
     public DocumentResponse getById(UUID id) {
         Document doc = documentRepository.findbyIdWithReview(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
 
-        return new DocumentResponse(
-                doc.getId(),
-                doc.getFilename(),
-                doc.getMime(),
-                doc.getSize(),
-                doc.getPageSize(),
-                doc.getOwner().getId(),
-                doc.getReview().getId(),
-                doc.getStatus(),
-                doc.getCreatedAt()
-        );
+        return documentMapper.toDocumentResponse(doc);
     }
 
     public List<DocumentResponse> getAllByOwnerUsername(String username) {
