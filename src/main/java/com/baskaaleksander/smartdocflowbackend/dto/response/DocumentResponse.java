@@ -12,6 +12,7 @@ public record DocumentResponse (
         double size,
         int pageSize,
         long ownerId,
+        long reviewId,
         DocumentStatus status,
         Instant createdAt
 ) {

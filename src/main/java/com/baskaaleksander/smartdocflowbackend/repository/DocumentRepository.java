@@ -29,5 +29,5 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     left join fetch d.review
     where d.id = :documentId
 """)
-    Optional<Document> findbyIdWithReviewId(UUID documentId);
+    Optional<Document> findbyIdWithReview(UUID documentId);
 }

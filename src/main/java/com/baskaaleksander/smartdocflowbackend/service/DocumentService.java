@@ -94,7 +94,9 @@ public class DocumentService {
         Review blankReview = new Review();
         blankReview.setStatus(ReviewStatus.PENDING);
         blankReview.setDocument(doc);
-        reviewRepository.save(blankReview);
+        Review review = reviewRepository.save(blankReview);
+
+        doc.setReview(review);
 
 
 
@@ -110,13 +112,14 @@ public class DocumentService {
                 doc.getSize(),
                 doc.getPageSize(),
                 doc.getOwner().getId(),
+                review.getId(),
                 doc.getStatus(),
                 doc.getCreatedAt()
         );
     }
 
     public DocumentResponse getById(UUID id) {
-        Document doc = documentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
+        Document doc = documentRepository.findbyIdWithReview(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
 
         return new DocumentResponse(
                 doc.getId(),
@@ -125,6 +128,7 @@ public class DocumentService {
                 doc.getSize(),
                 doc.getPageSize(),
                 doc.getOwner().getId(),
+                doc.getReview().getId(),
                 doc.getStatus(),
                 doc.getCreatedAt()
         );

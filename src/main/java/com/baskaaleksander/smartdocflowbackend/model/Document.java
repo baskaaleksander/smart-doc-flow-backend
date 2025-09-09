@@ -43,4 +43,5 @@ public class Document {
     @OneToOne
     @JoinColumn(nullable = true)
     private Review review;
+
 }
