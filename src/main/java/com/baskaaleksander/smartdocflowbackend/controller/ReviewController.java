@@ -36,7 +36,7 @@ public class ReviewController {
 
     @GetMapping("/queue")
     public ResponseEntity<List<ReviewResponse>> getReviewsQueue(@RequestParam(defaultValue = "PENDING") String status) {
-        return null;
+        return new ResponseEntity<>(reviewService.getReviewsByStatus(status), HttpStatus.OK);
     }
 
     @GetMapping("/{reviewId}")

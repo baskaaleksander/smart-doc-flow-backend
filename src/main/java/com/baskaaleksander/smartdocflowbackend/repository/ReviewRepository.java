@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +23,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     void updateStatus(long reviewId, ReviewStatus status);
 
     Optional<Review> getReviewById(long id);
+
+    List<Review> getReviewsByStatus(ReviewStatus status);
 
 //    void assignUser(long reviewId, long userId);
 }

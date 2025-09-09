@@ -85,4 +85,8 @@ public class ReviewService {
                 reviewRepository.getReviewById(id).orElseThrow(() -> new ResourceNotFoundException("Review with id " + id + " not found"))
         );
     }
+
+    public List<ReviewResponse> getReviewsByStatus(String status) {
+        return reviewRepository.getReviewsByStatus(ReviewStatus.valueOf(status)).stream().map(reviewMapper::toReviewResponse).toList();
+    }
 }
