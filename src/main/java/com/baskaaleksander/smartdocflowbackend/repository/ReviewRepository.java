@@ -21,5 +21,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @Modifying
     void updateStatus(long reviewId, ReviewStatus status);
 
+    Optional<Review> getReviewById(long id);
+
 //    void assignUser(long reviewId, long userId);
 }

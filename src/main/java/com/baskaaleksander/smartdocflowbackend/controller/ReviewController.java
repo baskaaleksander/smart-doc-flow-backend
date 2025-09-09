@@ -29,9 +29,9 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    @GetMapping("/")
+    @GetMapping("")
     public ResponseEntity<List<ReviewResponse>> getAllReviews() {
-        return null;
+        return new ResponseEntity<>(reviewService.getAllReviews(), HttpStatus.OK);
     }
 
     @GetMapping("/queue")
@@ -41,7 +41,7 @@ public class ReviewController {
 
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> getReviewById(@PathVariable("reviewId") long reviewId) {
-        return null;
+        return new ResponseEntity<>(reviewService.getReviewById(reviewId), HttpStatus.OK);
     }
 
     @PostMapping("/{documentId}/claim")

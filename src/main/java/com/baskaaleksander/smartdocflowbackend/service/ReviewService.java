@@ -14,6 +14,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -73,5 +74,15 @@ public class ReviewService {
 
         return reviewMapper.toReviewResponse(review);
 
+    }
+
+    public List<ReviewResponse> getAllReviews() {
+        return reviewRepository.findAll().stream().map(reviewMapper::toReviewResponse).toList();
+    }
+
+    public ReviewResponse getReviewById(long id) {
+        return reviewMapper.toReviewResponse(
+                reviewRepository.getReviewById(id).orElseThrow(() -> new ResourceNotFoundException("Review with id " + id + " not found"))
+        );
     }
 }
