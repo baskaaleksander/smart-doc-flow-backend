@@ -41,7 +41,8 @@ public class ReviewController {
     }
 
     @PatchMapping("/{reviewId}")
-    public ResponseEntity<ReviewResponse> changeReviewStatus(@RequestBody ReviewRequest body) {
+    public ResponseEntity<ReviewResponse> changeReviewStatus(@RequestBody @Valid ReviewRequest body) {
+
         return null;
     }
 

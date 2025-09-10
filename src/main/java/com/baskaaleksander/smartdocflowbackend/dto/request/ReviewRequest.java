@@ -15,8 +15,8 @@ import java.util.Optional;
 public class ReviewRequest {
 
     @NotBlank
-    ReviewStatus status;
+    String status;
 
-    @Size(min = 10)
-    private Optional<String> comment;
+    @Size(max = 500)
+    private String comment = "";
 }
