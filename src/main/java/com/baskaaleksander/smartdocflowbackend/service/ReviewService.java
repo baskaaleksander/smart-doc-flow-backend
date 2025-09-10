@@ -13,6 +13,7 @@ import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -83,7 +84,7 @@ public class ReviewService {
         }
 
         if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
-            System.out.println("not allowed");
+            throw new AccessDeniedException("You are not allowed to release this review");
         }
 
         review.setReviewer(null);
@@ -106,7 +107,7 @@ public class ReviewService {
         }
 
         if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
-            System.out.println("not allowed");
+            throw new AccessDeniedException("You are not allowed to approve this document");
         }
 
         review.setComment(comment);
@@ -127,7 +128,7 @@ public class ReviewService {
         }
 
         if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
-            System.out.println("not allowed");
+            throw new AccessDeniedException("You are not allowed to reject this document");
         }
 
         review.setComment(comment);
