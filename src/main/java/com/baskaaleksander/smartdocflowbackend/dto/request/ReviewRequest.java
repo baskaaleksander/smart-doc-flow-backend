@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.dto.request;
 
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,8 +14,8 @@ import java.util.Optional;
 @NoArgsConstructor
 public class ReviewRequest {
 
-    @NotBlank
-    String status;
+    @NotNull
+    ReviewStatus status;
 
     @Size(max = 500)
     private String comment = "";

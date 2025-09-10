@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
@@ -36,12 +37,31 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse claimReview(UUID documentId, String username) {
-        Review review = reviewRepository.getReviewByDocId(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Review with document ID " + documentId + " not found"));
+    public ReviewResponse handleReviewStatusChange(long reviewId, String username, ReviewRequest body) {
+        System.out.println(body.getStatus() );
+        if(body.getComment().isBlank()) {
+            return switch (body.getStatus()) {
+                case IN_PROGRESS -> claimReview(reviewId, username);
+                case PENDING -> releaseReview(reviewId, username);
+                default -> throw new ResourceConflictException("This action requires a comment");
+            };
+        } else {
+            return switch(body.getStatus()) {
+                case APPROVED -> null;
+                case REJECTED -> null;
+                default -> throw new ResourceConflictException("Comment not allowed for this action");
+            };
+        }
+    }
+
+    @Transactional
+    public ReviewResponse claimReview(long reviewId, String username) {
+        System.out.println("im here");
+        Review review = reviewRepository.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() == ReviewStatus.IN_PROGRESS) {
-            throw new ResourceConflictException("Review with document ID " + documentId + " is already claimed");
+            throw new ResourceConflictException("Review with ID " + reviewId + " is already claimed");
         }
 
         User reviewer = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User with username " + username + " not found"));
@@ -55,12 +75,12 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse releaseReview(UUID documentId, String username) {
-        Review review = reviewRepository.getReviewByDocId(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Review with document ID " + documentId + " not found"));
+    public ReviewResponse releaseReview(long reviewId, String username) {
+        Review review = reviewRepository.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
-            throw new ResourceConflictException("Review with document ID " + documentId + " cannot be released");
+            throw new ResourceConflictException("Review with ID " + reviewId + " cannot be released");
         }
 
         if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {

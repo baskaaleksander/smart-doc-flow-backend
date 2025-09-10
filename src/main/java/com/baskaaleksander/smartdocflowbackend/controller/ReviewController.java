@@ -41,9 +41,13 @@ public class ReviewController {
     }
 
     @PatchMapping("/{reviewId}")
-    public ResponseEntity<ReviewResponse> changeReviewStatus(@RequestBody @Valid ReviewRequest body) {
+    public ResponseEntity<ReviewResponse> changeReviewStatus(
+            @RequestBody @Valid ReviewRequest body,
+            @PathVariable("reviewId") long reviewId,
+            @AuthenticationPrincipal UserDetails user
+            ) {
 
-        return null;
+        return new ResponseEntity<>(reviewService.handleReviewStatusChange(reviewId, user.getUsername(), body), HttpStatus.OK);
     }
 
 }
