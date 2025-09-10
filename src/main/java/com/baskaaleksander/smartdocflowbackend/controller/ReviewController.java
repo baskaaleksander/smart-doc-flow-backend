@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -30,13 +31,8 @@ public class ReviewController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<ReviewResponse>> getAllReviews() {
-        return new ResponseEntity<>(reviewService.getAllReviews(), HttpStatus.OK);
-    }
-
-    @GetMapping("/queue")
-    public ResponseEntity<List<ReviewResponse>> getReviewsQueue(@RequestParam(defaultValue = "PENDING") String status) {
-        return new ResponseEntity<>(reviewService.getReviewsByStatus(status), HttpStatus.OK);
+    public ResponseEntity<List<ReviewResponse>> getAllReviews(@RequestParam("status") Optional<String> status) {
+        return new ResponseEntity<>(reviewService.getAllReviews(status), HttpStatus.OK);
     }
 
     @GetMapping("/{reviewId}")
@@ -44,30 +40,9 @@ public class ReviewController {
         return new ResponseEntity<>(reviewService.getReviewById(reviewId), HttpStatus.OK);
     }
 
-    @PostMapping("/{documentId}/claim")
-    public ResponseEntity<ReviewResponse> claimReview(@PathVariable("documentId") UUID documentId, @AuthenticationPrincipal UserDetails user) {
-        return new ResponseEntity<>(reviewService.claimReview(documentId, user.getUsername()), HttpStatus.OK);
-    }
-
-    @PostMapping("/{documentId}/release")
-    public ResponseEntity<ReviewResponse> releaseReview(@PathVariable("documentId") UUID documentId, @AuthenticationPrincipal UserDetails user) {
-        return new ResponseEntity<>(reviewService.releaseReview(documentId, user.getUsername()), HttpStatus.OK);
-    }
-
-    @PostMapping("/{documentId}/approve")
-    public ResponseEntity<ReviewResponse> approveDocument(
-            @PathVariable("documentId") UUID documentId,
-            @AuthenticationPrincipal UserDetails user
-            ) {
+    @PatchMapping("/{reviewId}")
+    public ResponseEntity<ReviewResponse> changeReviewStatus(@RequestBody ReviewRequest body) {
         return null;
     }
 
-    @PostMapping("/{documentId}/reject")
-    public ResponseEntity<ReviewResponse> rejectDocument(
-            @PathVariable("documentId") UUID documentId,
-            @AuthenticationPrincipal UserDetails user,
-            @Valid ReviewRequest review
-    ) {
-        return null;
-    }
 }

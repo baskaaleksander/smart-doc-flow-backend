@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -76,7 +77,12 @@ public class ReviewService {
 
     }
 
-    public List<ReviewResponse> getAllReviews() {
+    public List<ReviewResponse> getAllReviews(Optional<String> status) {
+
+        if (status.isPresent()) {
+            String statusVal = status.get();
+            return reviewRepository.getReviewsByStatus(ReviewStatus.valueOf(statusVal)).stream().map(reviewMapper::toReviewResponse).toList();
+        }
         return reviewRepository.findAll().stream().map(reviewMapper::toReviewResponse).toList();
     }
 
@@ -86,7 +92,4 @@ public class ReviewService {
         );
     }
 
-    public List<ReviewResponse> getReviewsByStatus(String status) {
-        return reviewRepository.getReviewsByStatus(ReviewStatus.valueOf(status)).stream().map(reviewMapper::toReviewResponse).toList();
-    }
 }
