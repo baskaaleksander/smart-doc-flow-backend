@@ -47,8 +47,8 @@ public class ReviewService {
             };
         } else {
             return switch(body.getStatus()) {
-                case APPROVED -> null;
-                case REJECTED -> null;
+                case APPROVED -> approveDocument(reviewId, username, body.getComment());
+                case REJECTED -> rejectDocument(reviewId, username, body.getComment());
                 default -> throw new ResourceConflictException("Comment not allowed for this action");
             };
         }
@@ -56,11 +56,10 @@ public class ReviewService {
 
     @Transactional
     public ReviewResponse claimReview(long reviewId, String username) {
-        System.out.println("im here");
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
-        if(review.getStatus() == ReviewStatus.IN_PROGRESS) {
+        if(review.getStatus() != ReviewStatus.PENDING) {
             throw new ResourceConflictException("Review with ID " + reviewId + " is already claimed");
         }
 
@@ -95,6 +94,48 @@ public class ReviewService {
 
         return reviewMapper.toReviewResponse(review);
 
+    }
+
+    @Transactional
+    public ReviewResponse approveDocument(long reviewId, String username, String comment) {
+        Review review = reviewRepository.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
+
+        if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
+            throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
+        }
+
+        if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
+            System.out.println("not allowed");
+        }
+
+        review.setComment(comment);
+        reviewRepository.updateStatus(reviewId, ReviewStatus.APPROVED);
+
+        review = reviewRepository.save(review);
+
+        return reviewMapper.toReviewResponse(review);
+    }
+
+    @Transactional
+    public ReviewResponse rejectDocument(long reviewId, String username, String comment) {
+        Review review = reviewRepository.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
+
+        if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
+            throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
+        }
+
+        if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
+            System.out.println("not allowed");
+        }
+
+        review.setComment(comment);
+        reviewRepository.updateStatus(reviewId, ReviewStatus.REJECTED);
+
+        review = reviewRepository.save(review);
+
+        return reviewMapper.toReviewResponse(review);
     }
 
     public List<ReviewResponse> getAllReviews(Optional<String> status) {

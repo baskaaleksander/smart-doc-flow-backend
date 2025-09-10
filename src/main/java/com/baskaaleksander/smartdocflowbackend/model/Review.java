@@ -45,6 +45,9 @@ public class Review {
     @JoinColumn(name = "reviewer_id")
     private User reviewer;
 
+    @Column
+    private String comment;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;

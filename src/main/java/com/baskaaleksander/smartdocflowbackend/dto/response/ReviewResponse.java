@@ -10,6 +10,7 @@ public record ReviewResponse(
         UUID documentId,
         ReviewStatus status,
         Long reviewerId,
+        String comment,
         Instant createdAt,
         Instant updatedAt,
         int version
