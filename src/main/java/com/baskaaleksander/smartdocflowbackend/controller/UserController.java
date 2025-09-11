@@ -1,7 +1,9 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.UserRolesRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,20 +39,20 @@ public class UserController {
 
     @PatchMapping("/{userId}/roles")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<UserResponse> assignRoles(@PathVariable("userId") UUID userId) {
-        return new ResponseEntity<>(null, HttpStatus.OK);
+    public ResponseEntity<UserResponse> assignRoles(@PathVariable("userId") UUID userId, @RequestBody @Valid UserRolesRequest userRolesRequest) {
+        return new ResponseEntity<>(userService.updateUserRoles(userId, userRolesRequest.getRoles()), HttpStatus.OK);
     }
 
     @DeleteMapping("/{userId}")
     @PreAuthorize("@userAccess.canManage(#userId, authentication)")
     public ResponseEntity<String> inactivateUserAccount(@PathVariable("userId") String userId) {
-        return new ResponseEntity<>(null, HttpStatus.OK);
+        return new ResponseEntity<>(userService.inactivateUser(userId), HttpStatus.OK);
     }
 
     @PostMapping("/{userId}/restore")
     @PreAuthorize("@userAccess.canManage(#userId, authentication)")
-    public ResponseEntity<UserResponse> restoreUserAccount(@PathVariable("userId") String userId) {
-        return new ResponseEntity<>(null, HttpStatus.OK);
+    public ResponseEntity<String> restoreUserAccount(@PathVariable("userId") String userId) {
+        return new ResponseEntity<>(userService.activateUser(userId), HttpStatus.OK);
     }
 
     @GetMapping("/ai")

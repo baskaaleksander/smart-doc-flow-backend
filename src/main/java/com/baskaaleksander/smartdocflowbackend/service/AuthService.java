@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.dto.request.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.model.Role;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.RoleRepository;
@@ -73,7 +74,7 @@ public class AuthService {
         }
         String password = user.getPassword();
         String encodedPassword = passwordEncoder.encode(password);
-        Role role = roleRepository.findRoleByRole("ROLE_USER");
+        Role role = roleRepository.findRoleByRole("ROLE_USER").orElseThrow(() -> new ResourceNotFoundException("Role not found"));
         Set<Role> roles = new HashSet<>();
         roles.add(role);
 
