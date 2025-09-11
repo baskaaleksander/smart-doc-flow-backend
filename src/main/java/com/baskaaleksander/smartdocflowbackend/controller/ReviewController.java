@@ -36,14 +36,14 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}")
-    public ResponseEntity<ReviewResponse> getReviewById(@PathVariable("reviewId") long reviewId) {
+    public ResponseEntity<ReviewResponse> getReviewById(@PathVariable("reviewId") UUID reviewId) {
         return new ResponseEntity<>(reviewService.getReviewById(reviewId), HttpStatus.OK);
     }
 
     @PatchMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> changeReviewStatus(
             @RequestBody @Valid ReviewRequest body,
-            @PathVariable("reviewId") long reviewId,
+            @PathVariable("reviewId") UUID reviewId,
             @AuthenticationPrincipal UserDetails user
             ) {
 

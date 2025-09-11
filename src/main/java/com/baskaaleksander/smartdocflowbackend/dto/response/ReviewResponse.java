@@ -6,10 +6,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record ReviewResponse(
-        Long id,
+        UUID id,
         UUID documentId,
         ReviewStatus status,
-        Long reviewerId,
+        UUID reviewerId,
         String comment,
         Instant createdAt,
         Instant updatedAt,

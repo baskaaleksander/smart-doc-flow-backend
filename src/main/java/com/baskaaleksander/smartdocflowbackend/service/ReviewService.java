@@ -2,7 +2,6 @@ package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
-import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
@@ -38,7 +37,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse handleReviewStatusChange(long reviewId, String username, ReviewRequest body) {
+    public ReviewResponse handleReviewStatusChange(UUID reviewId, String username, ReviewRequest body) {
         System.out.println(body.getStatus() );
         if(body.getComment().isBlank()) {
             return switch (body.getStatus()) {
@@ -56,7 +55,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse claimReview(long reviewId, String username) {
+    public ReviewResponse claimReview(UUID reviewId, String username) {
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
@@ -75,7 +74,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse releaseReview(long reviewId, String username) {
+    public ReviewResponse releaseReview(UUID reviewId, String username) {
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
@@ -98,7 +97,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse approveDocument(long reviewId, String username, String comment) {
+    public ReviewResponse approveDocument(UUID reviewId, String username, String comment) {
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
@@ -119,7 +118,7 @@ public class ReviewService {
     }
 
     @Transactional
-    public ReviewResponse rejectDocument(long reviewId, String username, String comment) {
+    public ReviewResponse rejectDocument(UUID reviewId, String username, String comment) {
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
@@ -148,7 +147,7 @@ public class ReviewService {
         return reviewRepository.findAll().stream().map(reviewMapper::toReviewResponse).toList();
     }
 
-    public ReviewResponse getReviewById(long id) {
+    public ReviewResponse getReviewById(UUID id) {
         return reviewMapper.toReviewResponse(
                 reviewRepository.getReviewById(id).orElseThrow(() -> new ResourceNotFoundException("Review with id " + id + " not found"))
         );
