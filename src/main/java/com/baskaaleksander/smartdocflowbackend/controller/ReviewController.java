@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.service.ReviewService;
@@ -35,6 +36,11 @@ public class ReviewController {
         return new ResponseEntity<>(reviewService.getAllReviews(status), HttpStatus.OK);
     }
 
+    @GetMapping("/event/{eventId}")
+    public ResponseEntity<ReviewEventResponse> getReviewEvent() {
+        return null;
+    }
+
     @GetMapping("/{reviewId}")
     public ResponseEntity<ReviewResponse> getReviewById(@PathVariable("reviewId") UUID reviewId) {
         return new ResponseEntity<>(reviewService.getReviewById(reviewId), HttpStatus.OK);
@@ -48,6 +54,11 @@ public class ReviewController {
             ) {
 
         return new ResponseEntity<>(reviewService.handleReviewStatusChange(reviewId, user.getUsername(), body), HttpStatus.OK);
+    }
+
+    @GetMapping("/{reviewId}/events")
+    public ResponseEntity<List<ReviewEventResponse>> getAllEventsForReview() {
+        return null;
     }
 
 }
