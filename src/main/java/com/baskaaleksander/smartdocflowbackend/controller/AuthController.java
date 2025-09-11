@@ -11,11 +11,9 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController()
@@ -64,6 +62,11 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(HttpServletRequest request, HttpServletResponse response) {
         return new ResponseEntity<>(authService.logoutUser(request, response), HttpStatus.OK);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails user) {
+        return new ResponseEntity<>(authService.getMe(user), HttpStatus.OK);
     }
 
 }

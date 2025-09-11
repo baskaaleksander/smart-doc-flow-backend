@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.dto.response.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.mapper.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Role;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.RoleRepository;
@@ -35,6 +36,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final CookieUtil cookieUtil;
+    private final UserMapper userMapper;
 
     @Autowired
     public AuthService(
@@ -43,13 +45,14 @@ public class AuthService {
             RoleRepository roleRepository,
             JwtUtil jwtUtil,
             PasswordEncoder passwordEncoder,
-            CookieUtil cookieUtil) {
+            CookieUtil cookieUtil, UserMapper userMapper) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.cookieUtil = cookieUtil;
+        this.userMapper = userMapper;
     }
 
     public TokenResponse loginUser(UserRequest user) {
@@ -104,6 +107,12 @@ public class AuthService {
         jwtUtil.invalidateRefreshToken(refreshToken);
 
         return "Logout successful";
+    }
+
+    public UserResponse getMe(UserDetails user) {
+        return userMapper.toUserResponse(
+                userRepository.findUserByUsernameWithRoles(user.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"))
+        );
     }
 
 
