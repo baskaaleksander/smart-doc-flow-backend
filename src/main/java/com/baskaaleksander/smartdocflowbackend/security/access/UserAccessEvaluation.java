@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component("userAccess")
 public class UserAccessEvaluation {
@@ -29,6 +30,6 @@ public class UserAccessEvaluation {
         User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 
-        return userId.equals(user.getId().toString());
+        return UUID.fromString(userId).equals(user.getId());
     }
 }

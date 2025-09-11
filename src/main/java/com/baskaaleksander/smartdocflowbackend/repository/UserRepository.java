@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -14,5 +15,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u from User u left join fetch u.roles where u.username = :username")
     Optional<User> findUserByUsernameWithRoles(String username);
+
+    @Query("select u from User u left join fetch u.roles where u.id = :userId")
+    Optional<User> findUserByIdWithRoles(UUID userId);
 
 }

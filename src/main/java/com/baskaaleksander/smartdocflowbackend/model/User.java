@@ -9,7 +9,6 @@ import java.util.UUID;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@RequiredArgsConstructor
 @Table(name = "users")
 @Getter @Setter
 public class User {
@@ -18,11 +17,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NonNull
     @Column(nullable = false, unique = true)
     private String username;
 
-    @NonNull
     @Column(nullable = false)
     private String password;
 
@@ -32,9 +29,11 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    @NonNull
     @Column(nullable = false)
     private Set<Role> roles;
+
+    @Column(nullable = false)
+    private boolean isActive = true;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Document> documents;

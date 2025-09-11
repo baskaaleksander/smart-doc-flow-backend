@@ -77,18 +77,19 @@ public class AuthService {
         Set<Role> roles = new HashSet<>();
         roles.add(role);
 
-        User newUser = new User(
-                user.getUsername(),
-                encodedPassword,
-                roles
-        );
+        User newUser = new User();
+
+        newUser.setUsername(user.getUsername());
+        newUser.setPassword(encodedPassword);
+        newUser.setRoles(roles);
 
         User userCreated = userRepository.save(newUser);
 
         return new UserResponse(
                 userCreated.getId(),
                 userCreated.getUsername(),
-                userCreated.getRoles().stream().map(Role::getRole).toList()
+                userCreated.getRoles().stream().map(Role::getRole).toList(),
+                userCreated.isActive()
         );
     }
 
