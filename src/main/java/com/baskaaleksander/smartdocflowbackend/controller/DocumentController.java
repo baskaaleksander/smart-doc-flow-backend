@@ -32,7 +32,7 @@ public class DocumentController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<DocumentResponse>> getAllDocuments(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<List<DocumentResponse>> getAllUserDocuments(@AuthenticationPrincipal UserDetails user) {
         return new ResponseEntity<>(documentService.getAllByOwnerUsername(user.getUsername()), HttpStatus.OK);
     }
 

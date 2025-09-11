@@ -1,0 +1,34 @@
+package com.baskaaleksander.smartdocflowbackend.security.access;
+
+import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.model.User;
+import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component("userAccess")
+public class UserAccessEvaluation {
+
+    private final UserRepository userRepository;
+
+    public UserAccessEvaluation(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public boolean canManage(String userId, Authentication authentication) {
+
+        List<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+
+        if (roles.contains("ROLE_ADMIN")) return true;
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+
+        return userId.equals(user.getId().toString());
+    }
+}

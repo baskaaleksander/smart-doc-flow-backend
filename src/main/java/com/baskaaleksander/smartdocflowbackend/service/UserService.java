@@ -14,13 +14,13 @@ import java.util.Map;
 
 
 @Service
-public class TestService {
+public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final OpenAiChatModel chatModel;
 
     @Autowired
-    public TestService(UserRepository userRepository,
+    public UserService(UserRepository userRepository,
                        UserMapper userMapper,
                        OpenAiChatModel chatModel) {
         this.userRepository = userRepository;
