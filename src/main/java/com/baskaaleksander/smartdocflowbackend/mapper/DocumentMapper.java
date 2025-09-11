@@ -25,7 +25,7 @@ public interface DocumentMapper {
     DocumentResponse toDocumentResponse(Document document);
 
     @Named("reviewToId")
-    default Long reviewToId(Review review) {
+    default UUID reviewToId(Review review) {
         return review == null ? null : review.getId();
     }
 }

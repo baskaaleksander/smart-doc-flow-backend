@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.repository;
 
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -32,4 +33,5 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     where d.id = :documentId
 """)
     Optional<Document> findbyIdWithReview(UUID documentId);
+
 }

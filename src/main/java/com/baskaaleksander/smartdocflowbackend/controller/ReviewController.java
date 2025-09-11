@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/reviews")
-@PreAuthorize("hasAnyRole('ADMIN', 'REVIEWER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
 public class ReviewController {
 
     private final ReviewService reviewService;

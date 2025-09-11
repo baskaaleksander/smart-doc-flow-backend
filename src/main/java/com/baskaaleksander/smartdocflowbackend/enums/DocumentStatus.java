@@ -5,4 +5,7 @@ public enum DocumentStatus {
     UPLOADED,
     PROCESSED,
     TEXT_READY,
+    REVIEW_PENDING,
+    IN_REVIEW,
+    REVIEWED
 }

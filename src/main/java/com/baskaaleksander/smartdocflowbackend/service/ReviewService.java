@@ -2,12 +2,14 @@ package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
+import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.mapper.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.model.User;
+import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -25,15 +27,17 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
+    private final DocumentRepository documentRepository;
 
     @Autowired
     public ReviewService(
             ReviewRepository reviewRepository,
             UserRepository userRepository,
-            ReviewMapper reviewMapper) {
+            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
+        this.documentRepository = documentRepository;
     }
 
     @Transactional
@@ -68,6 +72,8 @@ public class ReviewService {
 
         reviewRepository.updateStatus(review.getId(), ReviewStatus.IN_PROGRESS);
 
+        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.IN_REVIEW);
+
         review = reviewRepository.save(review);
 
         return reviewMapper.toReviewResponse(review);
@@ -89,6 +95,8 @@ public class ReviewService {
         review.setReviewer(null);
 
         reviewRepository.updateStatus(review.getId(), ReviewStatus.PENDING);
+        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.REVIEW_PENDING);
+
 
         review = reviewRepository.save(review);
 
@@ -111,6 +119,8 @@ public class ReviewService {
 
         review.setComment(comment);
         reviewRepository.updateStatus(reviewId, ReviewStatus.APPROVED);
+        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.REVIEWED);
+
 
         review = reviewRepository.save(review);
 
@@ -132,6 +142,8 @@ public class ReviewService {
 
         review.setComment(comment);
         reviewRepository.updateStatus(reviewId, ReviewStatus.REJECTED);
+        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.REVIEWED);
+
 
         review = reviewRepository.save(review);
 

@@ -34,7 +34,7 @@ public class Document {
 
     @Column(nullable = false)
     @CreationTimestamp
-    private Instant createdAt;
+    private Instant createdAt = Instant.now();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id")
