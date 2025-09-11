@@ -3,13 +3,16 @@ package com.baskaaleksander.smartdocflowbackend.service;
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.enums.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.mapper.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
+import com.baskaaleksander.smartdocflowbackend.model.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.repository.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -28,21 +31,22 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
     private final DocumentRepository documentRepository;
+    private final ReviewEventRepository reviewEventRepository;
 
     @Autowired
     public ReviewService(
             ReviewRepository reviewRepository,
             UserRepository userRepository,
-            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository) {
+            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository, ReviewEventRepository reviewEventRepository) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
         this.documentRepository = documentRepository;
+        this.reviewEventRepository = reviewEventRepository;
     }
 
     @Transactional
     public ReviewResponse handleReviewStatusChange(UUID reviewId, String username, ReviewRequest body) {
-        System.out.println(body.getStatus() );
         if(body.getComment().isBlank()) {
             return switch (body.getStatus()) {
                 case IN_PROGRESS -> claimReview(reviewId, username);
@@ -56,6 +60,17 @@ public class ReviewService {
                 default -> throw new ResourceConflictException("Comment not allowed for this action");
             };
         }
+    }
+
+    private void logReviewEvent(User reviewer, Review review, ReviewEventType eventType, String comment) {
+        ReviewEvent reviewEvent = new ReviewEvent();
+
+        reviewEvent.setReviewer(reviewer);
+        reviewEvent.setReview(review);
+        reviewEvent.setEventType(eventType);
+        if (comment != null) reviewEvent.setComment(comment);
+
+        reviewEventRepository.save(reviewEvent);
     }
 
     @Transactional
@@ -76,6 +91,8 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
 
+        logReviewEvent(reviewer, review,  ReviewEventType.ASSIGNED, null);
+
         return reviewMapper.toReviewResponse(review);
     }
 
@@ -84,11 +101,13 @@ public class ReviewService {
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
+        User reviewer = review.getReviewer();
+
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be released");
         }
 
-        if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
+        if(!reviewer.getUsername().equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to release this review");
         }
 
@@ -99,6 +118,9 @@ public class ReviewService {
 
 
         review = reviewRepository.save(review);
+
+        logReviewEvent(reviewer, review,  ReviewEventType.RELEASED, null);
+
 
         return reviewMapper.toReviewResponse(review);
 
@@ -112,8 +134,10 @@ public class ReviewService {
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
+        User reviewer = review.getReviewer();
 
-        if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
+
+        if(!reviewer.getUsername().equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to approve this document");
         }
 
@@ -123,6 +147,9 @@ public class ReviewService {
 
 
         review = reviewRepository.save(review);
+
+        logReviewEvent(reviewer, review,  ReviewEventType.APPROVED, comment);
+
 
         return reviewMapper.toReviewResponse(review);
     }
@@ -136,7 +163,9 @@ public class ReviewService {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
 
-        if(!review.getReviewer().getUsername().equalsIgnoreCase(username)) {
+        User reviewer = review.getReviewer();
+
+        if(!reviewer.getUsername().equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to reject this document");
         }
 
@@ -146,6 +175,9 @@ public class ReviewService {
 
 
         review = reviewRepository.save(review);
+
+        logReviewEvent(reviewer, review,  ReviewEventType.APPROVED, comment);
+
 
         return reviewMapper.toReviewResponse(review);
     }

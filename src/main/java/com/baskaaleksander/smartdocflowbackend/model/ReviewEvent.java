@@ -2,12 +2,16 @@ package com.baskaaleksander.smartdocflowbackend.model;
 
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewEventType;
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
+@Data
+@EqualsAndHashCode(of = "id")
 public class ReviewEvent {
 
     @Id
