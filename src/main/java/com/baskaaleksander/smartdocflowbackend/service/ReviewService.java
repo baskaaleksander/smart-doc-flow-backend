@@ -1,12 +1,14 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.mapper.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.mapper.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.model.ReviewEvent;
@@ -32,17 +34,19 @@ public class ReviewService {
     private final ReviewMapper reviewMapper;
     private final DocumentRepository documentRepository;
     private final ReviewEventRepository reviewEventRepository;
+    private final ReviewEventMapper reviewEventMapper;
 
     @Autowired
     public ReviewService(
             ReviewRepository reviewRepository,
             UserRepository userRepository,
-            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository, ReviewEventRepository reviewEventRepository) {
+            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository, ReviewEventRepository reviewEventRepository, ReviewEventMapper reviewEventMapper) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
         this.documentRepository = documentRepository;
         this.reviewEventRepository = reviewEventRepository;
+        this.reviewEventMapper = reviewEventMapper;
     }
 
     @Transactional
@@ -195,6 +199,16 @@ public class ReviewService {
         return reviewMapper.toReviewResponse(
                 reviewRepository.getReviewById(id).orElseThrow(() -> new ResourceNotFoundException("Review with id " + id + " not found"))
         );
+    }
+
+    public ReviewEventResponse getReviewEventById(UUID id) {
+        return reviewEventMapper.toReviewEventResponse(
+                reviewEventRepository.getReviewEventById(id).orElseThrow(() -> new ResourceNotFoundException("Review event with id " + id + " not found"))
+        );
+    }
+
+    public List<ReviewEventResponse> getReviewEvents(UUID id) {
+        return reviewEventRepository.getReviewEventsByReviewId(id).stream().map(reviewEventMapper::toReviewEventResponse).toList();
     }
 
 }

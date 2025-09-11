@@ -37,8 +37,8 @@ public class ReviewController {
     }
 
     @GetMapping("/event/{eventId}")
-    public ResponseEntity<ReviewEventResponse> getReviewEvent() {
-        return null;
+    public ResponseEntity<ReviewEventResponse> getReviewEvent(@PathVariable("eventId") UUID eventId) {
+        return new ResponseEntity<>(reviewService.getReviewEventById(eventId), HttpStatus.OK);
     }
 
     @GetMapping("/{reviewId}")
@@ -57,8 +57,8 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}/events")
-    public ResponseEntity<List<ReviewEventResponse>> getAllEventsForReview() {
-        return null;
+    public ResponseEntity<List<ReviewEventResponse>> getAllEventsForReview(@PathVariable("reviewId") UUID reviewId) {
+        return new ResponseEntity<>(reviewService.getReviewEvents(reviewId), HttpStatus.OK);
     }
 
 }
