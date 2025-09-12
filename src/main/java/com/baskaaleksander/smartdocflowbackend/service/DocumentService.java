@@ -1,6 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
@@ -12,8 +14,11 @@ import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.utils.PaginationUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -114,8 +119,31 @@ public class DocumentService {
         return documentMapper.toDocumentResponse(doc);
     }
 
-    public List<DocumentResponse> getAllByOwnerUsername(String username) {
-        return documentRepository.findAllByOwnerUsername(username).stream().map(documentMapper::toDocumentResponse).toList();
+    public PagingResult<DocumentResponse> getAllByOwnerUsername(String username, PaginationRequest request) {
+
+        Pageable pageable = PaginationUtil.getPageable(request);
+        User owner = userRepository.findByUsername(username).orElseThrow(
+                () -> new ResourceNotFoundException("User not found")
+        );
+        Page<Document> documents = documentRepository.findAllByOwner(owner, pageable);
+
+        List<DocumentResponse> documentsList = documents
+                .stream()
+                .map(documentMapper::toDocumentResponse)
+                .toList();
+
+        Integer currentPage = request.getPage();
+        int totalPages = documents.getTotalPages();
+
+        return new PagingResult<>(
+                documentsList,
+                totalPages,
+                documents.getTotalElements(),
+                documents.getSize(),
+                documents.getNumber(),
+                currentPage + 1 == totalPages,
+                currentPage + 1 < totalPages
+        );
     }
 
     public void deleteById(UUID id) {

@@ -1,8 +1,11 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.service.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,8 +35,15 @@ public class DocumentController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<DocumentResponse>> getAllUserDocuments(@AuthenticationPrincipal UserDetails user) {
-        return new ResponseEntity<>(documentService.getAllByOwnerUsername(user.getUsername()), HttpStatus.OK);
+    public ResponseEntity<PagingResult<DocumentResponse>> getAllUserDocuments(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortField,
+            @RequestParam(required = false) Sort.Direction direction
+    ) {
+        PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
+        return new ResponseEntity<>(documentService.getAllByOwnerUsername(user.getUsername(), request), HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")
