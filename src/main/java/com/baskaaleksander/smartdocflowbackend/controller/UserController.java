@@ -1,10 +1,13 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRolesRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,8 +30,15 @@ public class UserController {
 
     @GetMapping("/")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public List<UserResponse> getAllUsers(){
-        return userService.getAllUsers();
+    public PagingResult<UserResponse> getAllUsers(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortField,
+            @RequestParam(required = false) Sort.Direction direction
+    ){
+        PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
+
+        return userService.getAllUsers(request);
     }
 
     @GetMapping("/{userId}")

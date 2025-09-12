@@ -2,6 +2,8 @@ package com.baskaaleksander.smartdocflowbackend.repository;
 
 import com.baskaaleksander.smartdocflowbackend.model.Role;
 import com.baskaaleksander.smartdocflowbackend.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -33,4 +35,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("update User u set u.roles = :roles where u.id = :userId")
     @Modifying
     int updateUserRoles(UUID userId, Set<Role> roles);
+
+    Page<User> findAll(Pageable pageable);
 }

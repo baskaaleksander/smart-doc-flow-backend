@@ -1,5 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
@@ -8,9 +10,12 @@ import com.baskaaleksander.smartdocflowbackend.model.Role;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.utils.PaginationUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
@@ -38,13 +43,28 @@ public class UserService {
         this.roleRepository = roleRepository;
     }
 
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public PagingResult<UserResponse> getAllUsers(PaginationRequest request) {
 
-        return users
+        Pageable pageable = PaginationUtil.getPageable(request);
+        Page<User> users = userRepository.findAll(pageable);
+
+        List<UserResponse> usersList = users
                 .stream()
                 .map(userMapper::toUserResponse)
                 .toList();
+
+        Integer currentPage = request.getPage();
+        int totalPages = users.getTotalPages();
+
+        return new PagingResult<>(
+                usersList,
+                totalPages,
+                users.getTotalElements(),
+                users.getSize(),
+                users.getNumber(),
+                currentPage + 1 == totalPages,
+                currentPage + 1 < totalPages
+        );
     }
 
     public UserResponse getUserById(String userId) {
