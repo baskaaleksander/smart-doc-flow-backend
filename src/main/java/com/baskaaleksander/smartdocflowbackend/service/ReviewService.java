@@ -1,6 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
@@ -17,8 +19,11 @@ import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.utils.PaginationUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -186,13 +191,34 @@ public class ReviewService {
         return reviewMapper.toReviewResponse(review);
     }
 
-    public List<ReviewResponse> getAllReviews(Optional<String> status) {
+    public PagingResult<ReviewResponse> getAllReviews(Optional<String> status, PaginationRequest request) {
+        Pageable pageable = PaginationUtil.getPageable(request);
+        Page<Review> reviews = null;
 
         if (status.isPresent()) {
             String statusVal = status.get();
-            return reviewRepository.getReviewsByStatus(ReviewStatus.valueOf(statusVal)).stream().map(reviewMapper::toReviewResponse).toList();
+            reviews = reviewRepository.findByStatus(pageable, ReviewStatus.fromString(statusVal));
+        } else {
+            reviews = reviewRepository.findAll(pageable);
         }
-        return reviewRepository.findAll().stream().map(reviewMapper::toReviewResponse).toList();
+
+        List<ReviewResponse> reviewsList = reviews
+                .stream()
+                .map(reviewMapper::toReviewResponse)
+                .toList();
+
+        Integer currentPage = request.getPage();
+        int totalPages = reviews.getTotalPages();
+
+        return new PagingResult<>(
+                reviewsList,
+                totalPages,
+                reviews.getTotalElements(),
+                reviews.getSize(),
+                reviews.getNumber(),
+                currentPage + 1 == totalPages,
+                currentPage + 1 < totalPages
+        );
     }
 
     public ReviewResponse getReviewById(UUID id) {

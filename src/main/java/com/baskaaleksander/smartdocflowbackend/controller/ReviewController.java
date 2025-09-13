@@ -1,12 +1,15 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.service.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,8 +35,16 @@ public class ReviewController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<ReviewResponse>> getAllReviews(@RequestParam("status") Optional<String> status) {
-        return new ResponseEntity<>(reviewService.getAllReviews(status), HttpStatus.OK);
+    public ResponseEntity<PagingResult<ReviewResponse>> getAllReviews(
+            @RequestParam("status") Optional<String> status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sortField,
+            @RequestParam(required = false) Sort.Direction direction
+    ) {
+        PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
+
+        return new ResponseEntity<>(reviewService.getAllReviews(status, request), HttpStatus.OK);
     }
 
     @GetMapping("/event/{eventId}")

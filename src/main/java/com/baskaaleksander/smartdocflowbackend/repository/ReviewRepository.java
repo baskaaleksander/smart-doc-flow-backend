@@ -30,5 +30,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     List<Review> getReviewsByStatus(ReviewStatus status);
 
     Page<Review> findAll(Pageable pageable);
+
+    Page<Review> findByStatus(Pageable pageable, ReviewStatus status);
 //    void assignUser(long reviewId, long userId);
 }

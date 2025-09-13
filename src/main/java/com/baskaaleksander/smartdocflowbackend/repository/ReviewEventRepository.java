@@ -21,6 +21,7 @@ public interface ReviewEventRepository extends JpaRepository<ReviewEvent, UUID> 
     @Query("select r from ReviewEvent r left join fetch r.reviewer left join fetch r.review where r.review.id = :reviewId")
     List<ReviewEvent> getReviewEventsByReviewId(UUID reviewId);
 
-    Page<Review> findAllByReview(Pageable pageable, Review review);
+    @Query("select r from ReviewEvent r left join fetch r.reviewer left join fetch r.review where r.review.id = :reviewId")
+    Page<Review> findByReviewId(Pageable pageable, UUID reviewId);
 
 }
