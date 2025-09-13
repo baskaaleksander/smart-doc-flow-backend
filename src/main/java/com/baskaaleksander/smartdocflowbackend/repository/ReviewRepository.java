@@ -3,6 +3,8 @@ package com.baskaaleksander.smartdocflowbackend.repository;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -27,5 +29,6 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     List<Review> getReviewsByStatus(ReviewStatus status);
 
+    Page<Review> findAll(Pageable pageable);
 //    void assignUser(long reviewId, long userId);
 }
