@@ -233,8 +233,27 @@ public class ReviewService {
         );
     }
 
-    public List<ReviewEventResponse> getReviewEvents(UUID id) {
-        return reviewEventRepository.getReviewEventsByReviewId(id).stream().map(reviewEventMapper::toReviewEventResponse).toList();
+    public PagingResult<ReviewEventResponse> getReviewEvents(UUID id, PaginationRequest request) {
+        Pageable pageable = PaginationUtil.getPageable(request);
+        Page<ReviewEvent> reviewEvents = reviewEventRepository.findByReviewId(pageable, id);
+
+        List<ReviewEventResponse> reviewEventsList = reviewEvents
+                .stream()
+                .map(reviewEventMapper::toReviewEventResponse)
+                .toList();
+
+        Integer currentPage = request.getPage();
+        int totalPages = reviewEvents.getTotalPages();
+
+        return new PagingResult<>(
+                reviewEventsList,
+                totalPages,
+                reviewEvents.getTotalElements(),
+                reviewEvents.getSize(),
+                reviewEvents.getNumber(),
+                currentPage + 1 == totalPages,
+                currentPage + 1 < totalPages
+        );
     }
 
 }

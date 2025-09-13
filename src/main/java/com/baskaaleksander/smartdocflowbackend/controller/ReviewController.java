@@ -68,8 +68,16 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}/events")
-    public ResponseEntity<List<ReviewEventResponse>> getAllEventsForReview(@PathVariable("reviewId") UUID reviewId) {
-        return new ResponseEntity<>(reviewService.getReviewEvents(reviewId), HttpStatus.OK);
+    public ResponseEntity<PagingResult<ReviewEventResponse>> getAllEventsForReview(
+            @PathVariable("reviewId") UUID reviewId,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+            ) {
+
+        PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
+        return new ResponseEntity<>(reviewService.getReviewEvents(reviewId, request), HttpStatus.OK);
     }
 
 }

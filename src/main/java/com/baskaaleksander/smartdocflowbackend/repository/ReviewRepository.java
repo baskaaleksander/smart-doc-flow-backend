@@ -17,17 +17,12 @@ import java.util.UUID;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
-    @Query("select r from Review r left join fetch r.document left join fetch r.reviewer where r.document.id = :documentId")
-    Optional<Review> getReviewByDocId(UUID documentId);
-
     @Query("update Review r set r.status = :status where r.id = :reviewId")
     @Modifying
     void updateStatus(UUID reviewId, ReviewStatus status);
 
     @Query("select r from Review r left join fetch r.document left join fetch r.reviewer where r.id = :id")
     Optional<Review> getReviewById(UUID id);
-
-    List<Review> getReviewsByStatus(ReviewStatus status);
 
     Page<Review> findAll(Pageable pageable);
 
