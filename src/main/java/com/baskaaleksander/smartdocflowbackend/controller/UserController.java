@@ -31,10 +31,10 @@ public class UserController {
     @GetMapping("/")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public PagingResult<UserResponse> getAllUsers(
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String sortField,
-            @RequestParam(required = false) Sort.Direction direction
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ){
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
 
