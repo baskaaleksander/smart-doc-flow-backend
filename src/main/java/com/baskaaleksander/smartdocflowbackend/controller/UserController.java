@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.controller;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.request.UserRolesRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.service.UserService;
@@ -39,6 +40,17 @@ public class UserController {
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
 
         return userService.getAllUsers(request);
+    }
+
+    @GetMapping("/me/documents")
+    public ResponseEntity<PagingResult<DocumentResponse>> getPersonalDocuments() {
+        return null;
+    }
+
+    @GetMapping("/{userId}/documents")
+    @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
+    public ResponseEntity<PagingResult<DocumentResponse>> getUserDocuments() {
+        return null;
     }
 
     @GetMapping("/{userId}")
