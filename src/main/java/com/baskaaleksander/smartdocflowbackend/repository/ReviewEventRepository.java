@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.repository;
 
+import com.baskaaleksander.smartdocflowbackend.enums.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.model.Review;
 import com.baskaaleksander.smartdocflowbackend.model.ReviewEvent;
 import org.springframework.data.domain.Page;
@@ -23,5 +24,8 @@ public interface ReviewEventRepository extends JpaRepository<ReviewEvent, UUID> 
 
     @Query("select r from ReviewEvent r left join fetch r.reviewer left join fetch r.review where r.review.id = :reviewId")
     Page<ReviewEvent> findByReviewId(Pageable pageable, UUID reviewId);
+
+    @Query("select r from ReviewEvent r left join fetch r.reviewer left join fetch r.review where r.review.id = :reviewId and r.eventType = :eventType")
+    Page<ReviewEvent> findByReviewIdWithType(Pageable pageable, UUID reviewId, ReviewEventType eventType);
 
 }

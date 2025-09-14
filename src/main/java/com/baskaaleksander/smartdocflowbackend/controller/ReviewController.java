@@ -73,11 +73,12 @@ public class ReviewController {
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(defaultValue = "ALL") String eventType
             ) {
 
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
-        return new ResponseEntity<>(reviewService.getReviewEvents(reviewId, request), HttpStatus.OK);
+        return new ResponseEntity<>(reviewService.getReviewEvents(reviewId, request, eventType), HttpStatus.OK);
     }
 
 }

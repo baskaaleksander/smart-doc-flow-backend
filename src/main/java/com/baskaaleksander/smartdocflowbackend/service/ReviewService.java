@@ -233,9 +233,15 @@ public class ReviewService {
         );
     }
 
-    public PagingResult<ReviewEventResponse> getReviewEvents(UUID id, PaginationRequest request) {
+    public PagingResult<ReviewEventResponse> getReviewEvents(UUID id, PaginationRequest request, String eventType) {
         Pageable pageable = PaginationUtil.getPageable(request);
-        Page<ReviewEvent> reviewEvents = reviewEventRepository.findByReviewId(pageable, id);
+        Page<ReviewEvent> reviewEvents;
+
+        if (eventType.equalsIgnoreCase("ALL")) {
+            reviewEvents = reviewEventRepository.findByReviewId(pageable, id);
+        } else {
+            reviewEvents = reviewEventRepository.findByReviewIdWithType(pageable, id, ReviewEventType.fromString(eventType));
+        }
 
         List<ReviewEventResponse> reviewEventsList = reviewEvents
                 .stream()
