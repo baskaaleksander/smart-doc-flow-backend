@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.dto.request.UserRolesRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.service.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.service.UserService;
 import jakarta.validation.Valid;
@@ -53,11 +54,11 @@ public class UserController {
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
-            @AuthenticationPrincipal UserDetails user
+            @AuthenticationPrincipal CustomUserDetails user
             ) {
 
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
-        return new ResponseEntity<>(documentService.getUserDocuments(request, user.getUsername()), HttpStatus.OK);
+        return new ResponseEntity<>(documentService.getUserDocuments(request, user.getId()), HttpStatus.OK);
     }
 
     @GetMapping("/{userId}/documents")
@@ -66,9 +67,12 @@ public class UserController {
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @PathVariable("userId") UUID userId
     ) {
-        return null;
+        PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
+
+        return new ResponseEntity<>(documentService.getUserDocuments(request, userId), HttpStatus.OK);
     }
 
     @GetMapping("/{userId}")

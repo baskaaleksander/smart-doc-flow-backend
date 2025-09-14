@@ -128,11 +128,11 @@ public class DocumentService {
         return getDocumentResponsePagingResult(request, documents);
     }
 
-    public PagingResult<DocumentResponse> getUserDocuments(PaginationRequest request, String username) {
+    public PagingResult<DocumentResponse> getUserDocuments(PaginationRequest request, UUID userId) {
 
         Pageable pageable = PaginationUtil.getPageable(request);
 
-        Page<Document> documents = documentRepository.findAllByOwner(username, pageable);
+        Page<Document> documents = documentRepository.findAllByOwner(userId, pageable);
 
         return getDocumentResponsePagingResult(request, documents);
     }
