@@ -6,7 +6,8 @@ public enum ReviewEventType {
     ASSIGNED("assigned"),
     RELEASED("released"),
     APPROVED("approved"),
-    REJECTED("rejected");
+    REJECTED("rejected"),
+    COMMENT("comment");
 
     private final String value;
 
