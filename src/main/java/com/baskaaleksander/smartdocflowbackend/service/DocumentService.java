@@ -125,6 +125,19 @@ public class DocumentService {
 
         Page<Document> documents = documentRepository.findAll(pageable);
 
+        return getDocumentResponsePagingResult(request, documents);
+    }
+
+    public PagingResult<DocumentResponse> getUserDocuments(PaginationRequest request, String username) {
+
+        Pageable pageable = PaginationUtil.getPageable(request);
+
+        Page<Document> documents = documentRepository.findAllByOwner(username, pageable);
+
+        return getDocumentResponsePagingResult(request, documents);
+    }
+
+    private PagingResult<DocumentResponse> getDocumentResponsePagingResult(PaginationRequest request, Page<Document> documents) {
         List<DocumentResponse> documentsList = documents
                 .stream()
                 .map(documentMapper::toDocumentResponse)

@@ -27,9 +27,6 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     @Query("select d.owner.username from Document d where d.id = :documentId")
     Optional<String> getOwnerUsernameById(UUID documentId);
 
-    @Query("select d from Document d where d.owner.username = :username")
-    List<Document> findAllByOwnerUsername(String username);
-
     @Query("""
     select d from Document d
     left join fetch d.review
@@ -37,7 +34,8 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 """)
     Optional<Document> findbyIdWithReview(UUID documentId);
 
-    Page<Document> findAllByOwner(User owner, Pageable pageable);
+    @Query("select d from Document d where d.owner.username = :username")
+    Page<Document> findAllByOwner(String username, Pageable pageable);
 
     Page<Document> findAll(Pageable pageable);
 

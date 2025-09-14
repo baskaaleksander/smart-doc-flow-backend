@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.dto.request.UserRolesRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.service.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,10 +26,12 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final DocumentService documentService;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, DocumentService documentService) {
         this.userService = userService;
+        this.documentService = documentService;
     }
 
     @GetMapping("/")
@@ -43,13 +48,26 @@ public class UserController {
     }
 
     @GetMapping("/me/documents")
-    public ResponseEntity<PagingResult<DocumentResponse>> getPersonalDocuments() {
-        return null;
+    public ResponseEntity<PagingResult<DocumentResponse>> getPersonalDocuments(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @AuthenticationPrincipal UserDetails user
+            ) {
+
+        PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
+        return new ResponseEntity<>(documentService.getUserDocuments(request, user.getUsername()), HttpStatus.OK);
     }
 
     @GetMapping("/{userId}/documents")
     @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
-    public ResponseEntity<PagingResult<DocumentResponse>> getUserDocuments() {
+    public ResponseEntity<PagingResult<DocumentResponse>> getUserDocuments(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+    ) {
         return null;
     }
 
