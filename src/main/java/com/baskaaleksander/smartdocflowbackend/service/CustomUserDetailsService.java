@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.service;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.model.User;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -32,10 +33,12 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .map(role -> new SimpleGrantedAuthority(role.getRole()))
                 .toList();
 
-        return new org.springframework.security.core.userdetails.User(
+        return new CustomUserDetails(
+                user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                authorities
+                authorities,
+                user.isActive()
         );
     }
 }
