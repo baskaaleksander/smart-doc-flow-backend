@@ -119,13 +119,11 @@ public class DocumentService {
         return documentMapper.toDocumentResponse(doc);
     }
 
-    public PagingResult<DocumentResponse> getAllByOwnerUsername(String username, PaginationRequest request) {
+    public PagingResult<DocumentResponse> getAllDocuments(PaginationRequest request) {
 
         Pageable pageable = PaginationUtil.getPageable(request);
-        User owner = userRepository.findByUsername(username).orElseThrow(
-                () -> new ResourceNotFoundException("User not found")
-        );
-        Page<Document> documents = documentRepository.findAllByOwner(owner, pageable);
+
+        Page<Document> documents = documentRepository.findAll(pageable);
 
         List<DocumentResponse> documentsList = documents
                 .stream()

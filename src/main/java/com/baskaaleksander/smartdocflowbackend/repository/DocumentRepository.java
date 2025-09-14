@@ -39,4 +39,6 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
     Page<Document> findAllByOwner(User owner, Pageable pageable);
 
+    Page<Document> findAll(Pageable pageable);
+
 }

@@ -35,15 +35,15 @@ public class DocumentController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<PagingResult<DocumentResponse>> getAllUserDocuments(
-            @AuthenticationPrincipal UserDetails user,
+    @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
+    public ResponseEntity<PagingResult<DocumentResponse>> getAllDocuments(
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
-        return new ResponseEntity<>(documentService.getAllByOwnerUsername(user.getUsername(), request), HttpStatus.OK);
+        return new ResponseEntity<>(documentService.getAllDocuments(request), HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")
