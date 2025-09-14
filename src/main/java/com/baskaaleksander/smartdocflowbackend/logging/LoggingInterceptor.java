@@ -47,7 +47,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
             Exception ex
     ) {
         Long started = (Long) request.getAttribute(START_TIME_AFTER);
-        long tookMs = started - System.currentTimeMillis();
+        long tookMs = System.currentTimeMillis() - started;
         int status = response.getStatus();
 
         if (ex != null) {
