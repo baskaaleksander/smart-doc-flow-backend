@@ -71,7 +71,18 @@ public class ReviewService {
         }
     }
 
-    private void logReviewEvent(User reviewer, Review review, ReviewEventType eventType, String comment) {
+    @Transactional
+    public ReviewEventResponse commentReview(String username, String comment, UUID reviewId) {
+        Review review = reviewRepository.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
+
+        User reviewer = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return reviewEventMapper.toReviewEventResponse(logReviewEvent(reviewer, review, ReviewEventType.COMMENT, comment));
+    }
+
+    private ReviewEvent logReviewEvent(User reviewer, Review review, ReviewEventType eventType, String comment) {
         ReviewEvent reviewEvent = new ReviewEvent();
 
         reviewEvent.setReviewer(reviewer);
@@ -79,7 +90,7 @@ public class ReviewService {
         reviewEvent.setEventType(eventType);
         if (comment != null) reviewEvent.setComment(comment);
 
-        reviewEventRepository.save(reviewEvent);
+        return reviewEventRepository.save(reviewEvent);
     }
 
     @Transactional

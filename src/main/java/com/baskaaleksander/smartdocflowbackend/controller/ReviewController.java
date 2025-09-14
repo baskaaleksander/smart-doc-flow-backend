@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.CommentRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.request.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
@@ -65,6 +66,15 @@ public class ReviewController {
             ) {
 
         return new ResponseEntity<>(reviewService.handleReviewStatusChange(reviewId, user.getUsername(), body), HttpStatus.OK);
+    }
+
+    @PostMapping("/{reviewId}/comment")
+    public ResponseEntity<ReviewEventResponse> commentReview(
+        @AuthenticationPrincipal UserDetails user,
+        @RequestBody @Valid CommentRequest body,
+        @PathVariable("reviewId") UUID reviewId
+    ) {
+        return new ResponseEntity<>(reviewService.commentReview(user.getUsername(), body.getComment(), reviewId), HttpStatus.OK);
     }
 
     @GetMapping("/{reviewId}/events")
