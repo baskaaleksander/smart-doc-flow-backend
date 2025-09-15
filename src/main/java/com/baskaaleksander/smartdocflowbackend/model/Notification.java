@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.model;
 
+import com.baskaaleksander.smartdocflowbackend.enums.NotificationType;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -14,7 +15,7 @@ public class Notification {
     private UUID id;
 
     private UUID userId;
-    private String type;
+    private NotificationType type;
     private String message;
     private boolean read = false;
     private Instant createdAt = Instant.now();
