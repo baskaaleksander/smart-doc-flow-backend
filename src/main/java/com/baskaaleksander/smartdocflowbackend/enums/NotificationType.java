@@ -6,7 +6,8 @@ public enum NotificationType {
     DOCUMENT_UPLOADED("document_uploaded"),
     DOCUMENT_PROCESSED("document_processed"),
     DOCUMENT_IN_REVIEW("document_in_review"),
-    DOCUMENT_REVIEWED("document_reviewed");
+    DOCUMENT_REVIEWED("document_reviewed"),
+    REVIEW_COMMENT("review_comment");
 
 
     private final String value;
