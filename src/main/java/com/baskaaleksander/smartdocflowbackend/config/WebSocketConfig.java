@@ -97,44 +97,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 var acc = StompHeaderAccessor.wrap(message);
                 if (acc.getCommand() == null) return message;
 
-                boolean mutated = false;
-
                 if (acc.getUser() == null) {
-                    var ctxAuth = SecurityContextHolder.getContext().getAuthentication();
-                    if (ctxAuth != null && ctxAuth.isAuthenticated()) {
-                        acc.setUser(ctxAuth);
-                        acc.setHeader(SimpMessageHeaderAccessor.USER_HEADER, ctxAuth);
-                        mutated = true;
+                     log.warn("WS frame {} without user, dest={}", acc.getCommand(), acc.getDestination());
+                    if (acc.getCommand() != StompCommand.CONNECT) {
+                        return null;
                     }
                 }
 
-                if (acc.getUser() == null && StompCommand.CONNECT.equals(acc.getCommand())) {
-                    String hdr = acc.getFirstNativeHeader("Authorization");
-                    if (hdr == null) hdr = acc.getFirstNativeHeader("authorization");
-                    if (hdr != null && hdr.startsWith("Bearer ")) {
-                        String token = hdr.substring(7);
-                        try {
-                            String username = jwtUtil.getUsernameFromAccessToken(token);
-                            var ud = customUserDetailsService.loadUserByUsername(username);
-                            var auth = new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
-
-                            acc.setUser(auth);
-                            acc.setHeader(SimpMessageHeaderAccessor.USER_HEADER, auth);
-                            mutated = true;
-                            log.info("[WS AUTH] User set from JWT: {}", auth.getName());
-                        } catch (Exception e) {
-                            log.error("[WS AUTH] JWT parse error: {}", e.getMessage());
-                        }
-                    }
-                }
-
-                log.info("[WS IN] {} dest={} userHeaderBefore={} userAfter={}", acc.getCommand(), acc.getDestination(), message.getHeaders().get(SimpMessageHeaderAccessor.USER_HEADER), acc.getUser() != null ? acc.getUser().getName() : "null");
-
-                if (mutated) {
-                    acc.setLeaveMutable(true);
-                    return MessageBuilder
-                            .createMessage(message.getPayload(), acc.getMessageHeaders());
-                }
                 return message;
             }
         });
