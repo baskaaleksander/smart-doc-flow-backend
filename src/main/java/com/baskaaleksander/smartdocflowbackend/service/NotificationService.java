@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.response.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.NotificationType;
+import com.baskaaleksander.smartdocflowbackend.mapper.NotificationMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Notification;
 import com.baskaaleksander.smartdocflowbackend.repository.NotificationRepository;
 import jakarta.transaction.Transactional;
@@ -15,13 +16,15 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
+    private final NotificationMapper notificationMapper;
 
     public NotificationService(
             NotificationRepository notificationRepository,
-            SimpMessagingTemplate simpMessagingTemplate
-            ) {
+            SimpMessagingTemplate simpMessagingTemplate,
+            NotificationMapper notificationMapper) {
         this.notificationRepository = notificationRepository;
         this.simpMessagingTemplate = simpMessagingTemplate;
+        this.notificationMapper = notificationMapper;
     }
 
     @Transactional
@@ -42,7 +45,7 @@ public class NotificationService {
 
     }
 
-    public List<NotificationResponse> getAllUnreadNotifications() {
-        return null;
+    public List<NotificationResponse> getAllUnreadNotifications(String username) {
+        return notificationRepository.findAllByUsernameAndRead(username, false).stream().map(notificationMapper::toNotificationResponse).toList();
     }
 }
