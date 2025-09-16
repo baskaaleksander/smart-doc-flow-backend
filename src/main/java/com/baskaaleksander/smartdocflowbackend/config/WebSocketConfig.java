@@ -1,36 +1,92 @@
 package com.baskaaleksander.smartdocflowbackend.config;
 
+import com.baskaaleksander.smartdocflowbackend.security.JwtUtil;
+import com.baskaaleksander.smartdocflowbackend.service.CustomUserDetailsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
+
+import java.security.Principal;
+import java.util.Map;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
+    private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final Logger log = LoggerFactory.getLogger(WebSocketConfig.class);
+
+    public WebSocketConfig(JwtUtil jwtUtil, CustomUserDetailsService customUserDetailsService) {
+        this.jwtUtil = jwtUtil;
+        this.customUserDetailsService = customUserDetailsService;
+    }
+
+    @Bean
+    public DefaultHandshakeHandler handshakeHandler() {
+        return new DefaultHandshakeHandler() {
+            @Override
+            protected Principal determineUser(ServerHttpRequest request, WebSocketHandler wsHandler, Map<String, Object> attributes) {
+                var query = request.getURI().getQuery();
+                String token = null;
+                if (query != null) {
+                    for (String p : query.split("&")) {
+                        var kv = p.split("=", 2);
+                        if (kv.length == 2 && kv[0].equals("token")) {
+                            token = kv[1];
+                            break;
+                        }
+                    }
+                }
+                if (token != null) {
+                    try {
+                        String username = jwtUtil.getUsernameFromAccessToken(token);
+                        return () -> username;
+                    } catch (Exception ignored) {}
+                }
+                var auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.isAuthenticated()) return auth;
+
+                return super.determineUser(request, wsHandler, attributes);
+            }
+        };
+    }
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry){
         registry.addEndpoint("/ws")
+                .setHandshakeHandler(handshakeHandler())
                 .setAllowedOriginPatterns("*");
 
-        registry.addEndpoint("/ws")
+        registry.addEndpoint("/ws-sockjs")
+                .setHandshakeHandler(handshakeHandler())
                 .setAllowedOriginPatterns("*").withSockJS();
 
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/topic", "/queue");
-        registry.setApplicationDestinationPrefixes("/app");
-        registry.setUserDestinationPrefix("/user");
+            registry.enableSimpleBroker("/topic", "/queue");
+            registry.setApplicationDestinationPrefixes("/app");
+            registry.setUserDestinationPrefix("/user");
     }
 
     @Override
@@ -38,16 +94,49 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+                var acc = StompHeaderAccessor.wrap(message);
+                if (acc.getCommand() == null) return message;
 
-                if (accessor.getUser() == null) {
-                    var auth = SecurityContextHolder.getContext().getAuthentication();
-                    if (auth != null) {
-                        accessor.setUser(auth);
+                boolean mutated = false;
+
+                if (acc.getUser() == null) {
+                    var ctxAuth = SecurityContextHolder.getContext().getAuthentication();
+                    if (ctxAuth != null && ctxAuth.isAuthenticated()) {
+                        acc.setUser(ctxAuth);
+                        acc.setHeader(SimpMessageHeaderAccessor.USER_HEADER, ctxAuth);
+                        mutated = true;
                     }
+                }
+
+                if (acc.getUser() == null && StompCommand.CONNECT.equals(acc.getCommand())) {
+                    String hdr = acc.getFirstNativeHeader("Authorization");
+                    if (hdr == null) hdr = acc.getFirstNativeHeader("authorization");
+                    if (hdr != null && hdr.startsWith("Bearer ")) {
+                        String token = hdr.substring(7);
+                        try {
+                            String username = jwtUtil.getUsernameFromAccessToken(token);
+                            var ud = customUserDetailsService.loadUserByUsername(username);
+                            var auth = new UsernamePasswordAuthenticationToken(ud, null, ud.getAuthorities());
+
+                            acc.setUser(auth);
+                            acc.setHeader(SimpMessageHeaderAccessor.USER_HEADER, auth);
+                            mutated = true;
+                            log.info("[WS AUTH] User set from JWT: {}", auth.getName());
+                        } catch (Exception e) {
+                            log.error("[WS AUTH] JWT parse error: {}", e.getMessage());
+                        }
+                    }
+                }
+
+                log.info("[WS IN] {} dest={} userHeaderBefore={} userAfter={}", acc.getCommand(), acc.getDestination(), message.getHeaders().get(SimpMessageHeaderAccessor.USER_HEADER), acc.getUser() != null ? acc.getUser().getName() : "null");
+
+                if (mutated) {
+                    acc.setLeaveMutable(true);
+                    return MessageBuilder
+                            .createMessage(message.getPayload(), acc.getMessageHeaders());
                 }
                 return message;
             }
         });
     }
- }
+}

@@ -36,5 +36,6 @@ public class NotificationService {
         "/queue/notifications",
                 notification
                 );
+
     }
 }
