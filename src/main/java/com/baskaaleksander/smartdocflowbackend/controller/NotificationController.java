@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/notification")
@@ -23,12 +24,21 @@ public class NotificationController {
         this.registry = registry;
     }
 
-    @PostMapping("/{username}")
-    public String notifyUser(@PathVariable("username") String username) {
-        notificationService.sendNotification(username, "document_in_review", "lalala");
-
-        return "done";
+    @GetMapping("/")
+    public ResponseEntity<List<NotificationResponse>> getAllNotifications() {
+        return null;
     }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<String> markAsRead(@PathVariable("id") UUID id) {
+        return null;
+    }
+
+    @PostMapping("/")
+    public ResponseEntity<String> markAllAsRead() {
+        return null;
+    }
+
 
     @GetMapping("/unread")
     public ResponseEntity<List<NotificationResponse>> getAllUnreadNotifications(
@@ -37,5 +47,6 @@ public class NotificationController {
 
         return new ResponseEntity<>(notificationService.getAllUnreadNotifications(user.getUsername()), HttpStatus.OK);
     }
+
 
 }
