@@ -42,17 +42,17 @@ public class NotificationController {
     }
 
     @GetMapping("/unread-count")
-    public ResponseEntity<Integer> getUnreadNotificationsCount() {
-        return null;
+    public ResponseEntity<Integer> getUnreadNotificationsCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return new ResponseEntity<>(notificationService.getUnreadNotificationsCount(userDetails.getUsername()), HttpStatus.OK);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<String> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body) {
+    public ResponseEntity<Integer> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body) {
         return null;
     }
 
     @PatchMapping("")
-    public ResponseEntity<String> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body) {
+    public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body) {
         return null;
     }
 

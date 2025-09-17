@@ -114,5 +114,9 @@ public class NotificationService {
         return new PagedResponse<>(notificationsList, pageMetadata);
     }
 
+    public Integer getUnreadNotificationsCount(String username) {
+        return notificationRepository.getNotificationsCountByUsernameAndRead(username, false);
+    }
+
 
 }
