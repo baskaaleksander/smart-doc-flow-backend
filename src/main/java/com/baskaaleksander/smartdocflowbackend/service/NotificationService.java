@@ -1,11 +1,18 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.NotificationResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PageMetadata;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagedResponse;
+import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.enums.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.mapper.NotificationMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Notification;
 import com.baskaaleksander.smartdocflowbackend.repository.NotificationRepository;
+import com.baskaaleksander.smartdocflowbackend.utils.PaginationUtil;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +52,67 @@ public class NotificationService {
 
     }
 
-    public List<NotificationResponse> getAllUnreadNotifications(String username) {
-        return notificationRepository.findAllByUsernameAndRead(username, false).stream().map(notificationMapper::toNotificationResponse).toList();
+    public PagingResult<NotificationResponse> getNotifications(String username, PaginationRequest request, Boolean read) {
+        Pageable pageable = PaginationUtil.getPageable(request);
+        PagedResponse result;
+
+        if (read == null) {
+            result = getAllUserNotifications(pageable, username);
+        } else {
+            result = getAllUserNotificationsByRead(pageable, username, read);
+        }
+
+
+        List<NotificationResponse> items = result.items();
+        PageMetadata pageMetadata = result.pageMetadata();
+        Integer currentPage = request.getPage();
+
+        return new PagingResult<>(
+                items,
+                pageMetadata.totalPages(),
+                pageMetadata.totalElements(),
+                pageMetadata.size(),
+                pageMetadata.number(),
+                currentPage + 1 == pageMetadata.totalPages(),
+                currentPage + 1 < pageMetadata.totalPages()
+
+        );
     }
+
+    private PagedResponse<NotificationResponse> getAllUserNotificationsByRead(Pageable pageable, String username, Boolean read) {
+        Page<Notification> notifications = notificationRepository.findAllByUsernameAndRead(pageable, username, read);
+
+        List<NotificationResponse> notificationsList = notifications
+                .stream()
+                .map(notificationMapper::toNotificationResponse)
+                .toList();
+        PageMetadata pageMetadata = new PageMetadata(
+                notifications.getTotalPages(),
+                notifications.getTotalElements(),
+                notifications.getSize(),
+                notifications.getNumber()
+        );
+
+        return new PagedResponse<>(notificationsList, pageMetadata);
+    }
+
+    private PagedResponse<NotificationResponse> getAllUserNotifications(Pageable pageable, String username) {
+        Page<Notification> notifications = notificationRepository.findAllByUsername(pageable, username);
+
+        List<NotificationResponse> notificationsList = notifications
+                .stream()
+                .map(notificationMapper::toNotificationResponse)
+                .toList();
+
+        PageMetadata pageMetadata = new PageMetadata(
+                notifications.getTotalPages(),
+                notifications.getTotalElements(),
+                notifications.getSize(),
+                notifications.getNumber()
+        );
+
+        return new PagedResponse<>(notificationsList, pageMetadata);
+    }
+
+
 }
