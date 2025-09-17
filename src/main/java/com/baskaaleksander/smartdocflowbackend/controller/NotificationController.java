@@ -1,8 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.controller;
 
+import com.baskaaleksander.smartdocflowbackend.dto.request.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.service.NotificationService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
@@ -17,35 +19,31 @@ import java.util.UUID;
 public class NotificationController {
 
     private final NotificationService notificationService;
-    private final SimpUserRegistry registry;
 
-    public NotificationController(NotificationService notificationService, SimpUserRegistry registry) {
+    public NotificationController(NotificationService notificationService) {
         this.notificationService = notificationService;
-        this.registry = registry;
     }
 
-    @GetMapping("/")
-    public ResponseEntity<List<NotificationResponse>> getAllNotifications() {
+    @GetMapping("")
+    public ResponseEntity<List<NotificationResponse>> getAllNotifications(
+            @RequestParam(defaultValue = "all") String status
+    ) {
         return null;
     }
 
-    @PostMapping("/{id}")
-    public ResponseEntity<String> markAsRead(@PathVariable("id") UUID id) {
+    @GetMapping("/unread-count")
+    public ResponseEntity<Integer> getUnreadNotificationsCount() {
         return null;
     }
 
-    @PostMapping("/")
-    public ResponseEntity<String> markAllAsRead() {
+    @PatchMapping("/{id}")
+    public ResponseEntity<String> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body) {
         return null;
     }
 
-
-    @GetMapping("/unread")
-    public ResponseEntity<List<NotificationResponse>> getAllUnreadNotifications(
-            @AuthenticationPrincipal CustomUserDetails user
-            ) {
-
-        return new ResponseEntity<>(notificationService.getAllUnreadNotifications(user.getUsername()), HttpStatus.OK);
+    @PatchMapping("")
+    public ResponseEntity<String> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body) {
+        return null;
     }
 
 
