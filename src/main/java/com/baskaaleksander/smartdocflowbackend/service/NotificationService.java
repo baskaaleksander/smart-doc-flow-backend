@@ -118,5 +118,11 @@ public class NotificationService {
         return notificationRepository.getNotificationsCountByUsernameAndRead(username, false);
     }
 
+    public Integer markAllAsRead(String username) {
+        return notificationRepository.markAllRead(username);
+    }
+
+
+
 
 }

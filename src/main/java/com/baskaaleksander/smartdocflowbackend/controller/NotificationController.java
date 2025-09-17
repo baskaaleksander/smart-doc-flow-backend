@@ -53,7 +53,7 @@ public class NotificationController {
 
     @PatchMapping("")
     public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return null;
+        return new ResponseEntity<>(notificationService.markAllAsRead(userDetails.getUsername()), HttpStatus.OK);
     }
 
 
