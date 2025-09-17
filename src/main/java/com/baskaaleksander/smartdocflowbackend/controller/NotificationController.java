@@ -47,12 +47,12 @@ public class NotificationController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Integer> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body) {
+    public ResponseEntity<Integer> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return null;
     }
 
     @PatchMapping("")
-    public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body) {
+    public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return null;
     }
 
