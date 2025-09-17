@@ -48,12 +48,12 @@ public class NotificationController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<Integer> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return null;
+        return new ResponseEntity<>(notificationService.markOneAsRead(userDetails.getUsername(), id, body), HttpStatus.OK);
     }
 
     @PatchMapping("")
     public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return new ResponseEntity<>(notificationService.markAllAsRead(userDetails.getUsername()), HttpStatus.OK);
+        return new ResponseEntity<>(notificationService.markAllAsRead(userDetails.getUsername(), body), HttpStatus.OK);
     }
 
 

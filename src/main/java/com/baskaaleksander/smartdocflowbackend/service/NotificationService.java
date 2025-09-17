@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.service;
 
 import com.baskaaleksander.smartdocflowbackend.dto.request.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.dto.request.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.dto.response.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.PageMetadata;
 import com.baskaaleksander.smartdocflowbackend.dto.response.PagedResponse;
@@ -17,6 +18,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class NotificationService {
@@ -118,11 +120,13 @@ public class NotificationService {
         return notificationRepository.getNotificationsCountByUsernameAndRead(username, false);
     }
 
-    public Integer markAllAsRead(String username) {
+    public Integer markAllAsRead(String username, ReadNotificationRequest body) {
         return notificationRepository.markAllRead(username);
     }
 
-
+    public Integer markOneAsRead(String username, UUID id, ReadNotificationRequest body) {
+        return notificationRepository.markOneRead(username, id);
+    }
 
 
 }
