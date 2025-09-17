@@ -120,12 +120,21 @@ public class NotificationService {
         return notificationRepository.getNotificationsCountByUsernameAndRead(username, false);
     }
 
+    @Transactional
     public Integer markAllAsRead(String username, ReadNotificationRequest body) {
-        return notificationRepository.markAllRead(username);
+
+        if (body.getRead()) {
+            return notificationRepository.markAllRead(username);
+        }
+        return 0;
     }
 
+    @Transactional
     public Integer markOneAsRead(String username, UUID id, ReadNotificationRequest body) {
-        return notificationRepository.markOneRead(username, id);
+        if (body.getRead()) {
+            return notificationRepository.markOneRead(username, id);
+        }
+        return 0;
     }
 
 

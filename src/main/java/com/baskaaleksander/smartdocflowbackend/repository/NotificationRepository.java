@@ -18,6 +18,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     Page<Notification> findAllByUsername(Pageable pageable, String username);
 
+    @Query("select count(n) from Notification n where n.username = :username and n.read = :read")
     Integer getNotificationsCountByUsernameAndRead(String username, boolean read);
 
     @Query("update Notification n set n.read = true where n.username = :username and n.id = :id and n.read = false")
