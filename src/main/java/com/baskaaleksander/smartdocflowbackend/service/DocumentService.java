@@ -40,6 +40,7 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
+    private final NotificationService notificationService;
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
@@ -50,13 +51,14 @@ public class DocumentService {
             OcrService ocrService,
             UserRepository userRepository,
             ReviewRepository reviewRepository,
-            DocumentMapper documentMapper) {
+            DocumentMapper documentMapper, NotificationService notificationService) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
         this.documentMapper = documentMapper;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -103,12 +105,11 @@ public class DocumentService {
 
         document.setReview(review);
 
-
-
-
+        notificationService.sendNotification(username, "document_uploaded", "Document successfully uploaded!");
 
         //FOR NOW DISABLED
 //        ocrService.startAsync(document.getId());
+
 
         return documentMapper.toDocumentResponse(document);
     }
