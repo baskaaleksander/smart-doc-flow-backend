@@ -52,6 +52,12 @@ public class DocumentController {
         return new ResponseEntity<>(documentService.getById(id), HttpStatus.OK);
     }
 
+    @PreAuthorize("@docAccess.canView(#id, authentication)")
+    @GetMapping("/{id}/download")
+    public ResponseEntity<String> downloadDocumentById(@PathVariable UUID id) {
+        return new ResponseEntity<>(documentService.downloadDocumentById(id), HttpStatus.OK);
+    }
+
     @PreAuthorize("@docAccess.canModify(#id, authentication)")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteDocumentById(@PathVariable UUID id) {

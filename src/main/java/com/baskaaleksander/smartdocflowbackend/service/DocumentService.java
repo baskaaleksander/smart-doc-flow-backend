@@ -27,10 +27,19 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -45,6 +54,7 @@ public class DocumentService {
     private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
     private final NotificationService notificationService;
+    private final S3Presigner s3Presigner;
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     @Value(value = "${minio.bucket.name}")
@@ -56,7 +66,10 @@ public class DocumentService {
             OcrService ocrService,
             UserRepository userRepository,
             ReviewRepository reviewRepository,
-            DocumentMapper documentMapper, NotificationService notificationService) {
+            DocumentMapper documentMapper,
+            NotificationService notificationService,
+            S3Presigner s3Presigner
+    ) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
@@ -64,6 +77,7 @@ public class DocumentService {
         this.reviewRepository = reviewRepository;
         this.documentMapper = documentMapper;
         this.notificationService = notificationService;
+        this.s3Presigner = s3Presigner;
     }
 
     @Transactional
@@ -182,6 +196,24 @@ public class DocumentService {
         }
 
         documentRepository.deleteById(id);
+    }
+
+    public String downloadDocumentById(UUID id) {
+        Document document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
+
+        GetObjectRequest get = GetObjectRequest.builder()
+                .bucket(s3Bucket)
+                .key(document.getStorageKey())
+                .responseContentType(document.getMime())
+                .build();
+
+        var presignedReq = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(3))
+                .getObjectRequest(get)
+                .build();
+
+        PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignedReq);
+        return presigned.url().toString();
     }
 
 }
