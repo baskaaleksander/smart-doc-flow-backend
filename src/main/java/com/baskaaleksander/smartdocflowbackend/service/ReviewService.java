@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.dto.response.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.enums.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceConflictException;
@@ -40,18 +41,20 @@ public class ReviewService {
     private final DocumentRepository documentRepository;
     private final ReviewEventRepository reviewEventRepository;
     private final ReviewEventMapper reviewEventMapper;
+    private final NotificationService notificationService;
 
     @Autowired
     public ReviewService(
             ReviewRepository reviewRepository,
             UserRepository userRepository,
-            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository, ReviewEventRepository reviewEventRepository, ReviewEventMapper reviewEventMapper) {
+            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository, ReviewEventRepository reviewEventRepository, ReviewEventMapper reviewEventMapper, NotificationService notificationService) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
         this.documentRepository = documentRepository;
         this.reviewEventRepository = reviewEventRepository;
         this.reviewEventMapper = reviewEventMapper;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -78,6 +81,8 @@ public class ReviewService {
 
         User reviewer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        notificationService.sendNotification(username, "review_comment", "Document " + review.getDocument().getId() + " received comment");
 
         return reviewEventMapper.toReviewEventResponse(logReviewEvent(reviewer, review, ReviewEventType.COMMENT, comment));
     }
@@ -112,6 +117,8 @@ public class ReviewService {
         review = reviewRepository.save(review);
 
         logReviewEvent(reviewer, review,  ReviewEventType.ASSIGNED, null);
+
+        notificationService.sendNotification(username, "document_in_review", "Document " + review.getDocument().getId() + " is in review process!");
 
         return reviewMapper.toReviewResponse(review);
     }
@@ -170,7 +177,7 @@ public class ReviewService {
 
         logReviewEvent(reviewer, review,  ReviewEventType.APPROVED, comment);
 
-
+        notificationService.sendNotification(username, "document_reviewed", "Document " + review.getDocument().getId() + " is approved.");
         return reviewMapper.toReviewResponse(review);
     }
 
@@ -198,6 +205,7 @@ public class ReviewService {
 
         logReviewEvent(reviewer, review,  ReviewEventType.APPROVED, comment);
 
+        notificationService.sendNotification(username, "document_reviewed", "Document " + review.getDocument().getId() + " got rejected.");
 
         return reviewMapper.toReviewResponse(review);
     }

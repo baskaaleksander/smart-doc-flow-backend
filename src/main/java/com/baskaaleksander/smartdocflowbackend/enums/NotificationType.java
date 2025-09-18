@@ -10,6 +10,7 @@ public enum NotificationType {
     REVIEW_COMMENT("review_comment");
 
 
+
     private final String value;
 
     NotificationType(String value) {
