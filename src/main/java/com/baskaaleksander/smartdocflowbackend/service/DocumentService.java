@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.dto.response.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.enums.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.exceptions.S3DeleteException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.mapper.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
@@ -16,6 +17,8 @@ import com.baskaaleksander.smartdocflowbackend.repository.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.utils.PaginationUtil;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.util.List;
@@ -41,6 +45,7 @@ public class DocumentService {
     private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
     private final NotificationService notificationService;
+    private final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
@@ -158,7 +163,24 @@ public class DocumentService {
         );
     }
 
+    @Transactional
     public void deleteById(UUID id) {
+        Document document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
+
+        try {
+            ObjectIdentifier objectToDelete = ObjectIdentifier.builder().key(document.getStorageKey()).build();
+            s3Client.deleteObjects(request ->
+                    request
+                            .bucket(s3Bucket)
+                            .delete(deleteRequest ->
+                                    deleteRequest.objects(
+                                            objectToDelete
+                                    )));
+        } catch (Exception ex) {
+            log.error("Failed to delete document {} from S3: {}", id, ex.getMessage(), ex);
+            throw new S3DeleteException("Couldn't delete document");
+        }
+
         documentRepository.deleteById(id);
     }
 
