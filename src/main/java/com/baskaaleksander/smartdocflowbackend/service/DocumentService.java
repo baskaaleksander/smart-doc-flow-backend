@@ -25,6 +25,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
@@ -49,7 +51,7 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
-    private final OcrService ocrService;
+    private OcrService ocrService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
@@ -80,7 +82,6 @@ public class DocumentService {
         this.s3Presigner = s3Presigner;
     }
 
-    @Transactional
     public DocumentResponse createAndSave(MultipartFile file) {
         UUID docId = UUID.randomUUID();
         String originalFilename = Objects.requireNonNull(file.getOriginalFilename()).replace(" ", "_");
@@ -102,6 +103,7 @@ public class DocumentService {
         try (var in = file.getInputStream()) {
             s3Client.putObject(request, RequestBody.fromInputStream(in, file.getSize()));
         } catch (Exception e) {
+            System.out.println(e);
             throw new S3UploadException("Upload to object store failed");
         }
 
@@ -115,7 +117,21 @@ public class DocumentService {
         document.setStatus(DocumentStatus.UPLOADED);
         document.setOwner(user);
 
-        document = documentRepository.save(document);
+
+        saveDocToDb(document);
+
+        notificationService.sendNotification(username, "document_uploaded", "Document successfully uploaded!");
+
+        System.out.println("ocrService proxy: " + ocrService.getClass());
+
+        ocrService.startAsync(document.getId());
+
+        return documentMapper.toDocumentResponse(document);
+    }
+
+    @Transactional
+    protected void saveDocToDb(Document document) {
+        documentRepository.save(document);
 
         Review review = new Review();
         review.setStatus(ReviewStatus.PENDING);
@@ -123,14 +139,6 @@ public class DocumentService {
         review = reviewRepository.save(review);
 
         document.setReview(review);
-
-        notificationService.sendNotification(username, "document_uploaded", "Document successfully uploaded!");
-
-        //FOR NOW DISABLED
-//        ocrService.startAsync(document.getId());
-
-
-        return documentMapper.toDocumentResponse(document);
     }
 
     public DocumentResponse getById(UUID id) {

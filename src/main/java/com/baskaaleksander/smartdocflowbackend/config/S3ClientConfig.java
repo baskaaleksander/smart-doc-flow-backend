@@ -38,7 +38,7 @@ public class S3ClientConfig {
 
     @Bean
     public S3Client s3Client() {
-        AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.create(accessKey, secret);
+        AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.create(secret, accessKey);
 
         return S3Client.builder()
                 .endpointOverride(URI.create(url))

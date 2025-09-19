@@ -67,8 +67,11 @@ public class OcrService {
     @Async("ocrExecutor")
     public CompletableFuture<Void> startAsync(UUID documentId) {
 
-            Document doc = documentRepository.getDocumentById(documentId)
+        System.out.println("im here in start async");
+
+        Document doc = documentRepository.getDocumentById(documentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
+
 
             String documentKey = doc.getStorageKey();
 
@@ -192,7 +195,15 @@ public class OcrService {
         String raw = response.getResult().getOutput().getText();
 
         System.out.println(raw);
-        return MAPPER.readValue(raw, OcrResult.class);
+        OcrResult result = MAPPER.readValue(raw, OcrResult.class);
 
+        saveJsonToS3(result);
+
+        return result;
+
+    }
+
+    private void saveJsonToS3(OcrResult ocrResult) {
+        System.out.println(ocrResult);
     }
 }
