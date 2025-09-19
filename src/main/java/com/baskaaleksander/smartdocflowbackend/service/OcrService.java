@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.enums.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.exceptions.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3DownloadException;
+import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
 import com.baskaaleksander.smartdocflowbackend.model.OcrResult;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
@@ -26,16 +27,18 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -88,6 +91,7 @@ public class OcrService {
                 List<Media> mediaList = convertImages(imageList);
 
                 String rawText = performOcr(mediaList);
+
 
                 saveJsonToS3(rawText, documentId);
 
@@ -199,7 +203,26 @@ public class OcrService {
 
     }
 
-    private void saveJsonToS3(String raw, UUID docId) {
-        
+    private String saveJsonToS3(String raw, UUID docId) throws IOException {
+
+        byte[] bytes = raw.getBytes(StandardCharsets.UTF_8);
+        String docKey = docId + "_ocr";
+
+        PutObjectRequest request = PutObjectRequest.builder()
+                .bucket(bucket)
+                .key(docKey + ".json")
+                .contentType("application/json")
+                .contentLength((long) bytes.length)
+                .build();
+
+        try {
+            s3Client.putObject(request, RequestBody.fromBytes(bytes));
+        } catch (Exception ex) {
+            throw new S3UploadException("Upload to object store failed");
+        }
+
+        return docKey;
     }
+
+
 }

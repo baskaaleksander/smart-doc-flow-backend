@@ -103,7 +103,6 @@ public class DocumentService {
         try (var in = file.getInputStream()) {
             s3Client.putObject(request, RequestBody.fromInputStream(in, file.getSize()));
         } catch (Exception e) {
-            System.out.println(e);
             throw new S3UploadException("Upload to object store failed");
         }
 
