@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.exceptions.ResourceNotFoundExcept
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
+import com.baskaaleksander.smartdocflowbackend.model.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.model.OcrResult;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -93,7 +94,7 @@ public class OcrService {
                 String rawText = performOcr(mediaList);
 
 
-                saveJsonToS3(rawText, documentId);
+                String docKey = saveJsonToS3(rawText, documentId);
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
@@ -224,5 +225,6 @@ public class OcrService {
         return docKey;
     }
 
-
+    private void saveOcrResultToDb(String documentKey, UUID documentId) {
+    }
 }
