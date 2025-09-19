@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.exceptions.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.model.Document;
 import com.baskaaleksander.smartdocflowbackend.model.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.model.OcrResult;
+import com.baskaaleksander.smartdocflowbackend.repository.DocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.repository.DocumentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,6 +49,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class OcrService {
 
+    private final DocumentOcrResultRepository documentOcrResultRepository;
     @Value(value = "${minio.bucket.name}")
     private String bucket;
     @Value(value = "${spring.ai.openai.chat.options.model}")
@@ -61,11 +63,12 @@ public class OcrService {
     public OcrService(
             S3Client s3Client,
             DocumentRepository documentRepository,
-            OpenAiChatModel chatModel
-    ) {
+            OpenAiChatModel chatModel,
+            DocumentOcrResultRepository documentOcrResultRepository) {
         this.s3Client = s3Client;
         this.documentRepository = documentRepository;
         this.chatModel = chatModel;
+        this.documentOcrResultRepository = documentOcrResultRepository;
     }
 
     @Async("ocrExecutor")
@@ -94,7 +97,9 @@ public class OcrService {
                 String rawText = performOcr(mediaList);
 
 
-                String docKey = saveJsonToS3(rawText, documentId);
+                String docOcrKey = saveJsonToS3(rawText, documentId);
+
+                saveOcrResultToDb(docOcrKey, documentId);
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
@@ -226,5 +231,13 @@ public class OcrService {
     }
 
     private void saveOcrResultToDb(String documentKey, UUID documentId) {
+
+        Document document = documentRepository.getDocumentById(documentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        DocumentOcrResult ocrResult = new DocumentOcrResult();
+        ocrResult.setDocument(document);
+        ocrResult.setStorageKey(documentKey);
+
+        documentOcrResultRepository.save(ocrResult);
     }
 }
