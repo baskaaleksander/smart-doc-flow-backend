@@ -122,8 +122,6 @@ public class DocumentService {
 
         notificationService.sendNotification(username, "document_uploaded", "Document successfully uploaded!");
 
-        System.out.println("ocrService proxy: " + ocrService.getClass());
-
         ocrService.startAsync(document.getId());
 
         return documentMapper.toDocumentResponse(document);

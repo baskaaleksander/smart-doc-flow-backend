@@ -1,4 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.model;
 
-public record OcrResult(int page, String text) {
+import java.util.List;
+
+public record OcrResult(List<OcrResultPage> pages) {
 }

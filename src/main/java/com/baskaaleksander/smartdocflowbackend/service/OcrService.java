@@ -87,9 +87,9 @@ public class OcrService {
 
                 List<Media> mediaList = convertImages(imageList);
 
-                OcrResult result = performOcr(mediaList);
+                String rawText = performOcr(mediaList);
 
-                System.out.println(result);
+                saveJsonToS3(rawText, documentId);
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
@@ -160,7 +160,7 @@ public class OcrService {
         return mediaList;
     }
 
-    private OcrResult performOcr(List<Media> images) throws JsonProcessingException {
+    private String performOcr(List<Media> images) throws JsonProcessingException {
         var system = new SystemMessage("""
         You are an OCR engine. Extract plain text from each provided image.
         - Preserve original line breaks and spacing as much as possible.
@@ -192,18 +192,14 @@ public class OcrService {
                 )
         );
 
-        String raw = response.getResult().getOutput().getText();
+        //        OcrResult result = MAPPER.readValue(raw, OcrResult.class);
+        
 
-        System.out.println(raw);
-        OcrResult result = MAPPER.readValue(raw, OcrResult.class);
-
-        saveJsonToS3(result);
-
-        return result;
+        return response.getResult().getOutput().getText();
 
     }
 
-    private void saveJsonToS3(OcrResult ocrResult) {
-        System.out.println(ocrResult);
+    private void saveJsonToS3(String raw, UUID docId) {
+        
     }
 }
