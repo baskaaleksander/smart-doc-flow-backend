@@ -72,4 +72,33 @@ public class ChunkerService {
 
         return (e - 1) - i;
     }
+
+    private Chunk buildChunkFromSpans(String text, UUID docId, int page, List<SentenceSpan> spans, int chunkStartChar) {
+        int end = spans.getLast().end();
+        String content = text.substring(chunkStartChar, end);
+
+        return new Chunk(docId, page, chunkStartChar, end, content);
+    }
+
+    private int computeOverlapStartChar(String text, List<SentenceSpan> spans, int overlapTokens) {
+        int chunkStart = spans.getFirst().start();
+        int chunkEnd = spans.getLast().end();
+
+        int total = tokenizer.count(text.substring(chunkStart, chunkEnd));
+        if (total <= overlapTokens) return chunkStart;
+
+        int lo = chunkStart, hi = chunkEnd, ans = chunkStart;
+        while (lo <= hi) {
+            int mid = (lo + hi) >>> 1;
+            int suffixTokens = tokenizer.count(text.substring(mid, chunkEnd));
+            if (suffixTokens >= overlapTokens) {
+                ans = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+
+        return ans;
+    }
 }
