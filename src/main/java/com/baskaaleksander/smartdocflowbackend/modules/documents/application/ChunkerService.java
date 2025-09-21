@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.SentenceSpan;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.WordSpan;
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.Encoding;
 import com.knuddels.jtokkit.api.EncodingRegistry;
@@ -100,5 +101,52 @@ public class ChunkerService {
         }
 
         return ans;
+    }
+
+    private List<SentenceSpan> sliceSpansForOverlap(String text, List<SentenceSpan> spans, int overlapStart) {
+        int chunkEnd = spans.getLast().end();
+
+        List<SentenceSpan> out = new ArrayList<>();
+
+        for (SentenceSpan ss : spans) {
+            if (ss.end() <= overlapStart) continue;
+            int s = Math.max(ss.start(), overlapStart);
+            int e = ss.end();
+
+            if (s < e) {
+                out.add(new SentenceSpan(overlapStart, chunkEnd, text.substring(overlapStart, chunkEnd)));
+            }
+        }
+        if (out.isEmpty()) {
+            out.add(new SentenceSpan(overlapStart, chunkEnd, text.substring(overlapStart, chunkEnd)));
+        }
+
+        return out;
+    }
+
+    private List<Chunk> splitLongSentenceToChunks(String text, UUID docId, int page, SentenceSpan longSentence, int maxTokens, int overlapTokens) {
+        return null;
+    }
+
+    private List<WordSpan> wordSpans(String text, int baseOffset) {
+        List<WordSpan> out = new ArrayList<>();
+        Matcher m = Pattern.compile("\\S+").matcher(text);
+        while (m.find()) {
+            out.add(new WordSpan(baseOffset + m.start(), baseOffset + m.end()));
+        }
+
+        return out;
+    }
+
+    private String sliceWords(String pageText, List<WordSpan> wordSpans, int i, int jInclusive) {
+        int start = wordSpans.get(i).start();
+        int end = wordSpans.get(jInclusive).end();
+
+        return pageText.substring(start, end);
+    }
+
+    private String concatText(String pageText, List<WordSpan> wordSpans, int start, int end) {
+        if (wordSpans.isEmpty()) return "";
+        return pageText.substring(start, end);
     }
 }
