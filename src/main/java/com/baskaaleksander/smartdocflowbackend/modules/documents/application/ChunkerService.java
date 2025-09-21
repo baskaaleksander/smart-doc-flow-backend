@@ -15,18 +15,17 @@ import java.util.UUID;
 @Service
 public class ChunkerService {
 
+    private final Tokenizer tokenizer;
+
+    public ChunkerService(Tokenizer tokenizer) {
+        this.tokenizer = tokenizer;
+    }
+
     private List<String> splitIntoSentences(String rawText) {
         return Arrays.stream(rawText.split("(?<=[.!?])\\\\s+"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
-    }
-
-    private int countTokens(String text) {
-        EncodingRegistry registry = Encodings.newDefaultEncodingRegistry();
-        Encoding enc = registry.getEncodingForModel(ModelType.TEXT_EMBEDDING_3_SMALL);
-
-        return enc.countTokens(text);
     }
 
     public List<Chunk> chunkPage(String rawText, UUID documentId, int page) {
@@ -42,7 +41,7 @@ public class ChunkerService {
 
 
         for (String sentence : sentences) {
-            int sentenceTokens = countTokens(sentence);
+            int sentenceTokens = tokenizer.count(sentence);
 
             if (tokenCount + sentenceTokens > maxTokens) {
 
