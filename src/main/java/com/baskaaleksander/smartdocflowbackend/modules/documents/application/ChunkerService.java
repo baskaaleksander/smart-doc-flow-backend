@@ -3,14 +3,9 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.SentenceSpan;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.WordSpan;
-import com.knuddels.jtokkit.Encodings;
-import com.knuddels.jtokkit.api.Encoding;
-import com.knuddels.jtokkit.api.EncodingRegistry;
-import com.knuddels.jtokkit.api.ModelType;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -28,7 +23,76 @@ public class ChunkerService {
 
     public List<Chunk> chunkPage(String rawText, UUID documentId, int page) {
 
-        return null;
+        int maxTokens = 700;
+        int overlapTokens = 120;
+
+        List<SentenceSpan> sentences = splitIntoSentenceSpans(rawText);
+
+        List<Chunk> out = new ArrayList<>();
+
+        if (sentences.isEmpty()) {
+            return out;
+        }
+
+        int chunkStartChar = sentences.getFirst().start();
+        List<SentenceSpan> current = new ArrayList<>();
+        int currentTokens = 0;
+
+        for (SentenceSpan s : sentences) {
+            int sTokens = tokenizer.count(s.text());
+
+            if (sTokens > maxTokens) {
+                if (!current.isEmpty()) {
+                    Chunk ch = buildChunkFromSpans(rawText, documentId, page, current, chunkStartChar);
+                    out.add(ch);
+
+                    int overlapStart = computeOverlapStartChar(rawText, current, overlapTokens);
+
+                    chunkStartChar = overlapStart;
+                    current.clear();
+                    currentTokens = 0;
+                }
+
+                out.addAll(splitLongSentenceToChunks(rawText, documentId, page, s, maxTokens, overlapTokens));
+
+                chunkStartChar = s.end();
+                continue;
+            }
+
+            if (currentTokens + sTokens <= maxTokens) {
+                if(current.isEmpty()) chunkStartChar = s.start();
+                current.add(s);
+                currentTokens += sTokens;
+            } else {
+                Chunk ch = buildChunkFromSpans(rawText, documentId, page, current, chunkStartChar);
+
+                int overlapStart = computeOverlapStartChar(rawText, current, overlapTokens);
+
+                List<SentenceSpan> overlapped = sliceSpansForOverlap(rawText, current, overlapStart);
+                current = new ArrayList<>(overlapped);
+                currentTokens = tokenizer.count(concatText(rawText, overlapped, overlapStart, overlapped.getLast().end()));
+
+                if (currentTokens + sTokens > maxTokens) {
+                    Chunk ch2 = buildChunkFromSpans(rawText, documentId, page, current, overlapStart);
+                    out.add(ch2);
+                    chunkStartChar = s.start();
+                    current = new ArrayList<>(List.of(s));
+                    currentTokens = sTokens;
+                } else {
+                    if (current.isEmpty()) chunkStartChar = s.start();
+                    else chunkStartChar = overlapStart;
+                    current.add(s);
+                    currentTokens += sTokens;
+                }
+            }
+        }
+
+        if (!current.isEmpty()) {
+            Chunk ch = buildChunkFromSpans(rawText, documentId, page, current, chunkStartChar);
+            out.add(ch);
+        }
+
+        return out;
     }
 
     private List<SentenceSpan> splitIntoSentenceSpans(String rawText) {
@@ -197,8 +261,8 @@ public class ChunkerService {
         return pageText.substring(start, end);
     }
 
-    private String concatText(String pageText, List<WordSpan> wordSpans, int start, int end) {
-        if (wordSpans.isEmpty()) return "";
+    private String concatText(String pageText, List<SentenceSpan> spans, int start, int end) {
+        if (spans.isEmpty()) return "";
         return pageText.substring(start, end);
     }
 }
