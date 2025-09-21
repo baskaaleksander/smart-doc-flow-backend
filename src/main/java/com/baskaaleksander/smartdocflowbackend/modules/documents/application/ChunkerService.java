@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.SentenceSpan;
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.Encoding;
 import com.knuddels.jtokkit.api.EncodingRegistry;
@@ -11,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class ChunkerService {
@@ -21,32 +24,52 @@ public class ChunkerService {
         this.tokenizer = tokenizer;
     }
 
-    private List<String> splitIntoSentences(String rawText) {
-        return Arrays.stream(rawText.split("(?<=[.!?])\\\\s+"))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
-    }
 
     public List<Chunk> chunkPage(String rawText, UUID documentId, int page) {
-        int maxTokens = 700;
-        int overlap = 120;
 
-        List<String> sentences = splitIntoSentences(rawText);
-        List<Chunk> chunks = new ArrayList<>();
+        return null;
+    }
 
-        StringBuilder current = new StringBuilder();
-        int tokenCount = 0;
-        int startOffset = 0;
+    private List<SentenceSpan> splitIntoSentenceSpans(String rawText) {
+        Pattern p = Pattern.compile(".+?(?<=[.!?])(?=\\s+|$)", Pattern.DOTALL | Pattern.UNICODE_CASE);
+        Matcher m = p.matcher(rawText);
 
+        List<SentenceSpan> spans = new ArrayList<>();
+        int lastEnd = 0;
 
-        for (String sentence : sentences) {
-            int sentenceTokens = tokenizer.count(sentence);
+        while(m.find()) {
+            int s = m.start();
+            int e = m.end();
+            String piece = rawText.substring(s, e).trim();
 
-            if (tokenCount + sentenceTokens > maxTokens) {
+            if(!piece.isEmpty()) {
+                int leading = leadingWs(rawText, s, e);
+                int trailing = trailingWs(rawText, s, e);
+                int startAdj = s + leading;
+                int endAdj = e - trailing;
 
+                spans.add(new SentenceSpan(startAdj, endAdj, rawText.substring(startAdj, endAdj)));
+                lastEnd = e;
             }
         }
-        return null;
+
+        if (spans.isEmpty() && !rawText.isBlank()) {
+            spans.add(new SentenceSpan(0, rawText.length(), rawText));
+        }
+
+        return spans;
+    }
+
+    private int leadingWs(String t, int s, int e) {
+        int i = s;
+        while (i < e && Character.isWhitespace(t.charAt(i))) i++;
+        return i - s;
+    }
+
+    private int trailingWs(String t, int s, int e) {
+        int i = e - 1;
+        while(i > e && Character.isWhitespace(t.charAt(i))) i--;
+
+        return (e - 1) - i;
     }
 }
