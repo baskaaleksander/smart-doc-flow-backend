@@ -125,7 +125,59 @@ public class ChunkerService {
     }
 
     private List<Chunk> splitLongSentenceToChunks(String text, UUID docId, int page, SentenceSpan longSentence, int maxTokens, int overlapTokens) {
-        return null;
+
+        List<Chunk> out = new ArrayList<>();
+        List<WordSpan> words = wordSpans(longSentence.text(), longSentence.start());
+
+        int n = words.size();
+        if (n == 0) return out;
+
+        int startIdx = 0;
+        while(startIdx < n) {
+            int endIdx = startIdx;
+            while (endIdx < n) {
+                String segment = sliceWords(text, words, startIdx, endIdx);
+                int tokens = tokenizer.count(segment);
+                if(tokens > maxTokens) break;
+                endIdx++;
+            }
+            if (endIdx == startIdx) {
+                int hardStart = words.get(startIdx).start();
+                int hardEnd = Math.min(longSentence.end(), hardStart + Math.min(2000, maxTokens * 4));
+                String content = text.substring(hardStart, hardEnd);
+                out.add(new Chunk(docId, page, hardStart, hardEnd, content));
+                startIdx++;
+                continue;
+            }
+            int segStart = words.get(startIdx).start();
+            int segEnd = words.get(endIdx - 1).end();
+
+            String content = text.substring(segStart, segEnd);
+            out.add(new Chunk(docId, page, segStart, segEnd, content));
+
+            if (endIdx >= n) break;
+
+            int newStartIdx = endIdx - 1;
+            int suffixStartChar = segEnd;
+
+            int lo = startIdx, hi = endIdx, ans = startIdx;
+
+            while (lo <= hi) {
+                int mid = (lo + hi) >>> 1;
+                String suffix = sliceWords(text, words, mid, endIdx - 1);
+                int tokens = tokenizer.count(suffix);
+
+                if (tokens >= overlapTokens) {
+                    ans = mid;
+                    lo = mid + 1;
+
+                } else {
+                    hi = mid - 1;
+                }
+            }
+            startIdx = Math.max(ans, endIdx - 1);
+        }
+        return out;
     }
 
     private List<WordSpan> wordSpans(String text, int baseOffset) {
