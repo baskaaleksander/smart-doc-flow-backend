@@ -15,7 +15,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMap
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
