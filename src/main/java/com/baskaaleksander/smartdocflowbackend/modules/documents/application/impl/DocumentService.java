@@ -154,9 +154,11 @@ public class DocumentService {
     public void ingestDocument(UUID docId) throws IOException {
         DocumentOcrResult ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
 
+        System.out.println(ocrResult.getStorageKey());
+
         GetObjectRequest get = GetObjectRequest.builder()
                 .bucket(s3Bucket)
-                .key(ocrResult.getStorageKey())
+                .key(ocrResult.getStorageKey() + ".json")
                 .responseContentType("application/json")
                 .build();
 

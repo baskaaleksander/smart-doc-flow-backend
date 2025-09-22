@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @RestController
@@ -28,6 +29,13 @@ public class DocumentController {
     @PostMapping("/upload")
     public ResponseEntity<DocumentResponse> uploadDocument(@RequestBody MultipartFile file) {
         return new ResponseEntity<>(documentService.createAndSave(file), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{id}/ingest")
+    public ResponseEntity<String> ingestDocument(@PathVariable("id") UUID docId) throws IOException {
+        documentService.ingestDocument(docId);
+
+        return new ResponseEntity<>("OK", HttpStatus.OK);
     }
 
     @GetMapping("/")

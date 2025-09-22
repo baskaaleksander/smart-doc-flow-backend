@@ -20,7 +20,7 @@ public class VectorStoreLoader {
                 c -> Document.builder()
                         .text(c.content())
                         .metadata(Map.of(
-                                "docId", c.documentId(),
+                                "docId", c.documentId().toString(),
                                 "page", c.page(),
                                 "startOffset", c.startOffset(),
                                 "endOffset", c.endOffset()
