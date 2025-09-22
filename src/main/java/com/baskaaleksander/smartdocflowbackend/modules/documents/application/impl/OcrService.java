@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl;
 
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
@@ -56,17 +57,24 @@ public class OcrService {
     private final DocumentRepository documentRepository;
     private final OpenAiChatModel chatModel;
     private final ObjectMapper MAPPER = new ObjectMapper();
+    private final VectorStoreLoader vectorStoreLoader;
+    private final ChunkerService chunkerService;
 
     @Autowired
     public OcrService(
             S3Client s3Client,
             DocumentRepository documentRepository,
             OpenAiChatModel chatModel,
-            DocumentOcrResultRepository documentOcrResultRepository) {
+            DocumentOcrResultRepository documentOcrResultRepository,
+            VectorStoreLoader vectorStoreLoader,
+            ChunkerService chunkerService
+    ) {
         this.s3Client = s3Client;
         this.documentRepository = documentRepository;
         this.chatModel = chatModel;
         this.documentOcrResultRepository = documentOcrResultRepository;
+        this.vectorStoreLoader = vectorStoreLoader;
+        this.chunkerService = chunkerService;
     }
 
     @Async("ocrExecutor")
@@ -100,6 +108,10 @@ public class OcrService {
                 saveOcrResultToDb(docOcrKey, documentId);
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
+
+                List<Chunk> chunks = chunkerService.chunkPage(rawText, documentId, 0);
+
+                vectorStoreLoader.loadChunks(chunks);
 
                 return CompletableFuture.completedFuture(null);
             } catch (Exception e) {

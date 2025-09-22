@@ -4,11 +4,14 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
@@ -17,6 +20,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Revie
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +40,8 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
@@ -46,6 +52,7 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
+    private final DocumentOcrResultRepository documentOcrResultRepository;
     private OcrService ocrService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
@@ -53,6 +60,8 @@ public class DocumentService {
     private final NotificationService notificationService;
     private final S3Presigner s3Presigner;
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
+    private final ObjectMapper MAPPER = new ObjectMapper();
+
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
@@ -65,8 +74,8 @@ public class DocumentService {
             ReviewRepository reviewRepository,
             DocumentMapper documentMapper,
             NotificationService notificationService,
-            S3Presigner s3Presigner
-    ) {
+            S3Presigner s3Presigner,
+            DocumentOcrResultRepository documentOcrResultRepository) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
@@ -75,6 +84,7 @@ public class DocumentService {
         this.documentMapper = documentMapper;
         this.notificationService = notificationService;
         this.s3Presigner = s3Presigner;
+        this.documentOcrResultRepository = documentOcrResultRepository;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -131,6 +141,23 @@ public class DocumentService {
         review = reviewRepository.save(review);
 
         document.setReview(review);
+    }
+
+    //temp setup for debugging purposes
+    public void ingestDocument(UUID docId) throws IOException {
+        DocumentOcrResult ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
+
+        GetObjectRequest get = GetObjectRequest.builder()
+                .bucket(s3Bucket)
+                .key(ocrResult.getStorageKey())
+                .responseContentType("application/json")
+                .build();
+
+        var response = s3Client.getObject(get);
+
+        String json = new String(response.readAllBytes(), StandardCharsets.UTF_8);
+        OcrResult result = MAPPER.readValue(json, OcrResult.class);
+
     }
 
     public DocumentResponse getById(UUID id) {
