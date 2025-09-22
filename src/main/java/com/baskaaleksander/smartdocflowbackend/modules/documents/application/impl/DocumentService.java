@@ -3,8 +3,10 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.im
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrResultPage;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
@@ -43,6 +45,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -53,6 +56,8 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
     private final DocumentOcrResultRepository documentOcrResultRepository;
+    private final ChunkerService chunkerService;
+    private final VectorStoreLoader vectorStoreLoader;
     private OcrService ocrService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
@@ -75,7 +80,7 @@ public class DocumentService {
             DocumentMapper documentMapper,
             NotificationService notificationService,
             S3Presigner s3Presigner,
-            DocumentOcrResultRepository documentOcrResultRepository) {
+            DocumentOcrResultRepository documentOcrResultRepository, ChunkerService chunkerService, VectorStoreLoader vectorStoreLoader) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
@@ -85,6 +90,8 @@ public class DocumentService {
         this.notificationService = notificationService;
         this.s3Presigner = s3Presigner;
         this.documentOcrResultRepository = documentOcrResultRepository;
+        this.chunkerService = chunkerService;
+        this.vectorStoreLoader = vectorStoreLoader;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -157,6 +164,14 @@ public class DocumentService {
 
         String json = new String(response.readAllBytes(), StandardCharsets.UTF_8);
         OcrResult result = MAPPER.readValue(json, OcrResult.class);
+
+        List<Chunk> chunks = new ArrayList<>();
+
+        for (OcrResultPage page : result.pages()) {
+            chunks.addAll(chunkerService.chunkPage(page.text(),docId ,page.page()));
+        }
+
+        vectorStoreLoader.loadChunks(chunks);
 
     }
 
