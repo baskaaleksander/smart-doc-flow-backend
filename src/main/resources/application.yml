@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: smart-doc-flow
+  mvc:
+    servlet:
+      path: /api
+  profiles:
+    active: dev

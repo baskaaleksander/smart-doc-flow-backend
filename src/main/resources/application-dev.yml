@@ -1,0 +1,39 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  ai:
+    vectorstore:
+      qdrant:
+        collection-name: documents
+    openai:
+      chat:
+        options:
+          model: gpt-5-nano-2025-08-07
+          temperature: 1.0
+      embedding:
+        options:
+          model: text-embedding-3-small
+      api-key: ${OPENAI_API_KEY}
+  autoconfigure:
+    exclude: org.springframework.ai.autoconfigure.vectorstore.qdrant.QdrantVectorStoreAutoConfiguration
+jwt:
+  access:
+    secret: ${JWT_ACCESS_SECRET}
+    expiration: ${JWT_ACCESS_EXPIRATION}
+  refresh:
+    secret: ${JWT_REFRESH_SECRET}
+    expiration: ${JWT_REFRESH_EXPIRATION}
+minio:
+  url: ${MINIO_URL}
+  access:
+    name: ${MINIO_ACCESS_NAME}
+    secret: ${MINIO_ACCESS_SECRET}
+  bucket:
+    name: smartdocflow
