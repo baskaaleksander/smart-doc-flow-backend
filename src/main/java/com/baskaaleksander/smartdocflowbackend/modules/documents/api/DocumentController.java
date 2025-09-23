@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.EmbeddingService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.RagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -22,11 +23,13 @@ public class DocumentController {
 
     private final DocumentService documentService;
     private final EmbeddingService embeddingService;
+    private final RagService ragService;
 
     @Autowired
-    public DocumentController(DocumentService documentService, EmbeddingService embeddingService) {
+    public DocumentController(DocumentService documentService, EmbeddingService embeddingService, RagService ragService) {
         this.documentService = documentService;
         this.embeddingService = embeddingService;
+        this.ragService = ragService;
     }
 
     @PostMapping("/upload")
@@ -34,12 +37,7 @@ public class DocumentController {
         return new ResponseEntity<>(documentService.createAndSave(file), HttpStatus.CREATED);
     }
 
-    @PostMapping("/{id}/ingest")
-    public ResponseEntity<String> ingestDocument(@PathVariable("id") UUID docId) throws IOException {
-        embeddingService.ingestDocument(docId);
 
-        return new ResponseEntity<>("OK", HttpStatus.OK);
-    }
 
     @GetMapping("/")
     @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
@@ -57,6 +55,18 @@ public class DocumentController {
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponse> getDocumentById(@PathVariable UUID id) {
         return new ResponseEntity<>(documentService.getById(id), HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/ingest")
+    public ResponseEntity<String> ingestDocument(@PathVariable("id") UUID docId) throws IOException {
+        embeddingService.ingestDocument(docId);
+
+        return new ResponseEntity<>("OK", HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/ask")
+    public ResponseEntity<String> askQuestion(@RequestParam("question") String question) {
+        return new ResponseEntity<>(ragService.askQuestion(question), HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")
