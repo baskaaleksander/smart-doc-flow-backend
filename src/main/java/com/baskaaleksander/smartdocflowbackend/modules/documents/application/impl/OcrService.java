@@ -19,7 +19,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.Media;
+import org.springframework.ai.content.Media;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,8 +58,7 @@ public class OcrService {
     private final DocumentRepository documentRepository;
     private final OpenAiChatModel chatModel;
     private final ObjectMapper MAPPER = new ObjectMapper();
-    private final VectorStoreLoader vectorStoreLoader;
-    private final ChunkerService chunkerService;
+
 
     @Autowired
     public OcrService(
@@ -67,15 +66,12 @@ public class OcrService {
             DocumentRepository documentRepository,
             OpenAiChatModel chatModel,
             DocumentOcrResultRepository documentOcrResultRepository,
-            VectorStoreLoader vectorStoreLoader,
-            ChunkerService chunkerService,
             EmbeddingService embeddingService) {
         this.s3Client = s3Client;
         this.documentRepository = documentRepository;
         this.chatModel = chatModel;
         this.documentOcrResultRepository = documentOcrResultRepository;
-        this.vectorStoreLoader = vectorStoreLoader;
-        this.chunkerService = chunkerService;
+
         this.embeddingService = embeddingService;
     }
 
@@ -193,10 +189,10 @@ public class OcrService {
         - Language hint: %s
         """);
 
-        UserMessage userMessage = new UserMessage(
-                "Please OCR each page. Output must follow the schema above.",
-                images
-        );
+        UserMessage userMessage = UserMessage.builder()
+                .text("Please OCR each page. Output must follow the schema above.")
+                .media(images)
+                .build();
 
         var options = OpenAiChatOptions.builder()
                 .model(model)
