@@ -24,6 +24,7 @@ public class ChunkerService {
 
     public List<Chunk> chunkPage(String rawText, UUID documentId, int page) {
 
+
         int maxTokens = 700;
         int overlapTokens = 120;
 
@@ -35,7 +36,8 @@ public class ChunkerService {
             return out;
         }
 
-        int chunkStartChar = sentences.getFirst().start();
+        int chunkStartChar = sentences.get(0).start();
+
         List<SentenceSpan> current = new ArrayList<>();
         int currentTokens = 0;
 
@@ -46,12 +48,6 @@ public class ChunkerService {
                 if (!current.isEmpty()) {
                     Chunk ch = buildChunkFromSpans(rawText, documentId, page, current, chunkStartChar);
                     out.add(ch);
-
-                    int overlapStart = computeOverlapStartChar(rawText, current, overlapTokens);
-
-                    chunkStartChar = overlapStart;
-                    current.clear();
-                    currentTokens = 0;
                 }
 
                 out.addAll(splitLongSentenceToChunks(rawText, documentId, page, s, maxTokens, overlapTokens));
@@ -66,12 +62,14 @@ public class ChunkerService {
                 currentTokens += sTokens;
             } else {
                 Chunk ch = buildChunkFromSpans(rawText, documentId, page, current, chunkStartChar);
+                out.add(ch);
 
                 int overlapStart = computeOverlapStartChar(rawText, current, overlapTokens);
+                overlapStart = alignToWordBoundaryLeft(rawText, overlapStart);
 
                 List<SentenceSpan> overlapped = sliceSpansForOverlap(rawText, current, overlapStart);
                 current = new ArrayList<>(overlapped);
-                currentTokens = tokenizer.count(concatText(rawText, overlapped, overlapStart, overlapped.getLast().end()));
+                currentTokens = tokenizer.count(concatText(rawText, overlapped, overlapStart, overlapped.get(overlapped.size() - 1).end()));
 
                 if (currentTokens + sTokens > maxTokens) {
                     Chunk ch2 = buildChunkFromSpans(rawText, documentId, page, current, overlapStart);
@@ -96,12 +94,18 @@ public class ChunkerService {
         return out;
     }
 
+    private int alignToWordBoundaryLeft(String t, int pos) {
+        if (pos <= 0) return 0;
+        int i = pos;
+        while (i > 0 && !Character.isWhitespace(t.charAt(i - 1))) i--;
+        return i;
+    }
+
     private List<SentenceSpan> splitIntoSentenceSpans(String rawText) {
         Pattern p = Pattern.compile(".+?(?<=[.!?])(?=\\s+|$)", Pattern.DOTALL | Pattern.UNICODE_CASE);
         Matcher m = p.matcher(rawText);
 
         List<SentenceSpan> spans = new ArrayList<>();
-        int lastEnd = 0;
 
         while(m.find()) {
             int s = m.start();
@@ -115,7 +119,6 @@ public class ChunkerService {
                 int endAdj = e - trailing;
 
                 spans.add(new SentenceSpan(startAdj, endAdj, rawText.substring(startAdj, endAdj)));
-                lastEnd = e;
             }
         }
 
@@ -134,21 +137,20 @@ public class ChunkerService {
 
     private int trailingWs(String t, int s, int e) {
         int i = e - 1;
-        while(i > e && Character.isWhitespace(t.charAt(i))) i--;
-
+        while (i >= s && Character.isWhitespace(t.charAt(i))) i--;
         return (e - 1) - i;
     }
 
     private Chunk buildChunkFromSpans(String text, UUID docId, int page, List<SentenceSpan> spans, int chunkStartChar) {
-        int end = spans.getLast().end();
+        int end = spans.get(spans.size() - 1).end();
         String content = text.substring(chunkStartChar, end);
 
         return new Chunk(docId, page, chunkStartChar, end, content);
     }
 
     private int computeOverlapStartChar(String text, List<SentenceSpan> spans, int overlapTokens) {
-        int chunkStart = spans.getFirst().start();
-        int chunkEnd = spans.getLast().end();
+        int chunkStart = spans.get(0).start();
+        int chunkEnd = spans.get(spans.size() - 1).end();
 
         int total = tokenizer.count(text.substring(chunkStart, chunkEnd));
         if (total <= overlapTokens) return chunkStart;
@@ -169,23 +171,19 @@ public class ChunkerService {
     }
 
     private List<SentenceSpan> sliceSpansForOverlap(String text, List<SentenceSpan> spans, int overlapStart) {
-        int chunkEnd = spans.getLast().end();
-
+        int chunkEnd = spans.get(spans.size() - 1).end();
         List<SentenceSpan> out = new ArrayList<>();
-
         for (SentenceSpan ss : spans) {
             if (ss.end() <= overlapStart) continue;
             int s = Math.max(ss.start(), overlapStart);
             int e = ss.end();
-
             if (s < e) {
-                out.add(new SentenceSpan(overlapStart, chunkEnd, text.substring(overlapStart, chunkEnd)));
+                out.add(new SentenceSpan(s, e, text.substring(s, e)));
             }
         }
         if (out.isEmpty()) {
             out.add(new SentenceSpan(overlapStart, chunkEnd, text.substring(overlapStart, chunkEnd)));
         }
-
         return out;
     }
 
@@ -221,9 +219,6 @@ public class ChunkerService {
             out.add(new Chunk(docId, page, segStart, segEnd, content));
 
             if (endIdx >= n) break;
-
-            int newStartIdx = endIdx - 1;
-            int suffixStartChar = segEnd;
 
             int lo = startIdx, hi = endIdx, ans = startIdx;
 

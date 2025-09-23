@@ -174,7 +174,10 @@ public class DocumentService {
         }
 
         vectorStoreLoader.loadChunks(chunks);
-
+//        System.out.println("chunking result:");
+//        for(Chunk ch : chunks) {
+//            System.out.println(ch.content());
+//        }
     }
 
     public DocumentResponse getById(UUID id) {
