@@ -49,6 +49,7 @@ import java.util.concurrent.CompletableFuture;
 public class OcrService {
 
     private final DocumentOcrResultRepository documentOcrResultRepository;
+    private final EmbeddingService embeddingService;
     @Value(value = "${minio.bucket.name}")
     private String bucket;
     @Value(value = "${spring.ai.openai.chat.options.model}")
@@ -67,20 +68,19 @@ public class OcrService {
             OpenAiChatModel chatModel,
             DocumentOcrResultRepository documentOcrResultRepository,
             VectorStoreLoader vectorStoreLoader,
-            ChunkerService chunkerService
-    ) {
+            ChunkerService chunkerService,
+            EmbeddingService embeddingService) {
         this.s3Client = s3Client;
         this.documentRepository = documentRepository;
         this.chatModel = chatModel;
         this.documentOcrResultRepository = documentOcrResultRepository;
         this.vectorStoreLoader = vectorStoreLoader;
         this.chunkerService = chunkerService;
+        this.embeddingService = embeddingService;
     }
 
     @Async("ocrExecutor")
     public CompletableFuture<Void> startAsync(UUID documentId) {
-
-        System.out.println("im here in start async");
 
         Document doc = documentRepository.getDocumentById(documentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
@@ -109,9 +109,7 @@ public class OcrService {
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
-                List<Chunk> chunks = chunkerService.chunkPage(rawText, documentId, 0);
-
-                vectorStoreLoader.loadChunks(chunks);
+                embeddingService.ingestDocument(documentId);
 
                 return CompletableFuture.completedFuture(null);
             } catch (Exception e) {

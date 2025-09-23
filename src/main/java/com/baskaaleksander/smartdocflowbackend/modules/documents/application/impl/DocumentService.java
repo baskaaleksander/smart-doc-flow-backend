@@ -55,9 +55,6 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
-    private final DocumentOcrResultRepository documentOcrResultRepository;
-    private final ChunkerService chunkerService;
-    private final VectorStoreLoader vectorStoreLoader;
     private OcrService ocrService;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
@@ -79,8 +76,7 @@ public class DocumentService {
             ReviewRepository reviewRepository,
             DocumentMapper documentMapper,
             NotificationService notificationService,
-            S3Presigner s3Presigner,
-            DocumentOcrResultRepository documentOcrResultRepository, ChunkerService chunkerService, VectorStoreLoader vectorStoreLoader) {
+            S3Presigner s3Presigner) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.ocrService = ocrService;
@@ -89,9 +85,6 @@ public class DocumentService {
         this.documentMapper = documentMapper;
         this.notificationService = notificationService;
         this.s3Presigner = s3Presigner;
-        this.documentOcrResultRepository = documentOcrResultRepository;
-        this.chunkerService = chunkerService;
-        this.vectorStoreLoader = vectorStoreLoader;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -148,36 +141,6 @@ public class DocumentService {
         review = reviewRepository.save(review);
 
         document.setReview(review);
-    }
-
-    //temp setup for debugging purposes
-    public void ingestDocument(UUID docId) throws IOException {
-        DocumentOcrResult ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
-
-        System.out.println(ocrResult.getStorageKey());
-
-        GetObjectRequest get = GetObjectRequest.builder()
-                .bucket(s3Bucket)
-                .key(ocrResult.getStorageKey() + ".json")
-                .responseContentType("application/json")
-                .build();
-
-        var response = s3Client.getObject(get);
-
-        String json = new String(response.readAllBytes(), StandardCharsets.UTF_8);
-        OcrResult result = MAPPER.readValue(json, OcrResult.class);
-
-        List<Chunk> chunks = new ArrayList<>();
-
-        for (OcrResultPage page : result.pages()) {
-            chunks.addAll(chunkerService.chunkPage(page.text(),docId ,page.page()));
-        }
-
-        vectorStoreLoader.loadChunks(chunks);
-//        System.out.println("chunking result:");
-//        for(Chunk ch : chunks) {
-//            System.out.println(ch.content());
-//        }
     }
 
     public DocumentResponse getById(UUID id) {

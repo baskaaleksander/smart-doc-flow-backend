@@ -1,5 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.common.exception;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.gson.JsonParseException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                400,
+                HttpStatus.BAD_GATEWAY.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(JsonParseException.class)
+    public ResponseEntity<ErrorResponse> handleJsonParseException(JsonParseException ex, HttpServletRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(
                 400,
                 HttpStatus.BAD_GATEWAY.getReasonPhrase(),

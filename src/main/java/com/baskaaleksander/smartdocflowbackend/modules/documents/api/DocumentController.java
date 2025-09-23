@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.EmbeddingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,12 @@ import java.util.UUID;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final EmbeddingService embeddingService;
 
     @Autowired
-    public DocumentController(DocumentService documentService) {
+    public DocumentController(DocumentService documentService, EmbeddingService embeddingService) {
         this.documentService = documentService;
+        this.embeddingService = embeddingService;
     }
 
     @PostMapping("/upload")
@@ -33,7 +36,7 @@ public class DocumentController {
 
     @PostMapping("/{id}/ingest")
     public ResponseEntity<String> ingestDocument(@PathVariable("id") UUID docId) throws IOException {
-        documentService.ingestDocument(docId);
+        embeddingService.ingestDocument(docId);
 
         return new ResponseEntity<>("OK", HttpStatus.OK);
     }
