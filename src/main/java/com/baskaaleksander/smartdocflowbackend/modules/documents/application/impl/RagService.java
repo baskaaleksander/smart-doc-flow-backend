@@ -1,5 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -12,21 +17,31 @@ import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 public class RagService {
 
     private final OpenAiChatModel openAiChatModel;
     private final VectorStore vectorStore;
+    private final DocumentRepository documentRepository;
 
     public RagService(
             OpenAiChatModel openAiChatModel,
-            VectorStore vectorStore
-    ) {
+            VectorStore vectorStore,
+            DocumentRepository documentRepository) {
         this.openAiChatModel = openAiChatModel;
         this.vectorStore = vectorStore;
+        this.documentRepository = documentRepository;
     }
 
     public String askQuestion(String question, String docId) {
+
+        Document doc = documentRepository.getDocumentById(UUID.fromString(docId)).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+
+        if (doc.getStatus() != DocumentStatus.PROCESSED) {
+            throw new ResourceConflictException("Document is not processed yet");
+        }
 
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
