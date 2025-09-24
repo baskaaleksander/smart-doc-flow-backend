@@ -6,8 +6,12 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Document
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.openai.OpenAiChatModel;
@@ -22,26 +26,28 @@ import java.util.UUID;
 @Service
 public class RagService {
 
-    private final OpenAiChatModel openAiChatModel;
     private final VectorStore vectorStore;
     private final DocumentRepository documentRepository;
+    private final ChatClient chatClient;
 
     public RagService(
-            OpenAiChatModel openAiChatModel,
             VectorStore vectorStore,
-            DocumentRepository documentRepository) {
-        this.openAiChatModel = openAiChatModel;
+            DocumentRepository documentRepository,
+            ChatClient chatClient) {
         this.vectorStore = vectorStore;
         this.documentRepository = documentRepository;
+        this.chatClient = chatClient;
     }
 
-    public String askQuestion(String question, String docId) {
+    public String askQuestion(String question, String docId, UUID userId) {
 
         Document doc = documentRepository.getDocumentById(UUID.fromString(docId)).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         if (doc.getStatus() != DocumentStatus.PROCESSED) {
             throw new ResourceConflictException("Document is not processed yet");
         }
+
+        String conversationId = docId + ":" + userId;
 
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
@@ -60,7 +66,7 @@ public class RagService {
 
 			1. If the answer is not in the context, just say that you don't know.
 			2. Avoid statements like "Based on the context..." or "The provided information...".
-            """)
+           """)
                 .build();
 
 
@@ -70,14 +76,17 @@ public class RagService {
 
         Advisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
                 .documentRetriever(VectorStoreDocumentRetriever.builder()
-                        .similarityThreshold(0.90)
+                        .similarityThreshold(0.75)
                         .vectorStore(vectorStore)
                         .build())
                 .build();
 
-        return ChatClient.builder(openAiChatModel).build()
+
+
+        return chatClient
                 .prompt(question)
                 .advisors(retrievalAugmentationAdvisor)
+                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .advisors(qaAdvisor)
                 .advisors(a -> a.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "docId == '"+ docId +"'"))
                 .call()

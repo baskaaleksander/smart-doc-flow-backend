@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.DocumentService;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -65,8 +67,8 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/ask")
-    public ResponseEntity<String> askQuestion(@RequestParam("question") String question, @PathVariable("id") String id) {
-        return new ResponseEntity<>(ragService.askQuestion(question, id), HttpStatus.OK);
+    public ResponseEntity<String> askQuestion(@RequestParam("question") String question, @PathVariable("id") String id, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return new ResponseEntity<>(ragService.askQuestion(question, id, userDetails.getId()), HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")

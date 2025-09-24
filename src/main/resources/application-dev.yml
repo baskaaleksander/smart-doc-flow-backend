@@ -9,6 +9,11 @@ spring:
       ddl-auto: update
     show-sql: true
   ai:
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
     vectorstore:
       qdrant:
         collection-name: documents
