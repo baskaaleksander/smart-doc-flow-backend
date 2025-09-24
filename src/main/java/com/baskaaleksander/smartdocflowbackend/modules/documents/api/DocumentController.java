@@ -65,8 +65,8 @@ public class DocumentController {
     }
 
     @GetMapping("/{id}/ask")
-    public ResponseEntity<String> askQuestion(@RequestParam("question") String question) {
-        return new ResponseEntity<>(ragService.askQuestion(question), HttpStatus.OK);
+    public ResponseEntity<String> askQuestion(@RequestParam("question") String question, @PathVariable("id") String id) {
+        return new ResponseEntity<>(ragService.askQuestion(question, id), HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")

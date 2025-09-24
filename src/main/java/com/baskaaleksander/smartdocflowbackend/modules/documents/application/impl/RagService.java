@@ -26,7 +26,7 @@ public class RagService {
         this.vectorStore = vectorStore;
     }
 
-    public String askQuestion(String question) {
+    public String askQuestion(String question, String docId) {
 
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
@@ -62,7 +62,9 @@ public class RagService {
 
         return ChatClient.builder(openAiChatModel).build()
                 .prompt(question)
+                .advisors(retrievalAugmentationAdvisor)
                 .advisors(qaAdvisor)
+                .advisors(a -> a.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "docId == '"+ docId +"'"))
                 .call()
                 .content();
     }
