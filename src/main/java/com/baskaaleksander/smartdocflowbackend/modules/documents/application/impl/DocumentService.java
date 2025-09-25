@@ -55,7 +55,7 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
-    private OcrService ocrService;
+    private final OcrTaskPublisher ocrTaskPublisher;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
@@ -71,20 +71,20 @@ public class DocumentService {
     public DocumentService(
             DocumentRepository documentRepository,
             S3Client s3Client,
-            OcrService ocrService,
             UserRepository userRepository,
             ReviewRepository reviewRepository,
             DocumentMapper documentMapper,
             NotificationService notificationService,
-            S3Presigner s3Presigner) {
+            S3Presigner s3Presigner,
+            OcrTaskPublisher ocrTaskPublisher) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
-        this.ocrService = ocrService;
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
         this.documentMapper = documentMapper;
         this.notificationService = notificationService;
         this.s3Presigner = s3Presigner;
+        this.ocrTaskPublisher = ocrTaskPublisher;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -126,7 +126,7 @@ public class DocumentService {
 
         notificationService.sendNotification(username, "document_uploaded", "Document successfully uploaded!");
 
-        ocrService.startAsync(document.getId());
+        ocrTaskPublisher.enqueue(docId);
 
         return documentMapper.toDocumentResponse(document);
     }
