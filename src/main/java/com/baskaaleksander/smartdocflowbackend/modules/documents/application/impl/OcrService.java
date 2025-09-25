@@ -75,8 +75,7 @@ public class OcrService {
         this.embeddingService = embeddingService;
     }
 
-    @Async("ocrExecutor")
-    public CompletableFuture<Void> startAsync(UUID documentId) {
+    public void runOcr(UUID documentId) {
 
         Document doc = documentRepository.getDocumentById(documentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
@@ -105,9 +104,6 @@ public class OcrService {
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
-                embeddingService.ingestDocument(documentId);
-
-                return CompletableFuture.completedFuture(null);
             } catch (Exception e) {
                 documentRepository.updateStatus(documentId, DocumentStatus.FAILED);
                 throw new RuntimeException(e);
