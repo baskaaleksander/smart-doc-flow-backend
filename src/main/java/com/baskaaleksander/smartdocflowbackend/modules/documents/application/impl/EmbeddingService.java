@@ -2,12 +2,15 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.im
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrResultPage;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParseException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -27,6 +30,7 @@ public class EmbeddingService {
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final VectorStoreLoader vectorStoreLoader;
     private final ChunkerService chunkerService;
+    private final DocumentRepository documentRepository;
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
@@ -35,14 +39,16 @@ public class EmbeddingService {
             DocumentOcrResultRepository documentOcrResultRepository,
             S3Client s3Client,
             VectorStoreLoader vectorStoreLoader,
-            ChunkerService chunkerService
-    ) {
+            ChunkerService chunkerService,
+            DocumentRepository documentRepository) {
         this.documentOcrResultRepository = documentOcrResultRepository;
         this.s3Client = s3Client;
         this.vectorStoreLoader = vectorStoreLoader;
         this.chunkerService = chunkerService;
+        this.documentRepository = documentRepository;
     }
 
+    @Transactional
     public void ingestDocument(UUID docId) {
         DocumentOcrResult ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
 
@@ -71,5 +77,7 @@ public class EmbeddingService {
         }
 
         vectorStoreLoader.loadChunks(chunks);
+
+        documentRepository.updateStatus(docId, DocumentStatus.PROCESSED);
     }
 }

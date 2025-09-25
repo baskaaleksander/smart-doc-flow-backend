@@ -12,6 +12,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Doc
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.rendering.PDFRenderer;
@@ -50,6 +51,7 @@ public class OcrService {
 
     private final DocumentOcrResultRepository documentOcrResultRepository;
     private final EmbeddingService embeddingService;
+    private final EmbedTaskPublisher embedTaskPublisher;
     @Value(value = "${minio.bucket.name}")
     private String bucket;
     @Value(value = "${spring.ai.openai.chat.options.model}")
@@ -66,15 +68,17 @@ public class OcrService {
             DocumentRepository documentRepository,
             OpenAiChatModel chatModel,
             DocumentOcrResultRepository documentOcrResultRepository,
-            EmbeddingService embeddingService) {
+            EmbeddingService embeddingService, EmbedTaskPublisher embedTaskPublisher) {
         this.s3Client = s3Client;
         this.documentRepository = documentRepository;
         this.chatModel = chatModel;
         this.documentOcrResultRepository = documentOcrResultRepository;
 
         this.embeddingService = embeddingService;
+        this.embedTaskPublisher = embedTaskPublisher;
     }
 
+    @Transactional
     public void runOcr(UUID documentId) {
 
         Document doc = documentRepository.getDocumentById(documentId)
@@ -103,6 +107,8 @@ public class OcrService {
                 saveOcrResultToDb(docOcrKey, documentId);
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
+
+                embedTaskPublisher.enqueue(documentId);
 
             } catch (Exception e) {
                 documentRepository.updateStatus(documentId, DocumentStatus.FAILED);
