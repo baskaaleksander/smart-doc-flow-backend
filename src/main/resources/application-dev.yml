@@ -45,3 +45,7 @@ minio:
     secret: ${MINIO_ACCESS_SECRET}
   bucket:
     name: smartdocflow
+crypto:
+  conversation:
+    secret: ${CONVERSATION_SECRET}
+    fingerprint-secret: ${CONVERSATION_FINGERPRINT_SECRET}
