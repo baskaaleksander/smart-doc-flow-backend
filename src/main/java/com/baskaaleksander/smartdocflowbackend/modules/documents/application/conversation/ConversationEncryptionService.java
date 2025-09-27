@@ -60,6 +60,20 @@ public class ConversationEncryptionService {
     }
 
     public String decrypt(String cipherText) {
-        return null;
+        try {
+            byte[] all = Base64.getDecoder().decode(cipherText);
+
+            byte[] iv = new byte[IV_LENGTH];
+            byte[] ct = new byte[all.length - IV_LENGTH];
+            System.arraycopy(all, 0, iv, 0, IV_LENGTH);
+            System.arraycopy(all, IV_LENGTH, ct, 0, ct.length);
+
+            Cipher cipher = Cipher.getInstance(AES_ALGO);
+            cipher.init(Cipher.DECRYPT_MODE, aesKey, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
+
+            return new String(cipher.doFinal(ct), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
