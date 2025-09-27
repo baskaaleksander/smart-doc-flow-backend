@@ -52,8 +52,6 @@ public class EmbeddingService {
     public void ingestDocument(UUID docId) {
         DocumentOcrResult ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
 
-        System.out.println(ocrResult.getStorageKey());
-
         GetObjectRequest get = GetObjectRequest.builder()
                 .bucket(s3Bucket)
                 .key(ocrResult.getStorageKey() + ".json")

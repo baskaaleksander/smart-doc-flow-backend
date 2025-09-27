@@ -1,7 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.domain;
 
 public enum DocumentStatus {
-    FAILED,
+    OCR_FAILED,
+    EMBED_FAILED,
     UPLOADED,
     PROCESSED,
     TEXT_READY,

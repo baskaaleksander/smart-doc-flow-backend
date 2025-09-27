@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.common.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -91,5 +92,12 @@ public class QueueConfig {
         RabbitTemplate tpl = new RabbitTemplate(cf);
         tpl.setMessageConverter(conv);
         return tpl;
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory cf, MessageConverter mc, RabbitTemplate template
+    ) {
+        return null;
     }
 }

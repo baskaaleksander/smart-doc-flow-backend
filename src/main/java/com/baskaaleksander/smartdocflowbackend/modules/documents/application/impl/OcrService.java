@@ -111,7 +111,6 @@ public class OcrService {
                 embedTaskPublisher.enqueue(documentId);
 
             } catch (Exception e) {
-                documentRepository.updateStatus(documentId, DocumentStatus.FAILED);
                 throw new RuntimeException(e);
             }
     }
