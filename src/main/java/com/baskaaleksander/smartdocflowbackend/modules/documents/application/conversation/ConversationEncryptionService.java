@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -54,8 +55,8 @@ public class ConversationEncryptionService {
             buffer.put(ct);
 
             return Base64.getEncoder().encodeToString(buffer.array());
-        } catch (Exception e) {
-            throw new RuntimeException("AES-GCM encryption failed", e);
+        } catch (Exception ex) {
+            throw new RuntimeException("AES-GCM encryption failed", ex);
         }
     }
 
@@ -72,8 +73,21 @@ public class ConversationEncryptionService {
             cipher.init(Cipher.DECRYPT_MODE, aesKey, new GCMParameterSpec(GCM_TAG_LENGTH, iv));
 
             return new String(cipher.doFinal(ct), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    public String fingerprint(String message) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(hmacKey);
+
+            byte[] hash = mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
+
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (Exception ex) {
+            throw new RuntimeException("HMAC-SHA256 failed", ex);
         }
     }
 }
