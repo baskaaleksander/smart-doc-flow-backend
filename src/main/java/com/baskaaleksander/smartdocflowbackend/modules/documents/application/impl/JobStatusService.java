@@ -35,4 +35,12 @@ public class JobStatusService {
         documentRepository.updateStatus(documentId, DocumentStatus.PROCESSED);
 
     }
+    @Transactional
+    public void markInProgressOcr(UUID documentId) {
+        documentRepository.updateStatus(documentId, DocumentStatus.IN_PROGRESS_OCR);
+    }
+    @Transactional
+    public void markInProgressEmbed(UUID documentId) {
+        documentRepository.updateStatus(documentId, DocumentStatus.IN_PROGRESS_EMBED);
+    }
 }
