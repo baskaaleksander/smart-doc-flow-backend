@@ -21,7 +21,11 @@ public class EmbedTaskPublisher {
         rabbitTemplate.convertAndSend(
                 QueueConfig.EXCHANGE,
                 QueueConfig.EMBED_ROUTING_KEY,
-                task
+                task,
+                message -> {
+                    message.getMessageProperties().setHeader("documentId", documentId.toString());
+                    return message;
+                }
         );
     }
 }

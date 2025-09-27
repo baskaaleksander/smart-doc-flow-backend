@@ -20,7 +20,11 @@ public class OcrTaskPublisher {
         rabbitTemplate.convertAndSend(
                 QueueConfig.EXCHANGE,
                 QueueConfig.OCR_ROUTING_KEY,
-                task
+                task,
+                message -> {
+                    message.getMessageProperties().setHeader("documentId", documentId.toString());
+                    return message;
+                }
         );
     }
 }
