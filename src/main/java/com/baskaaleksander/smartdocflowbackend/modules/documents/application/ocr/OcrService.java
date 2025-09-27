@@ -1,6 +1,7 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
@@ -26,7 +27,6 @@ import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
 import software.amazon.awssdk.core.ResponseInputStream;
@@ -44,7 +44,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class OcrService {

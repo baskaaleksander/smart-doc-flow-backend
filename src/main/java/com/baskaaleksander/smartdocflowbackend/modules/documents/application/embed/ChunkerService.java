@@ -1,6 +1,5 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.Tokenizer;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.SentenceSpan;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.WordSpan;

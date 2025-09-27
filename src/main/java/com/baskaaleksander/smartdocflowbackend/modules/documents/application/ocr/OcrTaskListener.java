@@ -1,6 +1,7 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.JobStatusService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrTask;
 
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

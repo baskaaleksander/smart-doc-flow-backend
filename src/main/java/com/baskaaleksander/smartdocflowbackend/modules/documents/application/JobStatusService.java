@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;

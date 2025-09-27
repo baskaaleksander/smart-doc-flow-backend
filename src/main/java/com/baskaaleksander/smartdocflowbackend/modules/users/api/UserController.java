@@ -6,7 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

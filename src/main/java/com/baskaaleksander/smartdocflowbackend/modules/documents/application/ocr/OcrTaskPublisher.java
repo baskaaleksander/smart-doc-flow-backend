@@ -1,26 +1,25 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.impl;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.EmbedTask;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrTask;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
 @Service
-public class EmbedTaskPublisher {
+public class OcrTaskPublisher {
     private final RabbitTemplate rabbitTemplate;
 
-    public EmbedTaskPublisher(RabbitTemplate rabbitTemplate) {
+    public OcrTaskPublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
 
     public void enqueue(UUID documentId) {
-        EmbedTask task = new EmbedTask(documentId);
-
+        OcrTask task = new OcrTask(documentId);
         rabbitTemplate.convertAndSend(
                 QueueConfig.EXCHANGE,
-                QueueConfig.EMBED_ROUTING_KEY,
+                QueueConfig.OCR_ROUTING_KEY,
                 task,
                 message -> {
                     message.getMessageProperties().setHeader("documentId", documentId.toString());
