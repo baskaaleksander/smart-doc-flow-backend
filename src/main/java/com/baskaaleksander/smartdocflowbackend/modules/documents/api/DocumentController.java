@@ -6,7 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.RagService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -25,10 +25,10 @@ public class DocumentController {
 
     private final DocumentService documentService;
     private final EmbeddingService embeddingService;
-    private final RagService ragService;
+    private final ConversationService ragService;
 
     @Autowired
-    public DocumentController(DocumentService documentService, EmbeddingService embeddingService, RagService ragService) {
+    public DocumentController(DocumentService documentService, EmbeddingService embeddingService, ConversationService ragService) {
         this.documentService = documentService;
         this.embeddingService = embeddingService;
         this.ragService = ragService;
