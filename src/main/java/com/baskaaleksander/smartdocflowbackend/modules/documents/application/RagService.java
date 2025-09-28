@@ -3,8 +3,11 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationEncryptionService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessage;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,14 +29,18 @@ public class RagService {
     private final VectorStore vectorStore;
     private final DocumentRepository documentRepository;
     private final ChatClient chatClient;
+    private final ConversationEncryptionService conversationEncryptionService;
+    private final ConversationMessageRepository conversationMessageRepository;
 
     public RagService(
             VectorStore vectorStore,
             DocumentRepository documentRepository,
-            ChatClient chatClient) {
+            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, ConversationMessageRepository conversationMessageRepository) {
         this.vectorStore = vectorStore;
         this.documentRepository = documentRepository;
         this.chatClient = chatClient;
+        this.conversationEncryptionService = conversationEncryptionService;
+        this.conversationMessageRepository = conversationMessageRepository;
     }
 
     public String askQuestion(String question, String docId, UUID userId) {
@@ -96,6 +103,15 @@ public class RagService {
     }
 
     private void saveMessage(String content, ConversationSide type, String convoId) {
+        String encryptedContent = conversationEncryptionService.encrypt(content);
+        String fingerprint = conversationEncryptionService.fingerprint(content);
 
+        ConversationMessage message = new ConversationMessage();
+        message.setSide(type);
+        message.setContent(encryptedContent);
+        message.setFingerprint(fingerprint);
+        message.setConversationId(UUID.fromString(convoId));
+
+        conversationMessageRepository.save(message);
     }
 }
