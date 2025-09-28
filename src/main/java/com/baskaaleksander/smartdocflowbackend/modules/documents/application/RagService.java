@@ -78,7 +78,6 @@ public class RagService {
                 .build();
 
 
-
         return chatClient
                 .prompt(question)
                 .advisors(retrievalAugmentationAdvisor)

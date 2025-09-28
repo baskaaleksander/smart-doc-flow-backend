@@ -27,6 +27,9 @@ public class ConversationMessage {
     private String content;
 
     @Column(nullable = false)
+    private String fingerprint;
+
+    @Column(nullable = false)
     private UUID conversationId;
 
     @CreationTimestamp
