@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
@@ -45,6 +46,8 @@ public class RagService {
 
         String conversationId = MakeConversationId.makeConversationId(docId, userId);
 
+        saveMessage(question, ConversationSide.USER, conversationId);
+
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
                 .template("""
@@ -78,7 +81,7 @@ public class RagService {
                 .build();
 
 
-        return chatClient
+        String response = chatClient
                 .prompt(question)
                 .advisors(retrievalAugmentationAdvisor)
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
@@ -86,5 +89,13 @@ public class RagService {
                 .advisors(a -> a.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "docId == '"+ docId +"'"))
                 .call()
                 .content();
+
+        saveMessage(response, ConversationSide.SYSTEM, conversationId);
+
+        return response;
+    }
+
+    private void saveMessage(String content, ConversationSide type, String convoId) {
+
     }
 }
