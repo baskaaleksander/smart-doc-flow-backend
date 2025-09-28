@@ -25,13 +25,11 @@ public class DocumentController {
 
     private final DocumentService documentService;
     private final EmbeddingService embeddingService;
-    private final ConversationService ragService;
 
     @Autowired
-    public DocumentController(DocumentService documentService, EmbeddingService embeddingService, ConversationService ragService) {
+    public DocumentController(DocumentService documentService, EmbeddingService embeddingService) {
         this.documentService = documentService;
         this.embeddingService = embeddingService;
-        this.ragService = ragService;
     }
 
     @PostMapping("/upload")
@@ -64,11 +62,6 @@ public class DocumentController {
         embeddingService.ingestDocument(docId);
 
         return new ResponseEntity<>("OK", HttpStatus.OK);
-    }
-
-    @GetMapping("/{id}/ask")
-    public ResponseEntity<String> askQuestion(@RequestParam("question") String question, @PathVariable("id") String id, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return new ResponseEntity<>(ragService.askQuestion(question, id, userDetails.getId()), HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")
