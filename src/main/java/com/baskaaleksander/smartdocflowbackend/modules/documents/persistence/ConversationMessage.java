@@ -33,6 +33,9 @@ public class ConversationMessage {
     private UUID conversationId;
 
     @Column(nullable = false)
+    private UUID documentId;
+
+    @Column(nullable = false)
     private UUID userId;
 
     @CreationTimestamp

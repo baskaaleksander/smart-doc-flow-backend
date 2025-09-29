@@ -42,17 +42,17 @@ public class ConversationService {
         this.conversationMessageRepository = conversationMessageRepository;
     }
 
-    public String askQuestion(String question, String docId, UUID userId) {
+    public String askQuestion(String question, UUID docId, UUID userId) {
 
-        Document doc = documentRepository.getDocumentById(UUID.fromString(docId)).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        Document doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         if (doc.getStatus() != DocumentStatus.PROCESSED) {
             throw new ResourceConflictException("Document is not processed yet");
         }
 
-        String conversationId = MakeConversationId.makeConversationId(docId, userId);
+        String conversationId = MakeConversationId.makeConversationId(docId.toString(), userId);
 
-        saveMessage(question, ConversationSide.USER, conversationId, userId);
+        saveMessage(question, ConversationSide.USER, conversationId, userId, docId);
 
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
@@ -96,12 +96,12 @@ public class ConversationService {
                 .call()
                 .content();
 
-        saveMessage(response, ConversationSide.SYSTEM, conversationId, userId);
+        saveMessage(response, ConversationSide.SYSTEM, conversationId, userId, docId);
 
         return response;
     }
 
-    private void saveMessage(String content, ConversationSide type, String convoId, UUID userId) {
+    private void saveMessage(String content, ConversationSide type, String convoId, UUID userId, UUID documentId) {
         String encryptedContent = conversationEncryptionService.encrypt(content);
         String fingerprint = conversationEncryptionService.fingerprint(content);
 
@@ -111,6 +111,7 @@ public class ConversationService {
         message.setFingerprint(fingerprint);
         message.setConversationId(UUID.fromString(convoId));
         message.setUserId(userId);
+        message.setDocumentId(documentId);
 
         conversationMessageRepository.save(message);
 
