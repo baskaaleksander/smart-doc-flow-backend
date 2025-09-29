@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/documents/{documentId}/conversations")
 public class ConversationController {
@@ -20,5 +22,15 @@ public class ConversationController {
     @PostMapping()
     public ResponseEntity<String> askQuestion(@RequestParam("question") String question, @PathVariable("documentId") String id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return new ResponseEntity<>(conversationService.askQuestion(question, id, userDetails.getId()), HttpStatus.OK);
+    }
+
+    @GetMapping()
+    public ResponseEntity<?> getAllConversationMessages(@PathVariable("documentId") UUID documentId) {
+        return null;
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<?> deleteConversation(@PathVariable("documentId") UUID documentId) {
+        return null;
     }
 }
