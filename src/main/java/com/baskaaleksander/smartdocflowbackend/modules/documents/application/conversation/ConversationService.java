@@ -153,6 +153,10 @@ public class ConversationService {
                 .map(conversationMessageMapper::toMessageResponse)
                 .toList();
 
+        messageList.forEach(m ->
+                m.setContent(conversationEncryptionService.decrypt(m.getContent()))
+        );
+
         Integer currentPage = request.getPage();
         int totalPages = conversationMessages.getTotalPages();
 

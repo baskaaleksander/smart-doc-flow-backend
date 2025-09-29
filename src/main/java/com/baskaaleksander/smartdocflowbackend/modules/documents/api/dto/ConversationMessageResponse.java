@@ -1,12 +1,17 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.UUID;
 
-public record ConversationMessageResponse(
-    UUID id,
-    ConversationSide side,
-    String content
-) {
+@AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+public class ConversationMessageResponse {
+    private UUID id;
+    private ConversationSide side;
+    private String content;
 }
