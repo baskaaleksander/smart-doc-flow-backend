@@ -26,13 +26,13 @@ public class ConversationController {
         return new ResponseEntity<>(conversationService.askQuestion(question, id, userDetails.getId()), HttpStatus.OK);
     }
 
-    @PreAuthorize("@convoAccess.canViewAndModifyConversation(#id, authentication)")
+    @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
     @GetMapping()
     public ResponseEntity<?> getAllConversationMessages(@PathVariable("documentId") UUID id) {
         return null;
     }
 
-    @PreAuthorize("@convoAccess.canViewAndModifyConversation(#id, authentication)")
+    @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
     @DeleteMapping()
     public ResponseEntity<?> deleteConversation(@PathVariable("documentId") UUID id) {
         return null;

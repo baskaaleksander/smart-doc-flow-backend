@@ -18,6 +18,9 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     @Modifying
     void updateStatus(UUID reviewId, ReviewStatus status);
 
+    @Query("select r.reviewer.id from Review r where r.document.id = :documentId")
+    Optional<UUID> getReviewerIdByDocumentId(UUID documentId);
+
     @Query("select r from Review r left join fetch r.document left join fetch r.reviewer where r.id = :id")
     Optional<Review> getReviewById(UUID id);
 
