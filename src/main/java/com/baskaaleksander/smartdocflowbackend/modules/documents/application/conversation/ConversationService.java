@@ -13,6 +13,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
 import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
@@ -30,16 +31,18 @@ public class ConversationService {
     private final ChatClient chatClient;
     private final ConversationEncryptionService conversationEncryptionService;
     private final ConversationMessageRepository conversationMessageRepository;
+    private final JdbcChatMemoryRepository jdbcChatMemoryRepository;
 
     public ConversationService(
             VectorStore vectorStore,
             DocumentRepository documentRepository,
-            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, ConversationMessageRepository conversationMessageRepository) {
+            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, ConversationMessageRepository conversationMessageRepository, JdbcChatMemoryRepository jdbcChatMemoryRepository) {
         this.vectorStore = vectorStore;
         this.documentRepository = documentRepository;
         this.chatClient = chatClient;
         this.conversationEncryptionService = conversationEncryptionService;
         this.conversationMessageRepository = conversationMessageRepository;
+        this.jdbcChatMemoryRepository = jdbcChatMemoryRepository;
     }
 
     public String askQuestion(String question, UUID docId, UUID userId) {
@@ -115,5 +118,14 @@ public class ConversationService {
 
         conversationMessageRepository.save(message);
 
+    }
+
+    public void deleteConversation(UUID documentId, UUID userId) {
+        UUID conversationId = conversationMessageRepository.getIdByUserIdAndDocId(documentId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
+
+        jdbcChatMemoryRepository.deleteByConversationId(conversationId.toString());
+
+        conversationMessageRepository.deleteAllByConversationId(conversationId);
     }
 }

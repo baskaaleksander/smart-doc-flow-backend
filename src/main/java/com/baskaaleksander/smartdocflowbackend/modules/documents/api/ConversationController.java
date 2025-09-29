@@ -34,7 +34,8 @@ public class ConversationController {
 
     @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
     @DeleteMapping()
-    public ResponseEntity<?> deleteConversation(@PathVariable("documentId") UUID id) {
-        return null;
+    public ResponseEntity<?> deleteConversation(@PathVariable("documentId") UUID id, CustomUserDetails userDetails) {
+        conversationService.deleteConversation(id, userDetails.getId());
+        return new ResponseEntity<>("Deleted", HttpStatus.OK);
     }
 }
