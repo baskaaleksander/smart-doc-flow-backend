@@ -9,6 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.ConversationMessageMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessage;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,17 +40,19 @@ public class ConversationService {
     private final ConversationEncryptionService conversationEncryptionService;
     private final ConversationMessageRepository conversationMessageRepository;
     private final JdbcChatMemoryRepository jdbcChatMemoryRepository;
+    private final ConversationMessageMapper conversationMessageMapper;
 
     public ConversationService(
             VectorStore vectorStore,
             DocumentRepository documentRepository,
-            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, ConversationMessageRepository conversationMessageRepository, JdbcChatMemoryRepository jdbcChatMemoryRepository) {
+            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, ConversationMessageRepository conversationMessageRepository, JdbcChatMemoryRepository jdbcChatMemoryRepository, ConversationMessageMapper conversationMessageMapper) {
         this.vectorStore = vectorStore;
         this.documentRepository = documentRepository;
         this.chatClient = chatClient;
         this.conversationEncryptionService = conversationEncryptionService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.jdbcChatMemoryRepository = jdbcChatMemoryRepository;
+        this.conversationMessageMapper = conversationMessageMapper;
     }
 
     public String askQuestion(String question, UUID docId, UUID userId) {
@@ -144,6 +148,22 @@ public class ConversationService {
 
         Page<ConversationMessage> conversationMessages = conversationMessageRepository.findAllByDocumentIdAndUserId(pageable, userId, documentId);
 
-        return null;
+        List<ConversationMessageResponse> messageList = conversationMessages
+                .stream()
+                .map(conversationMessageMapper::toMessageResponse)
+                .toList();
+
+        Integer currentPage = request.getPage();
+        int totalPages = conversationMessages.getTotalPages();
+
+        return new PagingResult<>(
+                messageList,
+                totalPages,
+                conversationMessages.getTotalElements(),
+                conversationMessages.getSize(),
+                conversationMessages.getNumber(),
+                currentPage + 1 == totalPages,
+                currentPage + 1 < totalPages
+        );
     }
 }

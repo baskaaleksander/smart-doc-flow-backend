@@ -1,7 +1,9 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -30,7 +32,7 @@ public class ConversationController {
 
     @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
     @GetMapping()
-    public ResponseEntity<?> getAllConversationMessages(
+    public ResponseEntity<PagingResult<ConversationMessageResponse>> getAllConversationMessages(
             @PathVariable("documentId") UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") Integer page,
@@ -40,7 +42,7 @@ public class ConversationController {
 
     ) {
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
-        return null;
+        return new ResponseEntity<>(conversationService.getAllConversationMessages(id, userDetails.getId(), request), HttpStatus.OK);
     }
 
     @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
