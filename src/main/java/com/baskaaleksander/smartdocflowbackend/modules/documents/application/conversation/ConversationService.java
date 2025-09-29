@@ -52,7 +52,7 @@ public class ConversationService {
 
         String conversationId = MakeConversationId.makeConversationId(docId, userId);
 
-        saveMessage(question, ConversationSide.USER, conversationId);
+        saveMessage(question, ConversationSide.USER, conversationId, userId);
 
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
@@ -96,12 +96,12 @@ public class ConversationService {
                 .call()
                 .content();
 
-        saveMessage(response, ConversationSide.SYSTEM, conversationId);
+        saveMessage(response, ConversationSide.SYSTEM, conversationId, userId);
 
         return response;
     }
 
-    private void saveMessage(String content, ConversationSide type, String convoId) {
+    private void saveMessage(String content, ConversationSide type, String convoId, UUID userId) {
         String encryptedContent = conversationEncryptionService.encrypt(content);
         String fingerprint = conversationEncryptionService.fingerprint(content);
 
@@ -110,6 +110,7 @@ public class ConversationService {
         message.setContent(encryptedContent);
         message.setFingerprint(fingerprint);
         message.setConversationId(UUID.fromString(convoId));
+        message.setUserId(userId);
 
         conversationMessageRepository.save(message);
 

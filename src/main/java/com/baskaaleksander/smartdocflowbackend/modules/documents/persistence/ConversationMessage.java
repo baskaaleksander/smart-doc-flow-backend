@@ -32,6 +32,9 @@ public class ConversationMessage {
     @Column(nullable = false)
     private UUID conversationId;
 
+    @Column(nullable = false)
+    private UUID userId;
+
     @CreationTimestamp
     @Column(nullable = false)
     private Instant createdAt;
