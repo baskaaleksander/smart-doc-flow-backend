@@ -2,7 +2,10 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.co
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagedResponse;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessage;
@@ -127,5 +130,13 @@ public class ConversationService {
         jdbcChatMemoryRepository.deleteByConversationId(conversationId.toString());
 
         conversationMessageRepository.deleteAllByConversationId(conversationId);
+    }
+
+    public PagedResponse<ConversationMessageResponse> getAllConversationMessages(
+            UUID documentId,
+            UUID userId,
+            PaginationRequest request
+    ) {
+        return null;
     }
 }

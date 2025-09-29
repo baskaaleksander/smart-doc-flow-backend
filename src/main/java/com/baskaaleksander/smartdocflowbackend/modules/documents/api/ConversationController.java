@@ -1,7 +1,9 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.api;
 
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,13 +30,22 @@ public class ConversationController {
 
     @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
     @GetMapping()
-    public ResponseEntity<?> getAllConversationMessages(@PathVariable("documentId") UUID id) {
+    public ResponseEntity<?> getAllConversationMessages(
+            @PathVariable("documentId") UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "id") String sortField,
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+
+    ) {
+        PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
         return null;
     }
 
     @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
     @DeleteMapping()
-    public ResponseEntity<?> deleteConversation(@PathVariable("documentId") UUID id, CustomUserDetails userDetails) {
+    public ResponseEntity<String> deleteConversation(@PathVariable("documentId") UUID id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         conversationService.deleteConversation(id, userDetails.getId());
         return new ResponseEntity<>("Deleted", HttpStatus.OK);
     }

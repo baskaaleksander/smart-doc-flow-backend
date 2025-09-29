@@ -1,5 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -19,4 +21,6 @@ public interface ConversationMessageRepository extends JpaRepository<Conversatio
 
     void deleteAllByConversationId(UUID conversationId);
 
+    @Query("select c from ConversationMessage c where c.userId = :userId and c.documentId = :documentId")
+    Page<ConversationMessage> findAllByDocumentIdAndUserId(Pageable pageable, UUID userId, UUID documentId);
 }
