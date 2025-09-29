@@ -59,7 +59,8 @@ public class ConversationService {
 
         Document doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
-        if (doc.getStatus() != DocumentStatus.PROCESSED) {
+        //fix that
+        if (doc.getStatus() != DocumentStatus.PROCESSED || doc.getStatus() != DocumentStatus.IN_REVIEW || doc.getStatus() != DocumentStatus.REVIEW_PENDING) {
             throw new ResourceConflictException("Document is not processed yet");
         }
 

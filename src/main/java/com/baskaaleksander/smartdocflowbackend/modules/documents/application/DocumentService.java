@@ -134,6 +134,8 @@ public class DocumentService {
         review = reviewRepository.save(review);
 
         document.setReview(review);
+
+        documentRepository.save(document);
     }
 
     public DocumentResponse getById(UUID id) {

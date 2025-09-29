@@ -4,8 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Convers
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessage;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "string")
+@Mapper(componentModel = "spring")
 public interface ConversationMessageMapper {
-
     ConversationMessageResponse toMessageResponse(ConversationMessage message);
 }
