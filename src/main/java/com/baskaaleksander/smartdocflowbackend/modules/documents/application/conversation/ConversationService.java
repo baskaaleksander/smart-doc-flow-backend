@@ -2,8 +2,9 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.co
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PagedResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
@@ -22,6 +23,8 @@ import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
 import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -132,11 +135,15 @@ public class ConversationService {
         conversationMessageRepository.deleteAllByConversationId(conversationId);
     }
 
-    public PagedResponse<ConversationMessageResponse> getAllConversationMessages(
+    public PagingResult<ConversationMessageResponse> getAllConversationMessages(
             UUID documentId,
             UUID userId,
             PaginationRequest request
     ) {
+        Pageable pageable = PaginationUtil.getPageable(request);
+
+        Page<ConversationMessage> conversationMessages = conversationMessageRepository.findAllByDocumentIdAndUserId(pageable, userId, documentId);
+
         return null;
     }
 }
