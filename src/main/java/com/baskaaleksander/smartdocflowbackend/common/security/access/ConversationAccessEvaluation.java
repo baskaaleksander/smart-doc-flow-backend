@@ -26,6 +26,10 @@ public class ConversationAccessEvaluation {
     public boolean canViewAndModifyConversations(UUID documentId, Authentication authentication) {
         List<UUID> allUserIds = conversationMessageRepository.getUserIdByDocumentId(documentId);
 
+        for (UUID id : allUserIds) {
+            System.out.println(id);
+        }
+
         var userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         return allUserIds.contains(userDetails.getId());
