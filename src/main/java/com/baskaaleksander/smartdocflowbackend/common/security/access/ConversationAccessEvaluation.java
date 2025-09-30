@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.common.security.access;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.UnauthorizedAccessException;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
@@ -14,7 +15,6 @@ import java.util.UUID;
 @Component("convoAccess")
 public class ConversationAccessEvaluation {
 
-    //fix all that
     private final ConversationMessageRepository conversationMessageRepository;
     private final ReviewRepository reviewRepository;
 
@@ -26,10 +26,6 @@ public class ConversationAccessEvaluation {
     public boolean canViewAndModifyConversations(UUID documentId, Authentication authentication) {
         List<UUID> allUserIds = conversationMessageRepository.getUserIdByDocumentId(documentId);
 
-        for (UUID id : allUserIds) {
-            System.out.println(id);
-        }
-
         var userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         return allUserIds.contains(userDetails.getId());
@@ -39,7 +35,7 @@ public class ConversationAccessEvaluation {
 
         List<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
 
-        UUID reviewerId = reviewRepository.getReviewerIdByDocumentId(documentId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        UUID reviewerId = reviewRepository.getReviewerIdByDocumentId(documentId).orElseThrow(() -> new UnauthorizedAccessException("You are not allowed to operate with this document"));
 
         var userDetails = (CustomUserDetails) authentication.getPrincipal();
 

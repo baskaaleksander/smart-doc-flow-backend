@@ -20,6 +20,19 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedAccessException(UnauthorizedAccessException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                403,
+                HttpStatus.FORBIDDEN.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(

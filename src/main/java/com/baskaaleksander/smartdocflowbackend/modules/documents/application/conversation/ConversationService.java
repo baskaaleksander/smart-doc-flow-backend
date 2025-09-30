@@ -58,6 +58,8 @@ public class ConversationService {
 
     public String askQuestion(String question, UUID docId, UUID userId) {
 
+        System.out.println(docId);
+
         Document doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         EnumSet<DocumentStatus> allowedStatuses = EnumSet.of(
@@ -77,7 +79,7 @@ public class ConversationService {
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
                 .template("""
-        <input>
+        <query>
 
         Context information is below.
 
@@ -110,6 +112,7 @@ public class ConversationService {
                 .prompt(question)
                 .advisors(retrievalAugmentationAdvisor)
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+                .advisors(a -> a.param("query", question))
                 .advisors(qaAdvisor)
                 .advisors(a -> a.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "docId == '"+ docId +"'"))
                 .call()
