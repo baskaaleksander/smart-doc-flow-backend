@@ -23,7 +23,8 @@ public class ConversationMessage {
     @Column(nullable = false)
     private ConversationSide side;
 
-    @Column(nullable = false, length = 65000)
+    @Lob
+    @Column(nullable = false)
     private String content;
 
     @Column(nullable = false)
