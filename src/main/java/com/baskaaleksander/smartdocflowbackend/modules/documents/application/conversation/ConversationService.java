@@ -102,7 +102,7 @@ public class ConversationService {
 
         Advisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
                 .documentRetriever(VectorStoreDocumentRetriever.builder()
-                        .similarityThreshold(0.75)
+                        .similarityThreshold(0.50)
                         .vectorStore(vectorStore)
                         .build())
                 .build();
@@ -117,6 +117,7 @@ public class ConversationService {
                 .advisors(a -> a.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "docId == '"+ docId +"'"))
                 .call()
                 .content();
+
 
         saveMessage(response, ConversationSide.SYSTEM, conversationId, userId, docId);
 
