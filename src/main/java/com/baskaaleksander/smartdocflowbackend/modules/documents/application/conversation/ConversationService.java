@@ -77,21 +77,20 @@ public class ConversationService {
         PromptTemplate customPromptTemplate = PromptTemplate.builder()
                 .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
                 .template("""
-            <query>
+        <input>
 
-            Context information is below.
+        Context information is below.
 
-			---------------------
-			<question_answer_context>
-			---------------------
+        ---------------------
+        <question_answer_context>
+        ---------------------
 
-			Given the context information and no prior knowledge, answer the query.
+        Given the context information and no prior knowledge, answer the query.
 
-			Follow these rules:
-
-			1. If the answer is not in the context, just say that you don't know.
-			2. Avoid statements like "Based on the context..." or "The provided information...".
-           """)
+        Follow these rules:
+        1. If the answer is not in the context, just say that you don't know.
+        2. Avoid statements like "Based on the context..." or "The provided information...".
+        """)
                 .build();
 
 

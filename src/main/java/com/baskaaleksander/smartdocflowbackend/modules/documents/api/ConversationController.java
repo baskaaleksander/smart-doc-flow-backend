@@ -24,7 +24,7 @@ public class ConversationController {
         this.conversationService = conversationService;
     }
 
-//    @PreAuthorize("@convoAccess.canCreateConversation(#id, authentication)")
+    @PreAuthorize("@convoAccess.canCreateConversation(#id, authentication)")
     @PostMapping()
     public ResponseEntity<String> askQuestion(@RequestParam("question") String question, @PathVariable("documentId") UUID id, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return new ResponseEntity<>(conversationService.askQuestion(question, id, userDetails.getId()), HttpStatus.OK);
