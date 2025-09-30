@@ -28,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,8 +60,13 @@ public class ConversationService {
 
         Document doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
-        //fix that
-        if (doc.getStatus() != DocumentStatus.PROCESSED || doc.getStatus() != DocumentStatus.IN_REVIEW || doc.getStatus() != DocumentStatus.REVIEW_PENDING) {
+        EnumSet<DocumentStatus> allowedStatuses = EnumSet.of(
+                DocumentStatus.PROCESSED,
+                DocumentStatus.IN_REVIEW,
+                DocumentStatus.REVIEW_PENDING
+        );
+
+        if (!allowedStatuses.contains(doc.getStatus())) {
             throw new ResourceConflictException("Document is not processed yet");
         }
 
