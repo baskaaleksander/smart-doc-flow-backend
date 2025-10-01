@@ -49,3 +49,11 @@ crypto:
   conversation:
     secret: ${CONVERSATION_SECRET}
     fingerprint-secret: ${CONVERSATION_FINGERPRINT_SECRET}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
