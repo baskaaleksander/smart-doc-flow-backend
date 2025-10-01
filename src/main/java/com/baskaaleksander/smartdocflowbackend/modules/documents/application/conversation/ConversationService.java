@@ -58,8 +58,6 @@ public class ConversationService {
 
     public String askQuestion(String question, UUID docId, UUID userId) {
 
-        System.out.println(docId);
-
         Document doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         EnumSet<DocumentStatus> allowedStatuses = EnumSet.of(
