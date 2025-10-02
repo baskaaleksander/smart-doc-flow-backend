@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
@@ -88,5 +89,15 @@ public class AuthServiceTest {
 
         verify(userRepository).findByUsername("newuser");
         verifyNoMoreInteractions(userRepository, roleRepository, passwordEncoder);
+    }
+
+    @Test
+    void registerUser_shouldThrowException_whenRoleNotFound() {
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encoded");
+        when(roleRepository.findRoleByRole(anyString())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.registerUser(registerRequest)).isInstanceOf(ResourceNotFoundException.class);
+        verifyNoMoreInteractions(userRepository);
     }
 }
