@@ -179,4 +179,14 @@ public class AuthServiceTest {
         verify(userRepository).findUserByUsernameWithRoles("john");
         verify(userMapper).toUserResponse(entity);
     }
+
+    @Test
+    void getMe_shouldThrowException() {
+        org.springframework.security.core.userdetails.User springUser =
+                new org.springframework.security.core.userdetails.User("john", "x", List.of());
+
+        when(userRepository.findUserByUsernameWithRoles(anyString())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.getMe(springUser)).isInstanceOf(ResourceNotFoundException.class);
+    }
 }
