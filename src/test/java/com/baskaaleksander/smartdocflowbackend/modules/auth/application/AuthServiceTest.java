@@ -12,6 +12,9 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepo
 import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -188,5 +191,20 @@ public class AuthServiceTest {
         when(userRepository.findUserByUsernameWithRoles(anyString())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.getMe(springUser)).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void logoutUser_shouldEndWithSuccess() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        when(cookieUtil.parseRefreshTokenCookie(request)).thenReturn("refresh-token");
+
+        String message = authService.logoutUser(request, response);
+
+        assertThat(message).isEqualTo("Logout successful");
+        verify(cookieUtil).parseRefreshTokenCookie(request);
+        verify(cookieUtil).clearRefreshTokenCookie(response);
+        verify(jwtUtil).invalidateRefreshToken("refresh-token");
     }
 }
