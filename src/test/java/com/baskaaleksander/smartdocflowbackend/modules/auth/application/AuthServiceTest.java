@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,8 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -85,6 +85,18 @@ public class AuthServiceTest {
     }
 
     @Test
+    void loginUser_shouldThrowException_whenAuthNotOk() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        assertThatThrownBy(() -> authService.loginUser(loginRequest))
+                .isInstanceOf(BadCredentialsException.class)
+                .hasMessageContaining("Bad credentials");
+
+        verify(jwtUtil, never()).issueTokens(anyString());
+    }
+
+    @Test
     void registerUser_shouldThrowException_whenUserExists() {
         when(userRepository.findByUsername("newuser")).thenReturn(Optional.of(new User()));
 
@@ -128,5 +140,16 @@ public class AuthServiceTest {
         assertThat(res.roles()).containsExactly("ROLE_USER");
         assertThat(res.isActive()).isTrue();
         assertThat(res.id()).isEqualTo(saved.getId());
+    }
+
+    @Test
+    void refreshAccessToken_shouldReturnAccessToken() {
+        TokenResponse tokenResponse = new TokenResponse("access", "refresh");;
+        when(jwtUtil.refreshAccessToken("refresh")).thenReturn(tokenResponse);
+
+        TokenResponse res = authService.refreshAccessToken("refresh");
+
+        assertThat(res.refreshToken()).isEqualTo(tokenResponse.refreshToken());
+        assertThat(res.accessToken()).isEqualTo(tokenResponse.accessToken());
     }
 }
