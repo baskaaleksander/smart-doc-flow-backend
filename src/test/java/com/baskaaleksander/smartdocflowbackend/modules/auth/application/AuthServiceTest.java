@@ -207,4 +207,19 @@ public class AuthServiceTest {
         verify(cookieUtil).clearRefreshTokenCookie(response);
         verify(jwtUtil).invalidateRefreshToken("refresh-token");
     }
+
+    @Test
+    void logoutUser_shouldProceedWithoutRefreshToken() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        when(cookieUtil.parseRefreshTokenCookie(request)).thenReturn(null);
+
+        String message = authService.logoutUser(request, response);
+
+        assertThat(message).isEqualTo("Logout successful");
+        verify(cookieUtil).parseRefreshTokenCookie(request);
+        verify(cookieUtil).clearRefreshTokenCookie(response);
+        verify(jwtUtil).invalidateRefreshToken(null);
+    }
 }
