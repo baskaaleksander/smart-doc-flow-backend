@@ -6,6 +6,8 @@ import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
@@ -23,9 +25,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -99,5 +103,30 @@ public class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.registerUser(registerRequest)).isInstanceOf(ResourceNotFoundException.class);
         verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    void registerUser_shouldReturnUserResponse_whenOk() {
+        Role role = new Role();
+        role.setRole("ROLE_USER");
+
+        when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encoded");
+        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.of(role));
+
+        User saved = new User();
+        saved.setId(UUID.randomUUID());
+        saved.setUsername(registerRequest.getUsername());
+        saved.setPassword("encoded");
+        saved.setRoles(Set.of(role));
+        saved.setActive(true);
+
+        when(userRepository.save(any(User.class))).thenReturn(saved);
+        UserResponse res = authService.registerUser(registerRequest);
+
+        assertThat(res.username()).isEqualTo(registerRequest.getUsername());
+        assertThat(res.roles()).containsExactly("ROLE_USER");
+        assertThat(res.isActive()).isTrue();
+        assertThat(res.id()).isEqualTo(saved.getId());
     }
 }
