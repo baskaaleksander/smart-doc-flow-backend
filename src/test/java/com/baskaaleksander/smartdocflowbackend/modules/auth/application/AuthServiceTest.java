@@ -25,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -151,5 +152,31 @@ public class AuthServiceTest {
 
         assertThat(res.refreshToken()).isEqualTo(tokenResponse.refreshToken());
         assertThat(res.accessToken()).isEqualTo(tokenResponse.accessToken());
+    }
+
+    @Test
+    void getMe_shouldReturnMappedUserResponse() {
+        org.springframework.security.core.userdetails.User springUser =
+                new org.springframework.security.core.userdetails.User("john", "x", List.of());
+
+        Role role = new Role();
+        role.setRole("ROLE_USER");
+        User entity = new User();
+        entity.setUsername("john");
+        entity.setRoles(Set.of(role));
+
+        when(userRepository.findUserByUsernameWithRoles("john")).thenReturn(Optional.of(entity));
+
+        UserResponse mapped = new UserResponse(UUID.randomUUID(), "john", List.of("ROLE_USER"), true);
+        when(userMapper.toUserResponse(entity)).thenReturn(mapped);
+
+        UserResponse res = authService.getMe(springUser);
+
+        assertThat(res.id()).isEqualTo(mapped.id());
+        assertThat(res.username()).isEqualTo(mapped.username());
+        assertThat(res.roles()).isEqualTo(mapped.roles());
+        assertThat(res.isActive()).isEqualTo(mapped.isActive());
+        verify(userRepository).findUserByUsernameWithRoles("john");
+        verify(userMapper).toUserResponse(entity);
     }
 }
