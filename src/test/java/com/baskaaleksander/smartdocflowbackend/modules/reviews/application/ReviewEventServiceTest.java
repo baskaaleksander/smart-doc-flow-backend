@@ -1,6 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
@@ -14,8 +16,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -90,6 +95,34 @@ public class ReviewEventServiceTest {
         assertThat(res.reviewerId()).isEqualTo(mapped.reviewerId());
         assertThat(res.createdAt()).isEqualTo(mapped.createdAt());
 
+    }
+
+    @Test
+    void getReviewEvents_shouldReturnPaginatedResponse() {
+        Page<ReviewEvent> page = new PageImpl<>(List.of(reviewEvent), PageRequest.of(0, 10), 25);
+        when(reviewEventRepository.findByReviewId(any(Pageable.class), eq(reviewEvent.getReview().getId())))
+                .thenReturn(page);
+
+        ReviewEventResponse mapped = new ReviewEventResponse(
+                reviewEvent.getId(),
+                reviewEvent.getEventType(),
+                reviewEvent.getComment(),
+                reviewEvent.getReviewer().getId(),
+                reviewEvent.getCreatedAt()
+        );
+
+        when(reviewEventMapper.toReviewEventResponse(reviewEvent))
+                .thenReturn(mapped);
+
+        PagingResult<ReviewEventResponse> response = reviewEventService.getReviewEvents(reviewEvent.getReview().getId(), new PaginationRequest(0, 10, "id", Sort.Direction.DESC), "ALL");
+
+        assertThat(response.content()).contains(mapped);
+        assertThat(response.page()).isEqualTo(0);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.size()).isEqualTo(10);
+        assertThat(response.totalElements()).isEqualTo(25);
+        assertThat(response.last()).isEqualTo(false);
+        assertThat(response.next()).isEqualTo(true);
     }
 
 }
