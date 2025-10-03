@@ -97,9 +97,4 @@ public class UserController {
         return new ResponseEntity<>(userService.activateUser(userId), HttpStatus.OK);
     }
 
-    @GetMapping("/ai")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public Map<String,String> generate(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-        return userService.generate(message);
-    }
 }

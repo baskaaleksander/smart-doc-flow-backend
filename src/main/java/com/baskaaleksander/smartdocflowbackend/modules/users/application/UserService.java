@@ -29,16 +29,14 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final OpenAiChatModel chatModel;
     private final RoleRepository roleRepository;
 
     @Autowired
     public UserService(UserRepository userRepository,
                        UserMapper userMapper,
-                       OpenAiChatModel chatModel, RoleRepository roleRepository) {
+                       RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
-        this.chatModel = chatModel;
         this.roleRepository = roleRepository;
     }
 
@@ -114,9 +112,5 @@ public class UserService {
         user.getRoles().addAll(rolesSet);
 
         return userMapper.toUserResponse(user);
-    }
-
-    public Map<String,String> generate(String message) {
-        return Map.of("generation", this.chatModel.call(message));
     }
 }
