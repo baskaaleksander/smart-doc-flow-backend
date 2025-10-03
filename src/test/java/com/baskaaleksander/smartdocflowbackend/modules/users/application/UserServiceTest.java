@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
@@ -100,6 +101,26 @@ public class UserServiceTest {
         assertThat(res.username()).isEqualTo(mapped.username());
         assertThat(res.roles()).isEqualTo(mapped.roles());
         assertThat(res.isActive()).isEqualTo(mapped.isActive());
+    }
+
+    @Test
+    void inactivateUser_shouldThrowException_whenStatusNotFound() {
+        UUID id = UUID.randomUUID();
+
+        when(userRepository.getUserStatusById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.inactivateUser(id.toString()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void inactivateUser_shouldThrowException_whenStatusFalse() {
+        UUID id = UUID.randomUUID();
+
+        when(userRepository.getUserStatusById(id)).thenReturn(Optional.of(false));
+
+        assertThatThrownBy(() -> userService.inactivateUser(id.toString()))
+                .isInstanceOf(ResourceConflictException.class);
     }
 
 }
