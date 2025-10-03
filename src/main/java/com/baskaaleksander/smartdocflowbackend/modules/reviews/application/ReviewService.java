@@ -48,7 +48,11 @@ public class ReviewService {
     public ReviewService(
             ReviewRepository reviewRepository,
             UserRepository userRepository,
-            ReviewMapper reviewMapper, DocumentService documentService, DocumentRepository documentRepository, ReviewEventRepository reviewEventRepository, ReviewEventMapper reviewEventMapper, NotificationService notificationService) {
+            ReviewMapper reviewMapper,
+            DocumentRepository documentRepository,
+            ReviewEventRepository reviewEventRepository,
+            ReviewEventMapper reviewEventMapper,
+            NotificationService notificationService) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
@@ -64,13 +68,13 @@ public class ReviewService {
             return switch (body.getStatus()) {
                 case IN_PROGRESS -> claimReview(reviewId, username);
                 case PENDING -> releaseReview(reviewId, username);
-                default -> throw new ResourceConflictException("This action requires a comment");
+                default -> throw new IllegalArgumentException("No action like this possible");
             };
         } else {
             return switch(body.getStatus()) {
                 case APPROVED -> approveDocument(reviewId, username, body.getComment());
                 case REJECTED -> rejectDocument(reviewId, username, body.getComment());
-                default -> throw new ResourceConflictException("Comment not allowed for this action");
+                default -> throw new IllegalArgumentException("No action like this possible");
             };
         }
     }
