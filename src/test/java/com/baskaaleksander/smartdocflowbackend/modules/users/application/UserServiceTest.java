@@ -137,4 +137,36 @@ public class UserServiceTest {
 
     }
 
+    @Test
+    void activateUser_shouldThrowException_whenStatusNotFound() {
+        UUID id = UUID.randomUUID();
+
+        when(userRepository.getUserStatusById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.activateUser(id.toString()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void activateUser_shouldThrowException_whenStatusFalse() {
+        UUID id = UUID.randomUUID();
+
+        when(userRepository.getUserStatusById(id)).thenReturn(Optional.of(true));
+
+        assertThatThrownBy(() -> userService.activateUser(id.toString()))
+                .isInstanceOf(ResourceConflictException.class);
+    }
+
+    @Test
+    void activateUser_shouldSuccess() {
+        UUID id = UUID.randomUUID();
+
+        when(userRepository.getUserStatusById(id)).thenReturn(Optional.of(false));
+
+        String res = userService.activateUser(id.toString());
+
+        verify(userRepository).setIsActive(id, true);
+        assertThat(res).isEqualTo("User activated");
+
+    }
 }
