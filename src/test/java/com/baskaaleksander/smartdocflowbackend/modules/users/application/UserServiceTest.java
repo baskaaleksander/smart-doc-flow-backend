@@ -29,6 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -121,6 +122,19 @@ public class UserServiceTest {
 
         assertThatThrownBy(() -> userService.inactivateUser(id.toString()))
                 .isInstanceOf(ResourceConflictException.class);
+    }
+
+    @Test
+    void inactivateUser_shouldSuccess() {
+        UUID id = UUID.randomUUID();
+
+        when(userRepository.getUserStatusById(id)).thenReturn(Optional.of(true));
+
+        String res = userService.inactivateUser(id.toString());
+
+        verify(userRepository).setIsActive(id, false);
+        assertThat(res).isEqualTo("User inactivated");
+
     }
 
 }
