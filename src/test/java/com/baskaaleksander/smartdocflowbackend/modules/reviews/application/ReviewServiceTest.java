@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRequest;
@@ -7,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRes
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
@@ -18,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -123,5 +126,28 @@ public class ReviewServiceTest {
         reviewService.handleReviewStatusChange(id, "userid", body);
 
         verify(reviewService).claimReview(id, "userid");
+    }
+
+    @Test
+    void commentReview_shouldThrowException_whenReviewNotFound() {
+        UUID id = UUID.randomUUID();
+
+        when(reviewRepository.getReviewById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.commentReview("user-123", "some comment", id))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void commentReview_shouldThrowException_whenReviewerNotFound() {
+        UUID id = UUID.randomUUID();
+
+        when(reviewRepository.getReviewById(id)).thenReturn(Optional.of(new Review()));
+
+        when(userRepository.findByUsername("user-123"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.commentReview("user-123", "some comment", id))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }
