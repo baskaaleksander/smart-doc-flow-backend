@@ -1,8 +1,95 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ReviewEventServiceTest {
+
+    @Mock
+    private ReviewEventRepository reviewEventRepository;
+
+    @Mock
+    private ReviewEventMapper reviewEventMapper;
+
+    @InjectMocks
+    private ReviewEventService reviewEventService;
+
+    private ReviewEvent reviewEvent;
+
+    @BeforeEach
+    void setUp() {
+        reviewEvent = new ReviewEvent();
+        User reviewer = new User();
+        Review review = new Review();
+
+        reviewer.setId(UUID.randomUUID());
+        review.setId(UUID.randomUUID());
+
+        reviewEvent.setId(UUID.randomUUID());
+        reviewEvent.setEventType(ReviewEventType.ASSIGNED);
+        reviewEvent.setReviewer(reviewer);
+        reviewEvent.setReview(review);
+        reviewEvent.setCreatedAt(Instant.now());
+    }
+
+    @Test
+    void getReviewEventById_shouldThrowException_whenNotFound() {
+        UUID id = UUID.randomUUID();
+        when(reviewEventRepository.getReviewEventById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewEventService.getReviewEventById(id))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getReviewEventById_shouldReturnMappedReviewEvent() {
+
+        when(reviewEventRepository.getReviewEventById(reviewEvent.getId()))
+                .thenReturn(Optional.of(reviewEvent));
+
+        ReviewEventResponse mapped = new ReviewEventResponse(
+                reviewEvent.getId(),
+                reviewEvent.getEventType(),
+                reviewEvent.getComment(),
+                reviewEvent.getReviewer().getId(),
+                reviewEvent.getCreatedAt()
+        );
+
+        when(reviewEventMapper.toReviewEventResponse(reviewEvent))
+                .thenReturn(mapped);
+
+        ReviewEventResponse res = reviewEventService.getReviewEventById(reviewEvent.getId());
+
+        assertThat(res.id()).isEqualTo(mapped.id());
+        assertThat(res.eventType()).isEqualTo(mapped.eventType());
+        assertThat(res.comment()).isEqualTo(mapped.comment());
+        assertThat(res.reviewerId()).isEqualTo(mapped.reviewerId());
+        assertThat(res.createdAt()).isEqualTo(mapped.createdAt());
+
+    }
+
 }
