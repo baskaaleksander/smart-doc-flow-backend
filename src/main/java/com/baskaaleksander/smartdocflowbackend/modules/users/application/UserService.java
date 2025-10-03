@@ -108,8 +108,9 @@ public class UserService {
         User user = userRepository.findUserByIdWithRoles(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " not found"));
 
-        user.getRoles().clear();
-        user.getRoles().addAll(rolesSet);
+        user.setRoles(rolesSet);
+
+        user = userRepository.save(user);
 
         return userMapper.toUserResponse(user);
     }

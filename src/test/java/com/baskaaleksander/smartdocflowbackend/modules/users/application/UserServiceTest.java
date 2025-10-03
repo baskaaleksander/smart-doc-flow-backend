@@ -20,11 +20,7 @@ import org.springframework.data.domain.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -191,5 +187,30 @@ public class UserServiceTest {
         assertThatThrownBy(() -> userService.updateUserRoles(id, roles))
                 .isInstanceOf(ResourceNotFoundException.class);
 
+    }
+
+    @Test
+    void updateUserRoles_shouldReturnUserResponse() {
+
+        Set<String> roles = Set.of("ROLE_USER");
+        Role userRole = new Role();
+        userRole.setRole("ROLE_USER");
+
+        user1.setRoles(new HashSet<>(Set.of(userRole)));
+
+        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.of(userRole));
+        when(userRepository.findUserByIdWithRoles(user1.getId())).thenReturn(Optional.of(user1));
+        when(userRepository.save(user1)).thenReturn(user1);
+
+        UserResponse mapped = new UserResponse(user1.getId(), user1.getUsername(), List.of("ROLE_USER"), true);
+
+        when(userMapper.toUserResponse(user1))
+                .thenReturn(mapped);
+
+        UserResponse res = userService.updateUserRoles(user1.getId(), roles);
+
+        assertThat(res.username()).isEqualTo(mapped.username());
+        assertThat(res.username()).isEqualTo(mapped.username());
+        assertThat(res.roles()).containsExactly("ROLE_USER");
     }
 }
