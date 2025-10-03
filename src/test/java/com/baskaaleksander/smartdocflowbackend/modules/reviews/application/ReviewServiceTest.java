@@ -30,6 +30,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -57,10 +58,23 @@ public class ReviewServiceTest {
     private ReviewService realService;
 
     private ReviewService reviewService;
+    private User reviewer;
+    private Review review;
+    private Document document;
 
     @BeforeEach
     void setUp() {
         reviewService = spy(realService);
+        reviewer = new User();
+        reviewer.setId(UUID.randomUUID());
+        reviewer.setUsername("user-123");
+
+        document = new Document();
+        document.setId(UUID.randomUUID());
+
+        review = new Review();
+        review.setId(UUID.randomUUID());
+        review.setDocument(document);
     }
 
     @Test
@@ -159,16 +173,6 @@ public class ReviewServiceTest {
 
     @Test
     void commentReview_shouldReturnReviewEventResponse() {
-        User reviewer = new User();
-        reviewer.setId(UUID.randomUUID());
-        reviewer.setUsername("user-123");
-
-        Document document = new Document();
-        document.setId(UUID.randomUUID());
-
-        Review review = new Review();
-        review.setId(UUID.randomUUID());
-        review.setDocument(document);
 
         when(reviewRepository.getReviewById(review.getId()))
                 .thenReturn(Optional.of(review));
@@ -204,5 +208,46 @@ public class ReviewServiceTest {
         assertThat(res.reviewerId()).isEqualTo(reviewer.getId());
         assertThat(res.id()).isNotNull();
         assertThat(res.createdAt()).isNotNull();
+    }
+
+    @Test
+    void getReviewById_shouldThrowError_whenReviewNotFound() {
+        UUID id = UUID.randomUUID();
+        when(reviewRepository.getReviewById(id))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.getReviewById(id))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getReviewById_shouldReturnReviewResponse() {
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        ReviewResponse mapped = new ReviewResponse(
+                review.getId(),
+                document.getId(),
+                ReviewStatus.IN_PROGRESS,
+                reviewer.getId(),
+                null,
+                Instant.now(),
+                Instant.now(),
+                0
+        );
+
+        when(reviewMapper.toReviewResponse(review))
+                .thenReturn(mapped);
+
+        ReviewResponse res = reviewService.getReviewById(review.getId());
+
+        assertThat(res.id()).isEqualTo(mapped.id());
+        assertThat(res.documentId()).isEqualTo(mapped.documentId());
+        assertThat(res.status()).isEqualTo(mapped.status());
+        assertThat(res.reviewerId()).isEqualTo(mapped.reviewerId());
+        assertThat(res.comment()).isEqualTo(mapped.comment());
+        assertThat(res.createdAt()).isEqualTo(mapped.createdAt());
+        assertThat(res.updatedAt()).isEqualTo(mapped.updatedAt());
+        assertThat(res.version()).isEqualTo(mapped.version());
     }
 }
