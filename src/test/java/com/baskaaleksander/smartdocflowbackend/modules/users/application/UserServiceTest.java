@@ -1,8 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
@@ -19,9 +21,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 
@@ -40,11 +46,22 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private User user1;
+
+    @BeforeEach
+    void setUp() {
+        Role role = new Role();
+        role.setRole("ROLE_USER");
+        user1 = new User();
+        user1.setUsername("u1");
+        user1.setId(UUID.randomUUID());
+        user1.setRoles(Set.of(role));
+        user1.setActive(true);
+    }
+
 
     @Test
     void getAllUsers_shouldReturnPagingResult() {
-        User user1 = new User();
-        user1.setUsername("u1");
         Page<User> page = new PageImpl<>(List.of(user1), PageRequest.of(0, 10), 25);
         when(userRepository.findAll(any(Pageable.class))).thenReturn(page);
 
@@ -61,6 +78,28 @@ public class UserServiceTest {
         assertThat(response.totalElements()).isEqualTo(25);
         assertThat(response.last()).isEqualTo(false);
         assertThat(response.next()).isEqualTo(true);
+    }
+
+    @Test
+    void getUserById_shouldThrowException() {
+        UUID id = UUID.randomUUID();
+        when(userRepository.findUserByIdWithRoles(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserById(id.toString())).isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getUserById_shouldReturnUserResponse() {
+        UserResponse mapped = new UserResponse(user1.getId(), user1.getUsername(), List.of("ROLE_USER"), true);
+        when(userRepository.findUserByIdWithRoles(user1.getId())).thenReturn(Optional.of(user1));
+        when(userMapper.toUserResponse(user1)).thenReturn(mapped);
+
+        UserResponse res = userService.getUserById(user1.getId().toString());
+
+        assertThat(res.id()).isEqualTo(mapped.id());
+        assertThat(res.username()).isEqualTo(mapped.username());
+        assertThat(res.roles()).isEqualTo(mapped.roles());
+        assertThat(res.isActive()).isEqualTo(mapped.isActive());
     }
 
 }
