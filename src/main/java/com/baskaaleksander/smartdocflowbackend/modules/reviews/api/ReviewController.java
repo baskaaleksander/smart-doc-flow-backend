@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewReq
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewEventService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
@@ -25,11 +26,13 @@ import java.util.UUID;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewEventService reviewEventService;
 
     public ReviewController(
-            ReviewService reviewService
-    ) {
+            ReviewService reviewService,
+            ReviewEventService reviewEventService) {
         this.reviewService = reviewService;
+        this.reviewEventService = reviewEventService;
     }
 
     @GetMapping("")
@@ -47,7 +50,7 @@ public class ReviewController {
 
     @GetMapping("/event/{eventId}")
     public ResponseEntity<ReviewEventResponse> getReviewEvent(@PathVariable("eventId") UUID eventId) {
-        return new ResponseEntity<>(reviewService.getReviewEventById(eventId), HttpStatus.OK);
+        return new ResponseEntity<>(reviewEventService.getReviewEventById(eventId), HttpStatus.OK);
     }
 
     @GetMapping("/{reviewId}")
@@ -85,7 +88,7 @@ public class ReviewController {
             ) {
 
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
-        return new ResponseEntity<>(reviewService.getReviewEvents(reviewId, request, eventType), HttpStatus.OK);
+        return new ResponseEntity<>(reviewEventService.getReviewEvents(reviewId, request, eventType), HttpStatus.OK);
     }
 
 }

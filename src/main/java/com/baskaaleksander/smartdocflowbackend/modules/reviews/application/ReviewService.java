@@ -247,39 +247,4 @@ public class ReviewService {
         );
     }
 
-    public ReviewEventResponse getReviewEventById(UUID id) {
-        return reviewEventMapper.toReviewEventResponse(
-                reviewEventRepository.getReviewEventById(id).orElseThrow(() -> new ResourceNotFoundException("Review event with id " + id + " not found"))
-        );
-    }
-
-    public PagingResult<ReviewEventResponse> getReviewEvents(UUID id, PaginationRequest request, String eventType) {
-        Pageable pageable = PaginationUtil.getPageable(request);
-        Page<ReviewEvent> reviewEvents;
-
-        if (eventType.equalsIgnoreCase("ALL")) {
-            reviewEvents = reviewEventRepository.findByReviewId(pageable, id);
-        } else {
-            reviewEvents = reviewEventRepository.findByReviewIdWithType(pageable, id, ReviewEventType.fromString(eventType));
-        }
-
-        List<ReviewEventResponse> reviewEventsList = reviewEvents
-                .stream()
-                .map(reviewEventMapper::toReviewEventResponse)
-                .toList();
-
-        Integer currentPage = request.getPage();
-        int totalPages = reviewEvents.getTotalPages();
-
-        return new PagingResult<>(
-                reviewEventsList,
-                totalPages,
-                reviewEvents.getTotalElements(),
-                reviewEvents.getSize(),
-                reviewEvents.getNumber(),
-                currentPage + 1 == totalPages,
-                currentPage + 1 < totalPages
-        );
-    }
-
 }
