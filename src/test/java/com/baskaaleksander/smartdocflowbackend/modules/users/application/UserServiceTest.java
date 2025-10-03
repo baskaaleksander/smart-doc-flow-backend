@@ -169,4 +169,27 @@ public class UserServiceTest {
         assertThat(res).isEqualTo("User activated");
 
     }
+
+    @Test
+    void updateUserRoles_shouldThrowException_whenRoleNotFound() {
+        Set<String> roles = Set.of("ROLE_USER");
+
+        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.updateUserRoles(UUID.randomUUID(), roles))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+    }
+
+    @Test
+    void updateUserRoles_shouldThrowException_whenUserNotFound() {
+        Set<String> roles = Set.of("ROLE_USER");
+        UUID id = UUID.randomUUID();
+
+        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.of(new Role()));
+        when(userRepository.findUserByIdWithRoles(id)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> userService.updateUserRoles(id, roles))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+    }
 }
