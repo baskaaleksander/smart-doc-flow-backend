@@ -1,16 +1,21 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +28,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
@@ -149,5 +155,54 @@ public class ReviewServiceTest {
 
         assertThatThrownBy(() -> reviewService.commentReview("user-123", "some comment", id))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void commentReview_shouldReturnReviewEventResponse() {
+        User reviewer = new User();
+        reviewer.setId(UUID.randomUUID());
+        reviewer.setUsername("user-123");
+
+        Document document = new Document();
+        document.setId(UUID.randomUUID());
+
+        Review review = new Review();
+        review.setId(UUID.randomUUID());
+        review.setDocument(document);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+        when(userRepository.findByUsername(reviewer.getUsername()))
+                .thenReturn(Optional.of(reviewer));
+
+        when(reviewEventRepository.save(any(ReviewEvent.class)))
+                .thenAnswer(inv -> {
+                    ReviewEvent ev = inv.getArgument(0);
+                    if (ev.getId() == null) ev.setId(UUID.randomUUID());
+                    if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
+                    return ev;
+                });
+
+        when(reviewEventMapper.toReviewEventResponse(any(ReviewEvent.class)))
+                .thenAnswer(inv -> {
+                    ReviewEvent ev = inv.getArgument(0);
+                    return new ReviewEventResponse(
+                            ev.getId(),
+                            ev.getEventType(),
+                            ev.getComment(),
+                            ev.getReviewer().getId(),
+                            ev.getCreatedAt()
+                    );
+                });
+
+        ReviewEventResponse res =
+                reviewService.commentReview(reviewer.getUsername(), "some comment", review.getId());
+
+        assertThat(res).isNotNull();
+        assertThat(res.eventType()).isEqualTo(ReviewEventType.COMMENT);
+        assertThat(res.comment()).isEqualTo("some comment");
+        assertThat(res.reviewerId()).isEqualTo(reviewer.getId());
+        assertThat(res.id()).isNotNull();
+        assertThat(res.createdAt()).isNotNull();
     }
 }
