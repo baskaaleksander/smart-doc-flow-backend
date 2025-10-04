@@ -29,15 +29,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class NotificationServiceTest {
 
-    @Mock
-    private NotificationRepository notificationRepository;
-    @Mock
-    private SimpMessagingTemplate simpMessagingTemplate;
-    @Mock
-    private NotificationMapper notificationMapper;
+    @Mock private NotificationRepository notificationRepository;
+    @Mock private SimpMessagingTemplate simpMessagingTemplate;
+    @Mock private NotificationMapper notificationMapper;
 
-    @InjectMocks
-    private NotificationService notificationService;
+    @InjectMocks private NotificationService notificationService;
 
     private Notification n1;
     private Notification n2;
@@ -45,11 +41,11 @@ public class NotificationServiceTest {
     private NotificationResponse r2;
     private final String username = "user-123";
 
-
     @BeforeEach
     void setUp() {
         n1 = new Notification();
         n2 = new Notification();
+
         r1 = new NotificationResponse(
                 UUID.randomUUID(),
                 username,
@@ -66,18 +62,35 @@ public class NotificationServiceTest {
                 true,
                 Instant.now()
         );
+    }
 
-        when(notificationMapper.toNotificationResponse(n1)).thenReturn(r1);
-        when(notificationMapper.toNotificationResponse(n2)).thenReturn(r2);
+    private void stubMapper() {
+        when(notificationMapper.toNotificationResponse(any(Notification.class)))
+                .thenAnswer(inv -> {
+                    Notification arg = inv.getArgument(0);
+                    if (arg == n1) return r1;
+                    if (arg == n2) return r2;
+                    return new NotificationResponse(
+                            UUID.randomUUID(),
+                            username,
+                            NotificationType.DOCUMENT_PROCESSED,
+                            "example-message",
+                            false,
+                            Instant.now()
+                    );
+                });
     }
 
     @Test
     void sendNotification_shouldSaveToDb_and_triggerWs() {
-        notificationService.sendNotification("user-123", "document_uploaded", "test");
+        notificationService.sendNotification(username, "document_uploaded", "test");
 
         verify(notificationRepository).save(any(Notification.class));
-        verify(simpMessagingTemplate).convertAndSendToUser(eq("user-123"), eq("/queue/notifications"), any(Notification.class));
-
+        verify(simpMessagingTemplate).convertAndSendToUser(
+                eq(username),
+                eq("/queue/notifications"),
+                any(Notification.class)
+        );
     }
 
     @Test
@@ -85,11 +98,10 @@ public class NotificationServiceTest {
         PaginationRequest req = new PaginationRequest(0, 2, "createdAt", Sort.Direction.DESC);
         Pageable pageable = PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Notification> page = new PageImpl<>(
-                List.of(n1, n2), pageable, 5
-        );
-
+        Page<Notification> page = new PageImpl<>(List.of(n1, n2), pageable, 5);
         when(notificationRepository.findAllByUsername(pageable, username)).thenReturn(page);
+
+        stubMapper();
 
         PagingResult<NotificationResponse> res = notificationService.getNotifications(username, req, null);
 
@@ -100,6 +112,7 @@ public class NotificationServiceTest {
         assertThat(res.page()).isEqualTo(0);
         assertThat(res.last()).isFalse();
         assertThat(res.next()).isTrue();
+
         verify(notificationRepository).findAllByUsername(pageable, username);
     }
 
@@ -108,22 +121,44 @@ public class NotificationServiceTest {
         PaginationRequest req = new PaginationRequest(1, 2, "createdAt", Sort.Direction.DESC);
         Pageable pageable = PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Notification> page = new PageImpl<>(
-                List.of(n1, n2), pageable, 4
-        );
+        Page<Notification> page = new PageImpl<>(List.of(n1), pageable, 4);
+        when(notificationRepository.findAllByUsernameAndRead(pageable, username, true)).thenReturn(page);
 
-        when(notificationRepository.findAllByUsernameAndRead(pageable, username, true))
-                .thenReturn(page);
+        stubMapper();
 
         PagingResult<NotificationResponse> res = notificationService.getNotifications(username, req, true);
 
-        assertThat(res.content()).containsExactly(r1, r2);
+        assertThat(res.content()).containsExactly(r1);
         assertThat(res.totalPages()).isEqualTo(2);
         assertThat(res.totalElements()).isEqualTo(4);
         assertThat(res.size()).isEqualTo(2);
         assertThat(res.page()).isEqualTo(1);
         assertThat(res.last()).isTrue();
         assertThat(res.next()).isFalse();
+
         verify(notificationRepository).findAllByUsernameAndRead(pageable, username, true);
+    }
+
+    @Test
+    void getNotifications_shouldReturnPagedResult_whenReadIsFalse() {
+        PaginationRequest req = new PaginationRequest(0, 3, "createdAt", Sort.Direction.ASC);
+        Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Direction.ASC, "createdAt"));
+
+        Page<Notification> page = new PageImpl<>(List.of(n2), pageable, 1);
+        when(notificationRepository.findAllByUsernameAndRead(pageable, username, false)).thenReturn(page);
+
+        stubMapper();
+
+        PagingResult<NotificationResponse> res = notificationService.getNotifications(username, req, false);
+
+        assertThat(res.content()).containsExactly(r2);
+        assertThat(res.totalPages()).isEqualTo(1);
+        assertThat(res.totalElements()).isEqualTo(1);
+        assertThat(res.size()).isEqualTo(3);
+        assertThat(res.page()).isEqualTo(0);
+        assertThat(res.last()).isTrue();
+        assertThat(res.next()).isFalse();
+
+        verify(notificationRepository).findAllByUsernameAndRead(pageable, username, false);
     }
 }
