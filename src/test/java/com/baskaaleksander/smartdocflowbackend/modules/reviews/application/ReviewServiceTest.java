@@ -561,4 +561,68 @@ public class ReviewServiceTest {
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("not allowed");
     }
+
+    @Test
+    void rejectDocument_shouldReturnReviewResponse_andSendNotification_andLogEvent() {
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        doAnswer(inv -> { review.setStatus(ReviewStatus.REJECTED); return null; })
+                .when(reviewRepository).updateStatus(eq(review.getId()), eq(ReviewStatus.REJECTED));
+
+        doNothing().when(documentRepository)
+                .updateStatus(eq(document.getId()), eq(DocumentStatus.REVIEWED));
+
+        when(reviewRepository.save(any(Review.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        when(reviewEventRepository.save(any(ReviewEvent.class)))
+                .thenAnswer(inv -> {
+                    ReviewEvent ev = inv.getArgument(0);
+                    if (ev.getId() == null) ev.setId(UUID.randomUUID());
+                    if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
+                    return ev;
+                });
+
+        when(reviewMapper.toReviewResponse(any(Review.class)))
+                .thenAnswer(inv -> {
+                    Review r = inv.getArgument(0);
+                    return new ReviewResponse(
+                            r.getId(),
+                            r.getDocument().getId(),
+                            r.getStatus(),
+                            r.getReviewer() != null ? r.getReviewer().getId() : null,
+                            r.getComment(),
+                            r.getCreatedAt(),
+                            r.getUpdatedAt(),
+                            r.getVersion()
+                    );
+                });
+
+        String comment = "Needs fixes";
+        ReviewResponse res = reviewService.rejectDocument(review.getId(), reviewer.getUsername(), comment);
+
+        assertThat(res).isNotNull();
+        assertThat(res.id()).isEqualTo(review.getId());
+        assertThat(res.documentId()).isEqualTo(document.getId());
+        assertThat(res.status()).isEqualTo(ReviewStatus.REJECTED);
+        assertThat(res.reviewerId()).isEqualTo(reviewer.getId());
+        assertThat(res.comment()).isEqualTo(comment);
+
+        verify(reviewRepository).getReviewById(review.getId());
+        verify(reviewRepository).updateStatus(review.getId(), ReviewStatus.REJECTED);
+        verify(documentRepository).updateStatus(document.getId(), DocumentStatus.REVIEWED);
+        verify(reviewRepository).save(any(Review.class));
+        verify(reviewMapper).toReviewResponse(any(Review.class));
+
+
+        verify(notificationService).sendNotification(
+                eq(reviewer.getUsername()),
+                eq("document_reviewed"),
+                contains("got rejected")
+        );
+    }
 }
