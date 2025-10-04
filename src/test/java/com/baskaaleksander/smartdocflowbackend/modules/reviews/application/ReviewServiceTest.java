@@ -526,4 +526,39 @@ public class ReviewServiceTest {
                 contains("is approved")
         );
     }
+
+    @Test
+    void rejectDocument_shouldThrowException_whenReviewNotFound() {
+        UUID id = UUID.randomUUID();
+        when(reviewRepository.getReviewById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.rejectDocument(id, "user-123", "nope"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void rejectDocument_shouldThrowException_whenReviewStatusIsIncorrect() {
+        review.setStatus(ReviewStatus.PENDING);
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.rejectDocument(review.getId(), reviewer.getUsername(), "nope"))
+                .isInstanceOf(ResourceConflictException.class)
+                .hasMessageContaining("needs to be IN_PROGRESS");
+    }
+
+    @Test
+    void rejectDocument_shouldThrowException_whenUserNotOwner() {
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.rejectDocument(review.getId(), "other-user", "nope"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("not allowed");
+    }
 }
