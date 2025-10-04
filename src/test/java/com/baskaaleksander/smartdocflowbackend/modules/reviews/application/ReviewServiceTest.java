@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
@@ -249,5 +250,26 @@ public class ReviewServiceTest {
         assertThat(res.createdAt()).isEqualTo(mapped.createdAt());
         assertThat(res.updatedAt()).isEqualTo(mapped.updatedAt());
         assertThat(res.version()).isEqualTo(mapped.version());
+    }
+
+    @Test
+    void claimReview_shouldThrowException_whenReviewNotFound() {
+        UUID id = UUID.randomUUID();
+        when(reviewRepository.getReviewById(id))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.claimReview(id, "user-123"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void claimReview_shouldThrowException_whenReviewStatusIsIncorrect() {
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.claimReview(review.getId(), reviewer.getId().toString()))
+                .isInstanceOf(ResourceConflictException.class);
     }
 }
