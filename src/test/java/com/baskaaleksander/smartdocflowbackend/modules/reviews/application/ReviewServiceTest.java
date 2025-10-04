@@ -269,7 +269,61 @@ public class ReviewServiceTest {
         when(reviewRepository.getReviewById(review.getId()))
                 .thenReturn(Optional.of(review));
 
-        assertThatThrownBy(() -> reviewService.claimReview(review.getId(), reviewer.getId().toString()))
+        assertThatThrownBy(() -> reviewService.claimReview(review.getId(), reviewer.getUsername()))
                 .isInstanceOf(ResourceConflictException.class);
+    }
+
+    @Test
+    void claimReview_shouldThrowException_whenReviewerNotFound() {
+        review.setStatus(ReviewStatus.PENDING);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        when(userRepository.findByUsername(reviewer.getUsername()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.claimReview(review.getId(), reviewer.getUsername()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void claimReview_shouldReturnReviewResponse() {
+        review.setStatus(ReviewStatus.PENDING);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        when(userRepository.findByUsername(reviewer.getUsername()))
+                .thenReturn(Optional.of(reviewer));
+
+
+        when(reviewRepository.save(review))
+                .thenReturn(review);
+
+        ReviewResponse mapped = new ReviewResponse(
+                review.getId(),
+                document.getId(),
+                review.getStatus(),
+                reviewer.getId(),
+                null,
+                Instant.now(),
+                Instant.now(),
+                0
+        );
+
+        when(reviewMapper.toReviewResponse(review))
+                .thenReturn(mapped);
+
+        ReviewResponse res = reviewService.claimReview(review.getId(), reviewer.getUsername());
+
+        assertThat(res.id()).isEqualTo(mapped.id());
+        assertThat(res.documentId()).isEqualTo(mapped.documentId());
+        assertThat(res.status()).isEqualTo(mapped.status());
+        assertThat(res.reviewerId()).isEqualTo(mapped.reviewerId());
+        assertThat(res.comment()).isEqualTo(mapped.comment());
+        assertThat(res.createdAt()).isEqualTo(mapped.createdAt());
+        assertThat(res.updatedAt()).isEqualTo(mapped.updatedAt());
+        assertThat(res.version()).isEqualTo(mapped.version());
     }
 }
