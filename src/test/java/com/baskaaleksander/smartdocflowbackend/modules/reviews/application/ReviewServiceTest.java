@@ -2,6 +2,8 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
@@ -25,16 +27,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.assertj.core.api.InstanceOfAssertFactories.map;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -624,5 +626,37 @@ public class ReviewServiceTest {
                 eq("document_reviewed"),
                 contains("got rejected")
         );
+    }
+
+    @Test
+    void getAllReviews_shouldReturnPaginatedResponse() {
+        Page<Review> page = new PageImpl<>(List.of(review), PageRequest.of(0, 10), 25);
+
+        when(reviewRepository.findAll(any(Pageable.class)))
+                .thenReturn(page);
+
+        ReviewResponse mapped = new ReviewResponse(
+                review.getId(),
+                review.getDocument().getId(),
+                review.getStatus(),
+                review.getReviewer() != null ? review.getReviewer().getId() : null,
+                review.getComment(),
+                review.getCreatedAt(),
+                review.getUpdatedAt(),
+                review.getVersion()
+        );
+
+        when(reviewMapper.toReviewResponse(review))
+                .thenReturn(mapped);
+
+        PagingResult<ReviewResponse> response = reviewService.getAllReviews(Optional.empty(), new PaginationRequest(0, 10, "id", Sort.Direction.DESC));
+
+        assertThat(response.content()).containsExactly(mapped);
+        assertThat(response.page()).isEqualTo(0);
+        assertThat(response.totalPages()).isEqualTo(3);
+        assertThat(response.size()).isEqualTo(10);
+        assertThat(response.totalElements()).isEqualTo(25);
+        assertThat(response.last()).isEqualTo(false);
+        assertThat(response.next()).isEqualTo(true);
     }
 }
