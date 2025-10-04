@@ -426,4 +426,40 @@ public class ReviewServiceTest {
         verify(reviewEventRepository).save(any(ReviewEvent.class));
         verify(reviewMapper).toReviewResponse(any(Review.class));
     }
+
+    @Test
+    void approveDocument_shouldThrowException_whenReviewNotFound() {
+        UUID id = UUID.randomUUID();
+        when(reviewRepository.getReviewById(id)).thenReturn(Optional.empty());
+
+
+        assertThatThrownBy(() -> reviewService.approveDocument(id, "user-123", "ok"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void approveDocument_shouldThrowException_whenReviewStatusIsIncorrect() {
+        review.setStatus(ReviewStatus.PENDING);
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.approveDocument(review.getId(), reviewer.getUsername(), "ok"))
+                .isInstanceOf(ResourceConflictException.class)
+                .hasMessageContaining("needs to be IN_PROGRESS");
+    }
+
+    @Test
+    void approveDocument_shouldThrowException_whenUserNotOwner() {
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.approveDocument(review.getId(), "other-user", "ok"))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("not allowed");
+    }
 }
