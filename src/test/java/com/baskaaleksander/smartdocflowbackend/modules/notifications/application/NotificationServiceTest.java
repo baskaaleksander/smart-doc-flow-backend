@@ -102,4 +102,28 @@ public class NotificationServiceTest {
         assertThat(res.next()).isTrue();
         verify(notificationRepository).findAllByUsername(pageable, username);
     }
+
+    @Test
+    void getNotifications_shouldReturnPagedResult_whenReadIsTrue() {
+        PaginationRequest req = new PaginationRequest(1, 2, "createdAt", Sort.Direction.DESC);
+        Pageable pageable = PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Notification> page = new PageImpl<>(
+                List.of(n1, n2), pageable, 4
+        );
+
+        when(notificationRepository.findAllByUsernameAndRead(pageable, username, true))
+                .thenReturn(page);
+
+        PagingResult<NotificationResponse> res = notificationService.getNotifications(username, req, true);
+
+        assertThat(res.content()).containsExactly(r1, r2);
+        assertThat(res.totalPages()).isEqualTo(2);
+        assertThat(res.totalElements()).isEqualTo(4);
+        assertThat(res.size()).isEqualTo(2);
+        assertThat(res.page()).isEqualTo(1);
+        assertThat(res.last()).isTrue();
+        assertThat(res.next()).isFalse();
+        verify(notificationRepository).findAllByUsernameAndRead(pageable, username, true);
+    }
 }
