@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -325,5 +326,45 @@ public class ReviewServiceTest {
         assertThat(res.createdAt()).isEqualTo(mapped.createdAt());
         assertThat(res.updatedAt()).isEqualTo(mapped.updatedAt());
         assertThat(res.version()).isEqualTo(mapped.version());
+    }
+
+    @Test
+    void releaseReview_shouldThrowException_whenReviewNotFound() {
+        UUID id = UUID.randomUUID();
+        when(reviewRepository.getReviewById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reviewService.releaseReview(id, "user-123"))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void releaseReview_shouldThrowException_whenReviewStatusIsIncorrect() {
+        review.setStatus(ReviewStatus.PENDING);
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.releaseReview(review.getId(), reviewer.getUsername()))
+                .isInstanceOf(ResourceConflictException.class)
+                .hasMessageContaining("cannot be released");
+    }
+
+    @Test
+    void releaseReview_shouldThrowException_whenUserNotOwner() {
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+
+        User someoneElse = new User();
+        someoneElse.setId(UUID.randomUUID());
+        someoneElse.setUsername("not-the-owner");
+
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.releaseReview(review.getId(), someoneElse.getUsername()))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("not allowed");
     }
 }
