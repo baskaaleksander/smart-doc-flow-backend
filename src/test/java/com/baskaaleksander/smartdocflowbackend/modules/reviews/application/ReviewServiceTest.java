@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
@@ -366,5 +367,63 @@ public class ReviewServiceTest {
         assertThatThrownBy(() -> reviewService.releaseReview(review.getId(), someoneElse.getUsername()))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("not allowed");
+    }
+
+    @Test
+    void releaseReview_shouldReturnReviewResponse() {
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setReviewer(reviewer);
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+
+        doAnswer(inv -> {
+            review.setStatus(ReviewStatus.PENDING);
+            return null;
+        }).when(reviewRepository).updateStatus(eq(review.getId()), eq(ReviewStatus.PENDING));
+
+        doNothing().when(documentRepository)
+                .updateStatus(eq(document.getId()), eq(DocumentStatus.REVIEW_PENDING));
+
+        when(reviewRepository.save(any(Review.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        when(reviewEventRepository.save(any(ReviewEvent.class)))
+                .thenAnswer(inv -> {
+                    ReviewEvent ev = inv.getArgument(0);
+                    if (ev.getId() == null) ev.setId(UUID.randomUUID());
+                    if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
+                    return ev;
+                });
+
+        when(reviewMapper.toReviewResponse(any(Review.class)))
+                .thenAnswer(inv -> {
+                    Review r = inv.getArgument(0);
+                    return new ReviewResponse(
+                            r.getId(),
+                            r.getDocument().getId(),
+                            r.getStatus(),
+                            r.getReviewer() != null ? r.getReviewer().getId() : null,
+                            r.getComment(),
+                            r.getCreatedAt(),
+                            r.getUpdatedAt(),
+                            r.getVersion()
+                    );
+                });
+
+        ReviewResponse res = reviewService.releaseReview(review.getId(), reviewer.getUsername());
+
+        assertThat(res).isNotNull();
+        assertThat(res.id()).isEqualTo(review.getId());
+        assertThat(res.documentId()).isEqualTo(document.getId());
+        assertThat(res.status()).isEqualTo(ReviewStatus.PENDING);
+        assertThat(res.reviewerId()).isNull();
+
+        verify(reviewRepository).getReviewById(review.getId());
+        verify(reviewRepository).updateStatus(review.getId(), ReviewStatus.PENDING);
+        verify(documentRepository).updateStatus(document.getId(), DocumentStatus.REVIEW_PENDING);
+        verify(reviewRepository).save(any(Review.class));
+        verify(reviewEventRepository).save(any(ReviewEvent.class));
+        verify(reviewMapper).toReviewResponse(any(Review.class));
     }
 }
