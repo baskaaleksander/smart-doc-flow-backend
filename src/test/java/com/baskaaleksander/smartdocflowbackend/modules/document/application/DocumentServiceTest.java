@@ -30,7 +30,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import java.net.URL;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -273,6 +276,33 @@ public class DocumentServiceTest {
 
         verify(documentRepository).getDocumentById(id);
         verify(documentRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void downloadDocumentById_shouldReturnPresignedUrl() throws Exception {
+        UUID id = UUID.randomUUID();
+        document.setId(id);
+        document.setMime("application/pdf");
+
+        when(documentRepository.getDocumentById(id)).thenReturn(Optional.of(document));
+
+        PresignedGetObjectRequest presigned = mock(PresignedGetObjectRequest.class);
+        when(presigned.url()).thenReturn(new URL("https://example.com/presigned/file.pdf"));
+        when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presigned);
+
+        String url = documentService.downloadDocumentById(id);
+
+        assertThat(url).isEqualTo("https://example.com/presigned/file.pdf");
+        verify(s3Presigner).presignGetObject(any(GetObjectPresignRequest.class));
+    }
+
+    @Test
+    void downloadDocumentById_shouldThrow_whenDocumentNotFound() {
+        UUID id = UUID.randomUUID();
+        when(documentRepository.getDocumentById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> documentService.downloadDocumentById(id))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
 }
