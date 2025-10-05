@@ -203,4 +203,31 @@ public class DocumentServiceTest {
         verify(documentRepository).findAll(pageable);
     }
 
+    @Test
+    void getUserDocuments_shouldReturnPagedResult() {
+        UUID ownerId = owner.getId();
+
+        Document only = document;
+        DocumentResponse r = mapped;
+
+        PaginationRequest req = new PaginationRequest(0, 3, "updatedAt", Sort.Direction.ASC);
+        Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Direction.ASC, "updatedAt"));
+
+        Page<Document> page = new PageImpl<>(List.of(only), pageable, 1);
+        when(documentRepository.findAllByOwner(ownerId, pageable)).thenReturn(page);
+        when(documentMapper.toDocumentResponse(only)).thenReturn(r);
+
+        PagingResult<DocumentResponse> res = documentService.getUserDocuments(req, ownerId);
+
+        assertThat(res.content()).containsExactly(r);
+        assertThat(res.totalPages()).isEqualTo(1);
+        assertThat(res.totalElements()).isEqualTo(1);
+        assertThat(res.size()).isEqualTo(3);
+        assertThat(res.page()).isEqualTo(0);
+        assertThat(res.last()).isTrue();
+        assertThat(res.next()).isFalse();
+
+        verify(documentRepository).findAllByOwner(ownerId, pageable);
+    }
+
 }
