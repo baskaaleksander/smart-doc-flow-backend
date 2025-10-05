@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
@@ -21,16 +22,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.springframework.data.domain.*;
+import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -98,6 +103,8 @@ public class DocumentServiceTest {
                 document.getStatus(),
                 document.getCreatedAt()
         );
+
+        ReflectionTestUtils.setField(documentService, "s3Bucket", "bucket");
     }
 
     @Test
@@ -228,6 +235,44 @@ public class DocumentServiceTest {
         assertThat(res.next()).isFalse();
 
         verify(documentRepository).findAllByOwner(ownerId, pageable);
+    }
+
+    @Test
+    void deleteById_shouldDeleteFromS3_andFromDatabase() {
+        UUID id = UUID.randomUUID();
+        document.setId(id);
+        document.setStorageKey("storage-key");
+        when(documentRepository.getDocumentById(id)).thenReturn(Optional.of(document));
+
+        documentService.deleteById(id);
+
+        verify(s3Client).deleteObjects(Mockito.<Consumer<DeleteObjectsRequest.Builder>>any());
+        verify(documentRepository).deleteById(id);
+    }
+
+    @Test
+    void deleteById_shouldThrow_whenDocumentNotFound() {
+        UUID id = UUID.randomUUID();
+        when(documentRepository.getDocumentById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> documentService.deleteById(id))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void deleteById_shouldThrowS3DeleteException_whenS3DeletionFails() {
+        UUID id = UUID.randomUUID();
+        document.setId(id);
+        when(documentRepository.getDocumentById(id)).thenReturn(Optional.of(document));
+
+        when(s3Client.deleteObjects(any(DeleteObjectsRequest.class))).thenThrow(new RuntimeException("S3 down"));
+
+        assertThatThrownBy(() -> documentService.deleteById(id))
+                .isInstanceOf(S3DeleteException.class)
+                .hasMessageContaining("Couldn't delete document");
+
+        verify(documentRepository).getDocumentById(id);
+        verify(documentRepository, never()).deleteById(any());
     }
 
 }
