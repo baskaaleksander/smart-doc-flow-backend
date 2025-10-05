@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.document.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
@@ -189,6 +190,57 @@ public class DocumentServiceTest {
         assertThat(res.reviewId()).isEqualTo(lastSaved.getReview().getId());
         assertThat(res.status()).isEqualTo(DocumentStatus.UPLOADED);
     }
+
+    @Test
+    void createAndSave_shouldThrow_whenUserNotFound() throws Exception {
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn("ghost");
+        SecurityContext sc = mock(SecurityContext.class);
+        when(sc.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(sc);
+
+        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "x.pdf", "application/pdf", new byte[]{1, 2, 3}
+        );
+
+        assertThatThrownBy(() -> documentService.createAndSave(file))
+                .isInstanceOf(ResourceNotFoundException.class);
+        verifyNoInteractions(s3Client, reviewRepository, ocrTaskPublisher, notificationService, documentMapper);
+    }
+
+    @Test
+    void createAndSave_shouldThrowS3UploadException_whenPutObjectFails() throws Exception {
+        String username = "alice";
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn(username);
+        SecurityContext sc = mock(SecurityContext.class);
+        when(sc.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(sc);
+
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "bad.pdf", "application/pdf", new byte[]{1, 2, 3}
+        );
+
+        doThrow(new RuntimeException("S3 down"))
+                .when(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+
+        assertThatThrownBy(() -> documentService.createAndSave(file))
+                .isInstanceOf(S3UploadException.class)
+                .hasMessageContaining("Upload to object store failed");
+
+        verify(documentRepository, never()).save(any());
+        verify(reviewRepository, never()).save(any());
+        verify(ocrTaskPublisher, never()).enqueue(any());
+        verify(notificationService, never()).sendNotification(any(), any(), any());
+        verify(documentMapper, never()).toDocumentResponse(any());
+    }
+
 
     @Test
     void getById_shouldReturnDocumentResponse() {
