@@ -241,6 +241,56 @@ public class DocumentServiceTest {
         verify(documentMapper, never()).toDocumentResponse(any());
     }
 
+    @Test
+    void createAndSave_shouldAcceptNonPdfContentType_butKeepInternalMimePdf_andReplaceSpaces() throws Exception {
+        String username = "bob";
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn(username);
+        SecurityContext sc = mock(SecurityContext.class);
+        when(sc.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(sc);
+
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "scan doc.png", "image/png", "bytes".getBytes()
+        );
+
+        when(documentRepository.save(any(Document.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(reviewRepository.save(any(Review.class)))
+                .thenAnswer(inv -> {
+                    Review r = inv.getArgument(0);
+                    if (r.getId() == null) r.setId(UUID.randomUUID());
+                    return r;
+                });
+        when(documentMapper.toDocumentResponse(any(Document.class)))
+                .thenAnswer(inv -> {
+                    Document d = inv.getArgument(0);
+                    return new DocumentResponse(
+                            d.getId(), d.getFilename(), d.getMime(), d.getSize(), d.getPageSize(),
+                            d.getOwner().getId(),
+                            d.getReview() != null ? d.getReview().getId() : null,
+                            d.getStatus(),
+                            d.getCreatedAt()
+                    );
+                });
+
+        DocumentResponse res = documentService.createAndSave(file);
+
+        assertThat(res.mime()).isEqualTo("pdf");
+        assertThat(res.filename()).isEqualTo("scan_doc.png");
+
+        ArgumentCaptor<PutObjectRequest> putReqCap = ArgumentCaptor.forClass(PutObjectRequest.class);
+        verify(s3Client).putObject(putReqCap.capture(), any(RequestBody.class));
+        assertThat(putReqCap.getValue().contentType()).isEqualTo("image/png");
+
+        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
+        verify(ocrTaskPublisher).enqueue(any(UUID.class));
+    }
+
 
     @Test
     void getById_shouldReturnDocumentResponse() {
