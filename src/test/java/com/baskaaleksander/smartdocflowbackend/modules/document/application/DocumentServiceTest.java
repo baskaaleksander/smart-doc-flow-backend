@@ -177,5 +177,30 @@ public class DocumentServiceTest {
         verify(documentRepository).findAll(pageable);
     }
 
+    @Test
+    void getAllDocuments_shouldReturnPagedResult_lastPage() {
+        Document d1 = document;
+        DocumentResponse r1 = mapped;
+
+        PaginationRequest req = new PaginationRequest(2, 2, "createdAt", Sort.Direction.DESC);
+        Pageable pageable = PageRequest.of(2, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Document> page = new PageImpl<>(List.of(d1), pageable, 5);
+        when(documentRepository.findAll(pageable)).thenReturn(page);
+
+        when(documentMapper.toDocumentResponse(d1)).thenReturn(r1);
+
+        PagingResult<DocumentResponse> res = documentService.getAllDocuments(req);
+
+        assertThat(res.content()).containsExactly(r1);
+        assertThat(res.totalPages()).isEqualTo(3);
+        assertThat(res.totalElements()).isEqualTo(5);
+        assertThat(res.size()).isEqualTo(2);
+        assertThat(res.page()).isEqualTo(2);
+        assertThat(res.last()).isTrue();
+        assertThat(res.next()).isFalse();
+
+        verify(documentRepository).findAll(pageable);
+    }
 
 }
