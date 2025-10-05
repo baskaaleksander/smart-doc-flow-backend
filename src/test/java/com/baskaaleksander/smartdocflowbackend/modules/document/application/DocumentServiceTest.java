@@ -11,24 +11,30 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Document
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
 import org.springframework.data.domain.*;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -64,11 +70,12 @@ public class DocumentServiceTest {
     private S3Presigner s3Presigner;
     @Mock
     private ObjectMapper MAPPER;
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private DocumentService realService;
 
-    private String s3Bucket = "bucket";
     private Document document;
     private Review review;
     private User owner;
@@ -108,6 +115,79 @@ public class DocumentServiceTest {
         );
 
         ReflectionTestUtils.setField(documentService, "s3Bucket", "bucket");
+    }
+
+    @Test
+    void createAndSave_shouldUploadToS3_SaveInDb_MapAndTriggerSideEffects() throws Exception {
+        String username = "alice";
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn(username);
+        SecurityContext sc = mock(SecurityContext.class);
+        when(sc.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(sc);
+
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        byte[] content = "pdf-bytes".getBytes();
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "my file.pdf", "application/pdf", content
+        );
+
+        when(documentRepository.save(any(Document.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        when(reviewRepository.save(any(Review.class)))
+                .thenAnswer(inv -> {
+                    Review r = inv.getArgument(0);
+                    if (r.getId() == null) r.setId(UUID.randomUUID());
+                    return r;
+                });
+
+        when(documentMapper.toDocumentResponse(any(Document.class)))
+                .thenAnswer(inv -> {
+                    Document d = inv.getArgument(0);
+                    return new DocumentResponse(
+                            d.getId(), d.getFilename(), d.getMime(), d.getSize(), d.getPageSize(),
+                            d.getOwner().getId(),
+                            d.getReview() != null ? d.getReview().getId() : null,
+                            d.getStatus(),
+                            d.getCreatedAt()
+                    );
+                });
+
+        DocumentResponse res = documentService.createAndSave(file);
+
+        ArgumentCaptor<PutObjectRequest> putReqCap = ArgumentCaptor.forClass(PutObjectRequest.class);
+        ArgumentCaptor<RequestBody> bodyCap = ArgumentCaptor.forClass(RequestBody.class);
+        verify(s3Client).putObject(putReqCap.capture(), bodyCap.capture());
+
+        PutObjectRequest putReq = putReqCap.getValue();
+        assertThat(putReq.bucket()).isEqualTo("bucket");
+        assertThat(putReq.contentType()).isEqualTo("application/pdf");
+
+        String key = putReq.key();
+        assertThat(key).endsWith("_my_file.pdf");
+
+        verify(documentRepository, times(2)).save(any(Document.class));
+        verify(reviewRepository).save(any(Review.class));
+
+        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
+        ArgumentCaptor<UUID> enqueueCap = ArgumentCaptor.forClass(UUID.class);
+        verify(ocrTaskPublisher).enqueue(enqueueCap.capture());
+
+        ArgumentCaptor<Document> docCap = ArgumentCaptor.forClass(Document.class);
+        verify(documentRepository, atLeastOnce()).save(docCap.capture());
+        Document lastSaved = docCap.getAllValues().get(docCap.getAllValues().size() - 1);
+        assertThat(enqueueCap.getValue()).isEqualTo(lastSaved.getId());
+
+        assertThat(res.id()).isEqualTo(lastSaved.getId());
+        assertThat(res.filename()).isEqualTo("my_file.pdf");
+        assertThat(res.mime()).isEqualTo("pdf");
+        assertThat(res.ownerId()).isEqualTo(user.getId());
+        assertThat(res.reviewId()).isEqualTo(lastSaved.getReview().getId());
+        assertThat(res.status()).isEqualTo(DocumentStatus.UPLOADED);
     }
 
     @Test
