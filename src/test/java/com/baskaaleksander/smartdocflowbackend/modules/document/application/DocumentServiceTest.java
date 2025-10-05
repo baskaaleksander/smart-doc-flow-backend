@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskPublisher;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 
@@ -108,5 +110,16 @@ public class DocumentServiceTest {
         assertThat(response.reviewId()).isEqualTo(mapped.reviewId());
         assertThat(response.status()).isEqualTo(mapped.status());
         assertThat(response.createdAt()).isEqualTo(mapped.createdAt());
+    }
+
+    @Test
+    void getById_shouldThrowException_whenNotFound() {
+        UUID id = UUID.randomUUID();
+
+        when(documentRepository.findbyIdWithReview(id))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> documentService.getById(id))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }
