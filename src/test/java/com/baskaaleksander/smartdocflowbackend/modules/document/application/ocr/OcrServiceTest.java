@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.document.application.ocr
 import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
@@ -27,10 +28,7 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.AbortableInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -168,5 +166,20 @@ public class OcrServiceTest {
                 .hasCauseInstanceOf(PdfProcessingException.class);
 
         verifyNoInteractions(chatModel, documentOcrResultRepository, embedTaskPublisher);
+    }
+
+    @Test
+    void runOcr_shouldWrapS3UploadException_whenJsonUploadFails() throws Exception {
+        when(documentRepository.getDocumentById(docId)).thenReturn(Optional.of(doc));
+        when(s3Client.getObject(any(GetObjectRequest.class))).thenReturn(s3PdfStream(makeOnePagePdfBytes()));
+        stubChatModelReturningJson("{\"pages\":[]}");
+        doThrow(S3Exception.builder().message("put failed").build())
+                .when(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+
+        assertThatThrownBy(() -> ocrService.runOcr(docId))
+                .isInstanceOf(RuntimeException.class)
+                .hasCauseInstanceOf(S3UploadException.class);
+
+        verifyNoInteractions(documentOcrResultRepository, embedTaskPublisher);
     }
 }
