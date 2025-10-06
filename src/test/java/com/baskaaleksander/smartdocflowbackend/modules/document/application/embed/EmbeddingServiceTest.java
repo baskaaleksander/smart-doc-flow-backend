@@ -3,11 +3,16 @@ package com.baskaaleksander.smartdocflowbackend.modules.document.application.emb
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.VectorStoreLoader;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -15,10 +20,19 @@ import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.http.AbortableInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class EmbeddingServiceTest {
@@ -37,14 +51,16 @@ public class EmbeddingServiceTest {
     @InjectMocks
     private EmbeddingService embeddingService;
 
-    private Document doc;
+    private DocumentOcrResult ocrResult;
     private UUID docId;
+
+
     @BeforeEach
     void setUp() {
         docId = UUID.randomUUID();
-        doc = new Document();
-        doc.setId(docId);
-        doc.setStorageKey(docId + "_ocr");
+        ocrResult = new DocumentOcrResult();
+        ocrResult.setId(UUID.randomUUID());
+        ocrResult.setStorageKey(docId + "_ocr");
         ReflectionTestUtils.setField(embeddingService, "s3Bucket", "bucket");
     }
 
@@ -56,5 +72,42 @@ public class EmbeddingServiceTest {
 
         AbortableInputStream body = AbortableInputStream.create(new ByteArrayInputStream(bytes));
         return new ResponseInputStream<>(head, body);
+    }
+
+
+    @Test
+    void ingestDocument_shouldLoadJson_chunkAllPages_storeVectors_andUpdateStatus() {
+        when(documentOcrResultRepository.getOcrByDocId(docId)).thenReturn(Optional.of(ocrResult));
+
+        String json = """
+            {
+              "pages": [
+                { "page": 1, "text": "Hello page one." },
+                { "page": 2, "text": "Second page here." }
+              ]
+            }
+            """;
+        when(s3Client.getObject(any(GetObjectRequest.class)))
+                .thenReturn(s3Stream(json.getBytes(StandardCharsets.UTF_8)));
+
+        Chunk c1 = new Chunk(docId, 1, 0, 5, "Hello");
+        Chunk c2 = new Chunk(docId, 2, 0, 6, "Second");
+        when(chunkerService.chunkPage("Hello page one.", docId, 1)).thenReturn(List.of(c1));
+        when(chunkerService.chunkPage("Second page here.", docId, 2)).thenReturn(List.of(c2));
+
+        embeddingService.ingestDocument(docId);
+
+        ArgumentCaptor<GetObjectRequest> getCap = ArgumentCaptor.forClass(GetObjectRequest.class);
+        verify(s3Client).getObject(getCap.capture());
+        assertThat(getCap.getValue().bucket()).isEqualTo("bucket");
+        assertThat(getCap.getValue().key()).isEqualTo(ocrResult.getStorageKey() + ".json");
+
+        ArgumentCaptor<List<Chunk>> chunksCap = ArgumentCaptor.forClass(List.class);
+        verify(vectorStoreLoader).loadChunks(chunksCap.capture());
+        assertThat(chunksCap.getValue()).containsExactly(c1, c2);
+
+        verify(documentRepository).updateStatus(docId, DocumentStatus.PROCESSED);
+        verify(chunkerService).chunkPage("Hello page one.", docId, 1);
+        verify(chunkerService).chunkPage("Second page here.", docId, 2);
     }
 }
