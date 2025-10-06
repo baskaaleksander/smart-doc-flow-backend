@@ -49,7 +49,6 @@ import java.util.UUID;
 public class OcrService {
 
     private final DocumentOcrResultRepository documentOcrResultRepository;
-    private final EmbeddingService embeddingService;
     private final EmbedTaskPublisher embedTaskPublisher;
     @Value(value = "${minio.bucket.name}")
     private String bucket;
@@ -73,7 +72,6 @@ public class OcrService {
         this.chatModel = chatModel;
         this.documentOcrResultRepository = documentOcrResultRepository;
 
-        this.embeddingService = embeddingService;
         this.embedTaskPublisher = embedTaskPublisher;
     }
 
