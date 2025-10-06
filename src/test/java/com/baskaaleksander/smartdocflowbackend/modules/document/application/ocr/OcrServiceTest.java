@@ -182,4 +182,16 @@ public class OcrServiceTest {
 
         verifyNoInteractions(documentOcrResultRepository, embedTaskPublisher);
     }
+
+    @Test
+    void runOcr_shouldThrow_whenDocumentHasNoKey() {
+        doc.setStorageKey(null);
+        when(documentRepository.getDocumentById(docId)).thenReturn(Optional.of(doc));
+
+        assertThatThrownBy(() -> ocrService.runOcr(docId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("has no key");
+
+        verifyNoInteractions(s3Client, chatModel, documentOcrResultRepository, embedTaskPublisher);
+    }
 }
