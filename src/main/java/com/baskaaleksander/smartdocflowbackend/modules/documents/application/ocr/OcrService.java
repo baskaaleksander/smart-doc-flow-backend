@@ -150,7 +150,7 @@ public class OcrService {
         }
     }
 
-    public List<Media> convertImages(List<BufferedImage> images) {
+    private List<Media> convertImages(List<BufferedImage> images) {
         List<Media> mediaList = new ArrayList<>();
 
         for (BufferedImage img : images) {
