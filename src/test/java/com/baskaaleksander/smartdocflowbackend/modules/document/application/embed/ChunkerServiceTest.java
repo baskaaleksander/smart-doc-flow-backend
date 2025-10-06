@@ -39,4 +39,32 @@ public class ChunkerServiceTest {
         List<Chunk> chunks = service.chunkPage("", docId, 1);
         assertThat(chunks).isEmpty();
     }
+
+    @Test
+    void chunkPage_shouldReturnSingleChunk_whenShortTextFitsInLimit() {
+        String text = "Hello world. This is short. End.";
+        List<Chunk> chunks = service.chunkPage(text, docId, 2);
+
+        assertThat(chunks).hasSize(1);
+        Chunk ch = chunks.get(0);
+        assertThat(ch.documentId()).isEqualTo(docId);
+        assertThat(ch.page()).isEqualTo(2);
+        assertThat(text.substring(ch.startOffset(), ch.endOffset())).isEqualTo(ch.content());
+        assertThat(ch.content()).isEqualTo(text);
+        assertThat(ch.startOffset()).isEqualTo(0);
+        assertThat(ch.endOffset()).isEqualTo(text.length());
+    }
+
+    @Test
+    void chunkPage_shouldFallbackToSingleSpan_whenNoSentenceDelimiters() {
+        String text = "No delimiters here but still should be one span and one chunk if under limit";
+        List<Chunk> chunks = service.chunkPage(text, docId, 3);
+
+        assertThat(chunks).hasSize(1);
+        Chunk ch = chunks.get(0);
+        assertThat(ch.content()).isEqualTo(text);
+        assertThat(ch.startOffset()).isEqualTo(0);
+        assertThat(ch.endOffset()).isEqualTo(text.length());
+        assertThat(ch.page()).isEqualTo(3);
+    }
 }
