@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.ocr;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
@@ -153,6 +154,19 @@ public class OcrServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasCauseInstanceOf(S3DownloadException.class);
 
+        verifyNoInteractions(chatModel, documentOcrResultRepository, embedTaskPublisher);
     }
 
+    @Test
+    void runOcr_shouldWrapPdfProcessingException_whenCorruptedPdf() {
+        when(documentRepository.getDocumentById(docId)).thenReturn(Optional.of(doc));
+        when(s3Client.getObject(any(GetObjectRequest.class)))
+                .thenReturn(s3PdfStream("NOT_A_PDF".getBytes()));
+
+        assertThatThrownBy(() -> ocrService.runOcr(docId))
+                .isInstanceOf(RuntimeException.class)
+                .hasCauseInstanceOf(PdfProcessingException.class);
+
+        verifyNoInteractions(chatModel, documentOcrResultRepository, embedTaskPublisher);
+    }
 }
