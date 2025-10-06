@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
@@ -142,4 +143,16 @@ public class OcrServiceTest {
 
         verifyNoInteractions(s3Client, chatModel, documentOcrResultRepository, embedTaskPublisher);
     }
+
+    @Test
+    void runOcr_shouldWrap_s3Exception() {
+        when(documentRepository.getDocumentById(docId)).thenReturn(Optional.of(doc));
+        when(s3Client.getObject(any(GetObjectRequest.class))).thenThrow(S3DownloadException.class);
+
+        assertThatThrownBy(() -> ocrService.runOcr(docId))
+                .isInstanceOf(RuntimeException.class)
+                .hasCauseInstanceOf(S3DownloadException.class);
+
+    }
+
 }
