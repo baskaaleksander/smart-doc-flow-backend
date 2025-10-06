@@ -98,5 +98,37 @@ public class OcrServiceTest {
         return new ResponseInputStream<>(head, body);
     }
 
+    @Test
+    void runOcr_shouldProcessAndPersist_happyPath() throws Exception {
+        when(documentRepository.getDocumentById(docId)).thenReturn(Optional.of(doc));
+        when(s3Client.getObject(any(GetObjectRequest.class))).thenReturn(s3PdfStream(makeOnePagePdfBytes()));
+        stubChatModelReturningJson("{\"pages\":[{\"page\":1,\"text\":\"Hello OCR!\"}]}");
+        when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
+                .thenReturn(PutObjectResponse.builder().eTag("etag").build());
+        when(documentOcrResultRepository.save(any(DocumentOcrResult.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ocrService.runOcr(docId);
+
+        ArgumentCaptor<GetObjectRequest> getCap = ArgumentCaptor.forClass(GetObjectRequest.class);
+        verify(s3Client).getObject(getCap.capture());
+        assertThat(getCap.getValue().bucket()).isEqualTo("bucket");
+        assertThat(getCap.getValue().key()).isEqualTo(doc.getStorageKey());
+
+        verify(chatModel).call(any(Prompt.class));
+
+        ArgumentCaptor<PutObjectRequest> putCap = ArgumentCaptor.forClass(PutObjectRequest.class);
+        verify(s3Client).putObject(putCap.capture(), any(RequestBody.class));
+        assertThat(putCap.getValue().bucket()).isEqualTo("bucket");
+        assertThat(putCap.getValue().key()).isEqualTo(docId + "_ocr.json");
+        assertThat(putCap.getValue().contentType()).isEqualTo("application/json");
+
+        ArgumentCaptor<DocumentOcrResult> ocrCap = ArgumentCaptor.forClass(DocumentOcrResult.class);
+        verify(documentOcrResultRepository).save(ocrCap.capture());
+        assertThat(ocrCap.getValue().getDocument()).isEqualTo(doc);
+        assertThat(ocrCap.getValue().getStorageKey()).isEqualTo(docId + "_ocr");
+
+        verify(documentRepository).updateStatus(docId, DocumentStatus.TEXT_READY);
+        verify(embedTaskPublisher).enqueue(docId);
+    }
 
 }
