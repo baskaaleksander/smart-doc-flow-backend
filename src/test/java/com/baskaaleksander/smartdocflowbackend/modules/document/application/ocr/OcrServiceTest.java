@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.ocr;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
@@ -35,6 +36,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -131,4 +133,13 @@ public class OcrServiceTest {
         verify(embedTaskPublisher).enqueue(docId);
     }
 
+    @Test
+    void runOcr_shouldThrow_whenDocumentMissing() {
+        when(documentRepository.getDocumentById(docId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ocrService.runOcr(docId))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verifyNoInteractions(s3Client, chatModel, documentOcrResultRepository, embedTaskPublisher);
+    }
 }
