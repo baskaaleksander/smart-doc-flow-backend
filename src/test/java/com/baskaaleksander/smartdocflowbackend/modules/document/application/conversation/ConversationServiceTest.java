@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.conversation;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationEncryptionService;
@@ -10,6 +11,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Con
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -18,7 +20,13 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
 
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 
 @ExtendWith(MockitoExtension.class)
 public class ConversationServiceTest {
@@ -57,5 +65,23 @@ public class ConversationServiceTest {
         conversationMessage.setDocumentId(documentId);
         conversationMessage.setContent("example");
         conversationMessage.setSide(ConversationSide.USER);
+    }
+
+    @Test
+    void deleteConversation_shouldEndWithSuccess() {
+        when(conversationMessageRepository.getIdByUserIdAndDocId(documentId, ownerId)).thenReturn(Optional.of(conversationId));
+
+        conversationService.deleteConversation(documentId, ownerId);
+
+        verify(jdbcChatMemoryRepository).deleteByConversationId(conversationId.toString());
+        verify(conversationMessageRepository).deleteAllByConversationId(conversationId);
+    }
+
+    @Test
+    void deleteConversation_shouldThrowException_whenConvoIdNotFound() {
+        when(conversationMessageRepository.getIdByUserIdAndDocId(documentId, ownerId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> conversationService.deleteConversation(documentId, ownerId))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }
