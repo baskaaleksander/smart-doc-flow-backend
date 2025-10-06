@@ -1,14 +1,15 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.embed;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.VectorStoreLoader;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.google.gson.JsonParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,9 +31,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class EmbeddingServiceTest {
@@ -109,5 +110,50 @@ public class EmbeddingServiceTest {
         verify(documentRepository).updateStatus(docId, DocumentStatus.PROCESSED);
         verify(chunkerService).chunkPage("Hello page one.", docId, 1);
         verify(chunkerService).chunkPage("Second page here.", docId, 2);
+    }
+
+    @Test
+    void ingestDocument_shouldThrow_whenOcrNotFound() {
+        when(documentOcrResultRepository.getOcrByDocId(docId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> embeddingService.ingestDocument(docId))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verifyNoInteractions(s3Client, vectorStoreLoader, chunkerService, documentRepository);
+    }
+
+    @Test
+    void ingestDocument_shouldThrowJsonParse_onInvalidJson() {
+        when(documentOcrResultRepository.getOcrByDocId(docId)).thenReturn(Optional.of(ocrResult));
+
+        String invalid = "{ not-a-json ";
+        when(s3Client.getObject(any(GetObjectRequest.class)))
+                .thenReturn(s3Stream(invalid.getBytes(StandardCharsets.UTF_8)));
+
+        assertThatThrownBy(() -> embeddingService.ingestDocument(docId))
+                .isInstanceOf(JsonParseException.class)
+                .hasMessageContaining("Failed to parse OCR result");
+
+        verifyNoInteractions(vectorStoreLoader, chunkerService);
+        verify(documentRepository, never()).updateStatus(any(), any());
+    }
+
+    @Test
+    void ingestDocument_shouldHandleEmptyPages_withoutCrashing() {
+        when(documentOcrResultRepository.getOcrByDocId(docId)).thenReturn(Optional.of(ocrResult));
+
+        String emptyPages = """
+            {
+              "pages": []
+            }
+            """;
+        when(s3Client.getObject(any(GetObjectRequest.class)))
+                .thenReturn(s3Stream(emptyPages.getBytes(StandardCharsets.UTF_8)));
+
+        embeddingService.ingestDocument(docId);
+
+        verify(vectorStoreLoader).loadChunks(List.of());
+        verify(documentRepository).updateStatus(docId, DocumentStatus.PROCESSED);
+        verifyNoInteractions(chunkerService);
     }
 }
