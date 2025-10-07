@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.conversation;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
@@ -8,9 +9,11 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Convers
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationEncryptionService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.ConversationMessageMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessage;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,9 +61,11 @@ public class ConversationServiceTest {
     private ConversationService conversationService;
 
     private ConversationMessage conversationMessage;
+    private Document document;
     private UUID conversationId;
     private UUID documentId;
     private UUID ownerId;
+
 
     @BeforeEach
     void setUp() {
@@ -74,6 +79,29 @@ public class ConversationServiceTest {
         conversationMessage.setDocumentId(documentId);
         conversationMessage.setContent("example");
         conversationMessage.setSide(ConversationSide.USER);
+        document = new Document();
+        document.setId(documentId);
+        document.setStatus(DocumentStatus.PROCESSED);
+    }
+
+    @Test
+    void askQuestion_shouldThrowException_whenDocumentNotFound() {
+        when(documentRepository.getDocumentById(documentId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->conversationService.askQuestion("question", documentId, ownerId))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void askQuestion_shouldThrowException_whenDocumentIsInWrongStatus() {
+        document.setStatus(DocumentStatus.UPLOADED);
+
+        when(documentRepository.getDocumentById(documentId))
+                .thenReturn(Optional.of(document));
+
+        assertThatThrownBy(() -> conversationService.askQuestion("question", documentId, ownerId))
+                .isInstanceOf(ResourceConflictException.class);
     }
 
     @Test
