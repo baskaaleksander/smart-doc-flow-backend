@@ -18,10 +18,13 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Doc
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.data.domain.PageImpl;
@@ -32,10 +35,10 @@ import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 
@@ -46,7 +49,7 @@ public class ConversationServiceTest {
     private VectorStore vectorStore;
     @Mock
     private DocumentRepository documentRepository;
-    @Mock
+    @Mock(answer = org.mockito.Answers.RETURNS_DEEP_STUBS)
     private ChatClient chatClient;
     @Mock
     private ConversationEncryptionService conversationEncryptionService;
@@ -58,17 +61,20 @@ public class ConversationServiceTest {
     private ConversationMessageMapper conversationMessageMapper;
 
     @InjectMocks
-    private ConversationService conversationService;
+    private ConversationService realService;
 
     private ConversationMessage conversationMessage;
     private Document document;
     private UUID conversationId;
     private UUID documentId;
     private UUID ownerId;
+    private ConversationService conversationService;
+
 
 
     @BeforeEach
     void setUp() {
+        conversationService = spy(realService);
         documentId = UUID.randomUUID();
         ownerId = UUID.randomUUID();
         conversationId = UUID.fromString(MakeConversationId.makeConversationId(documentId.toString(), ownerId));
@@ -103,6 +109,7 @@ public class ConversationServiceTest {
         assertThatThrownBy(() -> conversationService.askQuestion("question", documentId, ownerId))
                 .isInstanceOf(ResourceConflictException.class);
     }
+
 
     @Test
     void deleteConversation_shouldEndWithSuccess() {
