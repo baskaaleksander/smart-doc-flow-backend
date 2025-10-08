@@ -103,7 +103,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public TokenResponse refreshAccessToken(String refreshToken) {
+    public TokenResponse    refreshAccessToken(String refreshToken) {
         if (validateRefreshToken(refreshToken)) {
             String oldJti = getJtiFromRefreshToken(refreshToken);
             RefreshToken oldToken = refreshTokenRepository.findByJtiAndRevokedFalse(oldJti)

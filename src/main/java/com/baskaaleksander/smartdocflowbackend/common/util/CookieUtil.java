@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.common.util;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidJwtTokenException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +27,7 @@ public class CookieUtil {
         Cookie refreshCookie = Arrays.stream(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
                 .filter(cookie -> "refreshToken".equalsIgnoreCase(cookie.getName()))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Refresh token cookie not found"));
+                .orElseThrow(() -> new InvalidJwtTokenException("Refresh token cookie not found"));
 
         return refreshCookie.getValue();
     }
