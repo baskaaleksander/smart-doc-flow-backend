@@ -35,7 +35,7 @@ public class User {
     private Set<Role> roles;
 
     @Column(nullable = false)
-    private boolean isActive = true;
+    private boolean active = true;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Document> documents;
@@ -51,4 +51,5 @@ public class User {
     public int hashCode() {
         return getClass().hashCode();
     }
+
 }

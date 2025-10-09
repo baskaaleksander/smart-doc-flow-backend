@@ -23,11 +23,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u left join fetch u.roles where u.id = :userId")
     Optional<User> findUserByIdWithRoles(UUID userId);
 
-    @Query("update User u set u.isActive = :isActive where u.id = :userId")
+    @Query("update User u set u.active = :isActive where u.id = :userId")
     @Modifying
     void setIsActive(UUID userId, boolean isActive);
 
-    @Query("select u.isActive from User u where u.id = :userId")
+    @Query("select u.active from User u where u.id = :userId")
     Optional<Boolean> getUserStatusById(UUID userId);
 
     @Query("update User u set u.roles = :roles where u.id = :userId")

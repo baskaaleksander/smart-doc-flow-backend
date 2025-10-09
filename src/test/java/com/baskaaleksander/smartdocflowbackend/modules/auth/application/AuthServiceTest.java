@@ -142,7 +142,7 @@ public class AuthServiceTest {
 
         assertThat(res.username()).isEqualTo(registerRequest.getUsername());
         assertThat(res.roles()).containsExactly("ROLE_USER");
-        assertThat(res.isActive()).isTrue();
+        assertThat(res.active()).isTrue();
         assertThat(res.id()).isEqualTo(saved.getId());
     }
 
@@ -178,7 +178,7 @@ public class AuthServiceTest {
         assertThat(res.id()).isEqualTo(mapped.id());
         assertThat(res.username()).isEqualTo(mapped.username());
         assertThat(res.roles()).isEqualTo(mapped.roles());
-        assertThat(res.isActive()).isEqualTo(mapped.isActive());
+        assertThat(res.active()).isEqualTo(mapped.active());
         verify(userRepository).findUserByUsernameWithRoles("john");
         verify(userMapper).toUserResponse(entity);
     }

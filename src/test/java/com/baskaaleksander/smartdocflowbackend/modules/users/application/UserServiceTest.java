@@ -97,7 +97,7 @@ public class UserServiceTest {
         assertThat(res.id()).isEqualTo(mapped.id());
         assertThat(res.username()).isEqualTo(mapped.username());
         assertThat(res.roles()).isEqualTo(mapped.roles());
-        assertThat(res.isActive()).isEqualTo(mapped.isActive());
+        assertThat(res.active()).isEqualTo(mapped.active());
     }
 
     @Test

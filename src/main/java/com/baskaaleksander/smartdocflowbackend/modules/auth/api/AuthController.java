@@ -66,6 +66,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails user) {
+
         return new ResponseEntity<>(authService.getMe(user), HttpStatus.OK);
     }
 
