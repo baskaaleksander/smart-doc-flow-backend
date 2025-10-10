@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface ReviewEventMapper {
 
     @Mapping(target = "reviewerId", source = "reviewer.id")
+    @Mapping(target= "reviewId", source = "review.id")
     ReviewEventResponse toReviewEventResponse(ReviewEvent reviewEvent);
 }

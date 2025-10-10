@@ -10,6 +10,7 @@ public record ReviewEventResponse(
         ReviewEventType eventType,
         String comment,
         UUID reviewerId,
+        UUID reviewId,
         Instant createdAt
 ) {
 }
