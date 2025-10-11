@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Document
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.EventReviewerBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewResponse;
@@ -176,45 +177,55 @@ public class ReviewServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
-//    @Test
-//    void commentReview_shouldReturnReviewEventResponse() {
-//
-//        when(reviewRepository.getReviewById(review.getId()))
-//                .thenReturn(Optional.of(review));
-//        when(userRepository.findByUsername(reviewer.getUsername()))
-//                .thenReturn(Optional.of(reviewer));
-//
-//        when(reviewEventRepository.save(any(ReviewEvent.class)))
-//                .thenAnswer(inv -> {
-//                    ReviewEvent ev = inv.getArgument(0);
-//                    if (ev.getId() == null) ev.setId(UUID.randomUUID());
-//                    if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
-//                    return ev;
-//                });
-//
-//        when(reviewEventMapper.toReviewEventResponse(any(ReviewEvent.class)))
-//                .thenAnswer(inv -> {
-//                    ReviewEvent ev = inv.getArgument(0);
-//                    return new ReviewEventResponse(
-//                            ev.getId(),
-//                            ev.getEventType(),
-//                            ev.getComment(),
-//                            ev.getReviewer().getId(),
-//                            ev.getReview().getId(),
-//                            ev.getCreatedAt()
-//                    );
-//                });
-//
-//        ReviewEventResponse res =
-//                reviewService.commentReview(reviewer.getUsername(), "some comment", review.getId());
-//
-//        assertThat(res).isNotNull();
-//        assertThat(res.eventType()).isEqualTo(ReviewEventType.COMMENT);
-//        assertThat(res.comment()).isEqualTo("some comment");
-//        assertThat(res.reviewerId()).isEqualTo(reviewer.getId());
-//        assertThat(res.id()).isNotNull();
-//        assertThat(res.createdAt()).isNotNull();
-//    }
+    @Test
+    void commentReview_shouldReturnReviewEventResponse() {
+
+        when(reviewRepository.getReviewById(review.getId()))
+                .thenReturn(Optional.of(review));
+        when(userRepository.findByUsername(reviewer.getUsername()))
+                .thenReturn(Optional.of(reviewer));
+
+        when(reviewEventRepository.save(any(ReviewEvent.class)))
+                .thenAnswer(inv -> {
+                    ReviewEvent ev = inv.getArgument(0);
+                    if (ev.getId() == null) ev.setId(UUID.randomUUID());
+                    if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
+                    return ev;
+                });
+
+        when(reviewEventMapper.toReviewEventResponse(any(ReviewEvent.class)))
+                .thenAnswer(inv -> {
+                    ReviewEvent ev = inv.getArgument(0);
+
+                    EventReviewerBasicInfo reviewerBasicInfo = new EventReviewerBasicInfo(
+                            ev.getReviewer().getId(),
+                            ev.getReviewer().getUsername()
+                    );
+                    return new ReviewEventResponse(
+                            ev.getId(),
+                            ev.getEventType(),
+                            ev.getComment(),
+                            reviewerBasicInfo,
+                            ev.getReview().getId(),
+                            ev.getCreatedAt()
+                    );
+                });
+
+        EventReviewerBasicInfo reviewerBasicInfo = new EventReviewerBasicInfo(
+                reviewer.getId(),
+                reviewer.getUsername()
+        );
+
+        ReviewEventResponse res =
+                reviewService.commentReview(reviewer.getUsername(), "some comment", review.getId());
+
+        assertThat(res).isNotNull();
+        assertThat(res.eventType()).isEqualTo(ReviewEventType.COMMENT);
+        assertThat(res.comment()).isEqualTo("some comment");
+        assertThat(res.reviewer()).isEqualTo(reviewerBasicInfo);
+        assertThat(res.id()).isNotNull();
+        assertThat(res.createdAt()).isNotNull();
+    }
 
     @Test
     void getReviewById_shouldThrowError_whenReviewNotFound() {
