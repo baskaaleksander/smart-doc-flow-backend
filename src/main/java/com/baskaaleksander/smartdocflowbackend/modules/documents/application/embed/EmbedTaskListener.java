@@ -20,7 +20,7 @@ public class EmbedTaskListener {
     public void handle(EmbedTask task) {
         jobStatusService.markInProgressEmbed(task.documentId());
         embeddingService.ingestDocument(task.documentId());
-        jobStatusService.markProcessed(task.documentId());
+        jobStatusService.markReviewPending(task.documentId());
     }
 
 }

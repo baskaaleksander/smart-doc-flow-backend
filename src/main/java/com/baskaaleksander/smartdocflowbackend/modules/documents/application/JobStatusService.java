@@ -31,8 +31,8 @@ public class JobStatusService {
 
     }
     @Transactional
-    public void markProcessed(UUID documentId) {
-        documentRepository.updateStatus(documentId, DocumentStatus.PROCESSED);
+    public void markReviewPending(UUID documentId) {
+        documentRepository.updateStatus(documentId, DocumentStatus.REVIEW_PENDING);
 
     }
     @Transactional
