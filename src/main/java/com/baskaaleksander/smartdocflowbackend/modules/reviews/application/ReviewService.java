@@ -208,7 +208,7 @@ public class ReviewService {
 
         review = reviewRepository.save(review);
 
-        logReviewEvent(reviewer, review,  ReviewEventType.APPROVED, comment);
+        logReviewEvent(reviewer, review,  ReviewEventType.REJECTED, comment);
 
         notificationService.sendNotification(username, "document_reviewed", "Document " + review.getDocument().getId() + " got rejected.");
 
