@@ -5,7 +5,9 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteExceptio
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentOwnerBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentReviewBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
@@ -13,6 +15,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.Documen
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
@@ -81,15 +84,39 @@ public class DocumentServiceTest {
     private Review review;
     private User owner;
     private DocumentResponse mapped;
+    private DocumentReviewBasicInfo reviewBasic;
+    private DocumentOwnerBasicInfo ownerBasic;
     private DocumentService documentService;
 
     @BeforeEach
     void setUp() {
         documentService = spy(realService);
+        User reviewer = new User();
+        reviewer.setUsername("reviewer");
+        reviewer.setId(UUID.randomUUID());
+
         review = new Review();
         review.setId(UUID.randomUUID());
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setUpdatedAt(Instant.now());
+        review.setReviewer(reviewer);
+
         owner = new User();
         owner.setId(UUID.randomUUID());
+        owner.setUsername("owner");
+
+        ownerBasic = new DocumentOwnerBasicInfo(
+                owner.getId(),
+                owner.getUsername()
+        );
+
+        reviewBasic = new DocumentReviewBasicInfo(
+                review.getId(),
+                review.getReviewer().getUsername(),
+                review.getReviewer().getId(),
+                review.getStatus(),
+                review.getUpdatedAt()
+        );
 
         document = new Document();
         document.setId(UUID.randomUUID());
@@ -109,8 +136,8 @@ public class DocumentServiceTest {
                 document.getMime(),
                 document.getSize(),
                 document.getPageSize(),
-                document.getOwner().getId(),
-                document.getReview().getId(),
+                ownerBasic,
+                reviewBasic,
                 document.getStatus(),
                 document.getCreatedAt()
         );
@@ -129,6 +156,7 @@ public class DocumentServiceTest {
 
         User user = new User();
         user.setId(UUID.randomUUID());
+        user.setUsername(username);
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
 
         byte[] content = "pdf-bytes".getBytes();
@@ -149,10 +177,31 @@ public class DocumentServiceTest {
         when(documentMapper.toDocumentResponse(any(Document.class)))
                 .thenAnswer(inv -> {
                     Document d = inv.getArgument(0);
+
+                    DocumentOwnerBasicInfo ownerInfo = new DocumentOwnerBasicInfo(
+                            d.getOwner() != null ? d.getOwner().getId() : null,
+                            d.getOwner() != null ? d.getOwner().getUsername() : null
+                    );
+
+                    DocumentReviewBasicInfo reviewInfo = null;
+                    if (d.getReview() != null) {
+                        reviewInfo = new DocumentReviewBasicInfo(
+                                d.getReview().getId(),
+                                d.getReview().getReviewer() != null ? d.getReview().getReviewer().getUsername() : null,
+                                d.getReview().getReviewer() != null ? d.getReview().getReviewer().getId() : null,
+                                d.getReview().getStatus(),
+                                d.getReview().getUpdatedAt()
+                        );
+                    }
+
                     return new DocumentResponse(
-                            d.getId(), d.getFilename(), d.getMime(), d.getSize(), d.getPageSize(),
-                            d.getOwner().getId(),
-                            d.getReview() != null ? d.getReview().getId() : null,
+                            d.getId(),
+                            d.getFilename(),
+                            d.getMime(),
+                            d.getSize(),
+                            d.getPageSize(),
+                            ownerInfo,
+                            reviewInfo,
                             d.getStatus(),
                             d.getCreatedAt()
                     );
@@ -186,8 +235,21 @@ public class DocumentServiceTest {
         assertThat(res.id()).isEqualTo(lastSaved.getId());
         assertThat(res.filename()).isEqualTo("my_file.pdf");
         assertThat(res.mime()).isEqualTo("pdf");
-        assertThat(res.ownerId()).isEqualTo(user.getId());
-        assertThat(res.reviewId()).isEqualTo(lastSaved.getReview().getId());
+
+        DocumentOwnerBasicInfo expectedOwner = new DocumentOwnerBasicInfo(user.getId(), username);
+        assertThat(res.owner()).isEqualTo(expectedOwner);
+
+        DocumentReviewBasicInfo expectedReview = (lastSaved.getReview() == null) ? null :
+                new DocumentReviewBasicInfo(
+                        lastSaved.getReview().getId(),
+                        lastSaved.getReview().getReviewer() != null ? lastSaved.getReview().getReviewer().getUsername() : null,
+                        lastSaved.getReview().getReviewer() != null ? lastSaved.getReview().getReviewer().getId() : null,
+                        lastSaved.getReview().getStatus(),
+                        lastSaved.getReview().getUpdatedAt()
+                );
+
+        assertThat(res.review()).isEqualTo(expectedReview);
+
         assertThat(res.status()).isEqualTo(DocumentStatus.UPLOADED);
     }
 
@@ -252,6 +314,7 @@ public class DocumentServiceTest {
 
         User user = new User();
         user.setId(UUID.randomUUID());
+        user.setUsername(username);
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
 
         MockMultipartFile file = new MockMultipartFile(
@@ -260,19 +323,41 @@ public class DocumentServiceTest {
 
         when(documentRepository.save(any(Document.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
+
         when(reviewRepository.save(any(Review.class)))
                 .thenAnswer(inv -> {
                     Review r = inv.getArgument(0);
                     if (r.getId() == null) r.setId(UUID.randomUUID());
                     return r;
                 });
+
         when(documentMapper.toDocumentResponse(any(Document.class)))
                 .thenAnswer(inv -> {
                     Document d = inv.getArgument(0);
+
+                    DocumentOwnerBasicInfo ownerInfo = (d.getOwner() == null)
+                            ? null
+                            : new DocumentOwnerBasicInfo(d.getOwner().getId(), d.getOwner().getUsername());
+
+                    DocumentReviewBasicInfo reviewInfo = null;
+                    if (d.getReview() != null) {
+                        reviewInfo = new DocumentReviewBasicInfo(
+                                d.getReview().getId(),
+                                d.getReview().getReviewer() != null ? d.getReview().getReviewer().getUsername() : null,
+                                d.getReview().getReviewer() != null ? d.getReview().getReviewer().getId() : null,
+                                d.getReview().getStatus(),
+                                d.getReview().getUpdatedAt()
+                        );
+                    }
+
                     return new DocumentResponse(
-                            d.getId(), d.getFilename(), d.getMime(), d.getSize(), d.getPageSize(),
-                            d.getOwner().getId(),
-                            d.getReview() != null ? d.getReview().getId() : null,
+                            d.getId(),
+                            d.getFilename(),
+                            d.getMime(),
+                            d.getSize(),
+                            d.getPageSize(),
+                            ownerInfo,
+                            reviewInfo,
                             d.getStatus(),
                             d.getCreatedAt()
                     );
@@ -286,6 +371,9 @@ public class DocumentServiceTest {
         ArgumentCaptor<PutObjectRequest> putReqCap = ArgumentCaptor.forClass(PutObjectRequest.class);
         verify(s3Client).putObject(putReqCap.capture(), any(RequestBody.class));
         assertThat(putReqCap.getValue().contentType()).isEqualTo("image/png");
+
+        assertThat(res.owner()).isEqualTo(new DocumentOwnerBasicInfo(user.getId(), username));
+
 
         verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
         verify(ocrTaskPublisher).enqueue(any(UUID.class));
@@ -306,8 +394,8 @@ public class DocumentServiceTest {
         assertThat(response.mime()).isEqualTo(mapped.mime());
         assertThat(response.size()).isEqualTo(mapped.size());
         assertThat(response.pageSize()).isEqualTo(mapped.pageSize());
-        assertThat(response.ownerId()).isEqualTo(mapped.ownerId());
-        assertThat(response.reviewId()).isEqualTo(mapped.reviewId());
+        assertThat(response.owner()).isEqualTo(mapped.owner());
+        assertThat(response.review()).isEqualTo(mapped.review());
         assertThat(response.status()).isEqualTo(mapped.status());
         assertThat(response.createdAt()).isEqualTo(mapped.createdAt());
     }
@@ -326,6 +414,7 @@ public class DocumentServiceTest {
     @Test
     void getAllDocuments_shouldReturnPagedResult_firstPage() {
         Document d1 = document;
+
         Document d2 = new Document();
         d2.setId(UUID.randomUUID());
         d2.setOwner(owner);
@@ -338,9 +427,23 @@ public class DocumentServiceTest {
         d2.setCreatedAt(Instant.now());
 
         DocumentResponse r1 = mapped;
+
         DocumentResponse r2 = new DocumentResponse(
-                d2.getId(), d2.getFilename(), d2.getMime(), d2.getSize(), d2.getPageSize(),
-                owner.getId(), review.getId(), d2.getStatus(), d2.getCreatedAt()
+                d2.getId(),
+                d2.getFilename(),
+                d2.getMime(),
+                d2.getSize(),
+                d2.getPageSize(),
+                new DocumentOwnerBasicInfo(owner.getId(), owner.getUsername()),
+                new DocumentReviewBasicInfo(
+                        review.getId(),
+                        review.getReviewer() != null ? review.getReviewer().getUsername() : null,
+                        review.getReviewer() != null ? review.getReviewer().getId() : null,
+                        review.getStatus(),
+                        review.getUpdatedAt()
+                ),
+                d2.getStatus(),
+                d2.getCreatedAt()
         );
 
         PaginationRequest req = new PaginationRequest(0, 2, "createdAt", Sort.Direction.DESC);
