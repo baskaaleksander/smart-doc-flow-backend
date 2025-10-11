@@ -30,7 +30,8 @@ public class ConversationController {
         return new ResponseEntity<>(conversationService.askQuestion(question, id, userDetails.getId()), HttpStatus.OK);
     }
 
-    @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
+//    @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
     @GetMapping()
     public ResponseEntity<PagingResult<ConversationMessageResponse>> getAllConversationMessages(
             @PathVariable("documentId") UUID id,

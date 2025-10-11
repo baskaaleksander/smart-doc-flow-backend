@@ -25,7 +25,7 @@ public class DocumentAccessEvaluation {
 
         List<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
 
-        if (roles.contains("ROLE_ADMIN") || roles.contains("ROLE_REVIEWER")) return true;
+        if (roles.contains("ROLE_ADMIN") || roles.contains("ROLE_REVIEW")) return true;
 
         UserDetails user = (UserDetails) authentication.getPrincipal();
 
