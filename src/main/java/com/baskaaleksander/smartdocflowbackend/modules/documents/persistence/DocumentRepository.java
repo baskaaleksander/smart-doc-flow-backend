@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatusCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,4 +40,6 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
     Page<Document> findAll(Pageable pageable);
 
+    @Query("select d.status as status, count(d) as count from Document d group by d.status")
+    List<DocumentStatusCount> countDocumentsByStatus();
 }

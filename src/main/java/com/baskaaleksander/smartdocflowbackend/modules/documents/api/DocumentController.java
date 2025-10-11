@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
@@ -24,12 +25,10 @@ import java.util.UUID;
 public class DocumentController {
 
     private final DocumentService documentService;
-    private final EmbeddingService embeddingService;
 
     @Autowired
-    public DocumentController(DocumentService documentService, EmbeddingService embeddingService) {
+    public DocumentController(DocumentService documentService) {
         this.documentService = documentService;
-        this.embeddingService = embeddingService;
     }
 
     @PostMapping("/upload")
@@ -37,7 +36,11 @@ public class DocumentController {
         return new ResponseEntity<>(documentService.createAndSave(file), HttpStatus.CREATED);
     }
 
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
+    @GetMapping("/stats")
+    public ResponseEntity<DocumentStatsResponse> getDocumentStats() {
+        return new ResponseEntity<>(documentService.getDocumentStats(), HttpStatus.OK);
+    }
 
     @GetMapping("/")
     @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
@@ -57,13 +60,6 @@ public class DocumentController {
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponse> getDocumentById(@PathVariable UUID id) {
         return new ResponseEntity<>(documentService.getById(id), HttpStatus.OK);
-    }
-
-    @PostMapping("/{id}/ingest")
-    public ResponseEntity<String> ingestDocument(@PathVariable("id") UUID docId) throws IOException {
-        embeddingService.ingestDocument(docId);
-
-        return new ResponseEntity<>("OK", HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")

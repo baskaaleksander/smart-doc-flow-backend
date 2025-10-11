@@ -3,8 +3,10 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
@@ -39,9 +41,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DocumentService {
@@ -224,6 +225,25 @@ public class DocumentService {
 
         PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignedReq);
         return presigned.url().toString();
+    }
+
+    public DocumentStatsResponse getDocumentStats() {
+        List<DocumentStatusCount> counts = documentRepository.countDocumentsByStatus();
+
+        Map<DocumentStatus, Long> stats = counts.stream()
+                .collect(Collectors.toMap(DocumentStatusCount::getStatus, DocumentStatusCount::getCount));
+
+        System.out.println(stats);
+
+        Long failed = Optional.ofNullable(stats.get(DocumentStatus.OCR_FAILED)).orElse(0L)
+                + Optional.ofNullable(stats.get(DocumentStatus.EMBED_FAILED)).orElse(0L);
+
+        return new DocumentStatsResponse(
+                Optional.ofNullable(stats.get(DocumentStatus.REVIEW_PENDING)).orElse(0L),
+                Optional.ofNullable(stats.get(DocumentStatus.IN_REVIEW)).orElse(0L),
+                Optional.ofNullable(stats.get(DocumentStatus.REVIEWED)).orElse(0L),
+                failed
+        );
     }
 
 }
