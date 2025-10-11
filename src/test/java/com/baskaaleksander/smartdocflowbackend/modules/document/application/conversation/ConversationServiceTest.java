@@ -32,6 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -85,6 +86,7 @@ public class ConversationServiceTest {
         conversationMessage.setDocumentId(documentId);
         conversationMessage.setContent("example");
         conversationMessage.setSide(ConversationSide.USER);
+        conversationMessage.setCreatedAt(Instant.now());
         document = new Document();
         document.setId(documentId);
         document.setStatus(DocumentStatus.PROCESSED);
@@ -141,7 +143,7 @@ public class ConversationServiceTest {
         when(conversationMessageMapper.toMessageResponse(any(ConversationMessage.class)))
                 .thenAnswer(inv -> {
                     ConversationMessage msg = inv.getArgument(0);
-                    return new ConversationMessageResponse(msg.getId(), msg.getSide(), "content");
+                    return new ConversationMessageResponse(msg.getId(), msg.getSide(), "content", msg.getCreatedAt());
                 });
 
         when(conversationEncryptionService.decrypt(any())).thenReturn("content");

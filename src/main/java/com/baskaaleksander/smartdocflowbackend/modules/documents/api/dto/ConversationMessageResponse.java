@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @AllArgsConstructor @NoArgsConstructor
@@ -14,4 +15,5 @@ public class ConversationMessageResponse {
     private UUID id;
     private ConversationSide side;
     private String content;
+    private Instant createdAt;
 }
