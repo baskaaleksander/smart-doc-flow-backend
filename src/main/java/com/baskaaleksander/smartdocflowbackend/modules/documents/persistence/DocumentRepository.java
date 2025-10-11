@@ -33,6 +33,9 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
     @Query("select d from Document d where d.owner.id = :ownerId")
     Page<Document> findAllByOwner(UUID ownerId, Pageable pageable);
 
+    @Query("select d from Document d where d.review.reviewer.id = :reviewerId")
+    Page<Document> findAllByReviewer(UUID reviewerId, Pageable pageable);
+
     Page<Document> findAll(Pageable pageable);
 
 }

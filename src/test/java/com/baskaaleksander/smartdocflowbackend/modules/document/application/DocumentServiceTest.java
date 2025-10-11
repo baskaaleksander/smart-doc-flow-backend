@@ -459,7 +459,7 @@ public class DocumentServiceTest {
             return null;
         });
 
-        PagingResult<DocumentResponse> res = documentService.getAllDocuments(req);
+        PagingResult<DocumentResponse> res = documentService.getAllDocuments(req, false, UUID.randomUUID());
 
         assertThat(res.content()).containsExactly(r1, r2);
         assertThat(res.totalPages()).isEqualTo(3);
@@ -485,7 +485,7 @@ public class DocumentServiceTest {
 
         when(documentMapper.toDocumentResponse(d1)).thenReturn(r1);
 
-        PagingResult<DocumentResponse> res = documentService.getAllDocuments(req);
+        PagingResult<DocumentResponse> res = documentService.getAllDocuments(req, false, UUID.randomUUID());
 
         assertThat(res.content()).containsExactly(r1);
         assertThat(res.totalPages()).isEqualTo(3);

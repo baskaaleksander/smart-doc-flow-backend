@@ -45,10 +45,12 @@ public class DocumentController {
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
-            @RequestParam(defaultValue = "DESC") Sort.Direction direction
+            @RequestParam(defaultValue = "DESC") Sort.Direction direction,
+            @RequestParam(defaultValue = "false") Boolean assignedToMe,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
-        return new ResponseEntity<>(documentService.getAllDocuments(request), HttpStatus.OK);
+        return new ResponseEntity<>(documentService.getAllDocuments(request, assignedToMe, userDetails.getId()), HttpStatus.OK);
     }
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")

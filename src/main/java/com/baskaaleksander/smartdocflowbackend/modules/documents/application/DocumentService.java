@@ -144,11 +144,16 @@ public class DocumentService {
         return documentMapper.toDocumentResponse(doc);
     }
 
-    public PagingResult<DocumentResponse> getAllDocuments(PaginationRequest request) {
+    public PagingResult<DocumentResponse> getAllDocuments(PaginationRequest request, Boolean assignedToMe, UUID userId) {
 
         Pageable pageable = PaginationUtil.getPageable(request);
+        Page<Document> documents;
 
-        Page<Document> documents = documentRepository.findAll(pageable);
+        if (assignedToMe) {
+            documents = documentRepository.findAllByReviewer(userId, pageable);
+        } else {
+            documents = documentRepository.findAll(pageable);
+        }
 
         return getDocumentResponsePagingResult(request, documents);
     }
