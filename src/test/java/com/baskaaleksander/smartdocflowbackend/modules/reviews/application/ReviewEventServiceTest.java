@@ -81,6 +81,7 @@ public class ReviewEventServiceTest {
                 reviewEvent.getEventType(),
                 reviewEvent.getComment(),
                 reviewEvent.getReviewer().getId(),
+                reviewEvent.getReview().getId(),
                 reviewEvent.getCreatedAt()
         );
 
@@ -108,6 +109,7 @@ public class ReviewEventServiceTest {
                 reviewEvent.getEventType(),
                 reviewEvent.getComment(),
                 reviewEvent.getReviewer().getId(),
+                reviewEvent.getReview().getId(),
                 reviewEvent.getCreatedAt()
         );
 

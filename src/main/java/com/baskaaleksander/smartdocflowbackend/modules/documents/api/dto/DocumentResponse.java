@@ -11,8 +11,8 @@ public record DocumentResponse (
         String mime,
         double size,
         int pageSize,
-        UUID ownerId,
-        UUID reviewId,
+        DocumentOwnerBasicInfo owner,
+        DocumentReviewBasicInfo review,
         DocumentStatus status,
         Instant createdAt
 ) {

@@ -200,6 +200,7 @@ public class ReviewServiceTest {
                             ev.getEventType(),
                             ev.getComment(),
                             ev.getReviewer().getId(),
+                            ev.getReview().getId(),
                             ev.getCreatedAt()
                     );
                 });
