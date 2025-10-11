@@ -9,7 +9,7 @@ public record ReviewEventResponse(
         UUID id,
         ReviewEventType eventType,
         String comment,
-        UUID reviewerId,
+        EventReviewerBasicInfo reviewer,
         UUID reviewId,
         Instant createdAt
 ) {

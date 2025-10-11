@@ -27,14 +27,19 @@ public interface DocumentMapper {
 
     @Named("reviewToBasicInfo")
     default DocumentReviewBasicInfo reviewToBasicInfo(Review review) {
-        return review == null ? null :
-                new DocumentReviewBasicInfo(
-                        review.getId(),
-                        review.getReviewer().getUsername(),
-                        review.getReviewer().getId(),
-                        review.getStatus(),
-                        review.getUpdatedAt()
-                );
+        if (review == null) return null;
+
+        User reviewer = review.getReviewer();
+        UUID reviewerId = reviewer != null ? reviewer.getId() : null;
+        String reviewerUsername = reviewer != null ? reviewer.getUsername() : null;
+
+        return new DocumentReviewBasicInfo(
+                review.getId(),
+                reviewerUsername,
+                reviewerId,
+                review.getStatus(),
+                review.getUpdatedAt()
+        );
     }
 
     @Named("ownerToBasicInfo")
