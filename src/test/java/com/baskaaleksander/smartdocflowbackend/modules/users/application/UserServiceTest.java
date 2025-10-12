@@ -20,6 +20,7 @@ import org.springframework.data.domain.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 
+import java.time.Instant;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,9 +53,11 @@ public class UserServiceTest {
         role.setRole("ROLE_USER");
         user1 = new User();
         user1.setUsername("u1");
+        user1.setEmail("u1@example.com");
         user1.setId(UUID.randomUUID());
         user1.setRoles(Set.of(role));
         user1.setActive(true);
+        user1.setCreatedAt(Instant.now());
     }
 
 
@@ -63,7 +66,7 @@ public class UserServiceTest {
         Page<User> page = new PageImpl<>(List.of(user1), PageRequest.of(0, 10), 25);
         when(userRepository.findAll(any(Pageable.class))).thenReturn(page);
 
-        UserResponse dto1 = new UserResponse(UUID.randomUUID(), user1.getUsername(), List.of("ROLE_USER"), true);
+        UserResponse dto1 = new UserResponse(UUID.randomUUID(), user1.getUsername(), user1.getEmail(), List.of("ROLE_USER"), true, user1.getCreatedAt());
 
         when(userMapper.toUserResponse(user1)).thenReturn(dto1);
 
@@ -88,7 +91,7 @@ public class UserServiceTest {
 
     @Test
     void getUserById_shouldReturnUserResponse() {
-        UserResponse mapped = new UserResponse(user1.getId(), user1.getUsername(), List.of("ROLE_USER"), true);
+        UserResponse mapped = new UserResponse(UUID.randomUUID(), user1.getUsername(), user1.getEmail(), List.of("ROLE_USER"), true, user1.getCreatedAt());
         when(userRepository.findUserByIdWithRoles(user1.getId())).thenReturn(Optional.of(user1));
         when(userMapper.toUserResponse(user1)).thenReturn(mapped);
 
@@ -202,7 +205,7 @@ public class UserServiceTest {
         when(userRepository.findUserByIdWithRoles(user1.getId())).thenReturn(Optional.of(user1));
         when(userRepository.save(user1)).thenReturn(user1);
 
-        UserResponse mapped = new UserResponse(user1.getId(), user1.getUsername(), List.of("ROLE_USER"), true);
+        UserResponse mapped = new UserResponse(UUID.randomUUID(), user1.getUsername(), user1.getEmail(), List.of("ROLE_USER"), true, user1.getCreatedAt());
 
         when(userMapper.toUserResponse(user1))
                 .thenReturn(mapped);

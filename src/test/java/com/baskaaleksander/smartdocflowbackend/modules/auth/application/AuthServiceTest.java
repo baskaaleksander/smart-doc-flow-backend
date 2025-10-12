@@ -28,6 +28,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -170,7 +171,7 @@ public class AuthServiceTest {
 
         when(userRepository.findUserByUsernameWithRoles("john")).thenReturn(Optional.of(entity));
 
-        UserResponse mapped = new UserResponse(UUID.randomUUID(), "john", List.of("ROLE_USER"), true);
+        UserResponse mapped = new UserResponse(UUID.randomUUID(), "john", "john@example.com", List.of("ROLE_USER"), true, Instant.now());
         when(userMapper.toUserResponse(entity)).thenReturn(mapped);
 
         UserResponse res = authService.getMe(springUser);

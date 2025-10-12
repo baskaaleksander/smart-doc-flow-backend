@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.api;
 
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
@@ -34,7 +35,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody @Valid UserRequest user, HttpServletResponse response){
+    public ResponseEntity<String> loginUser(@RequestBody @Valid UserLoginRequest user, HttpServletResponse response){
         TokenResponse res = authService.loginUser(user);
 
         cookieUtil.sendRefreshTokenCookie(res.refreshToken(), response);

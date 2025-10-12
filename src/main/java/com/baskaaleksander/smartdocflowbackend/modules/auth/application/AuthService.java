@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
@@ -15,6 +16,7 @@ import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,6 +28,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class AuthService {
@@ -55,7 +59,7 @@ public class AuthService {
         this.userMapper = userMapper;
     }
 
-    public TokenResponse loginUser(UserRequest user) {
+    public TokenResponse loginUser(UserLoginRequest user) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getUsername(),
@@ -75,7 +79,7 @@ public class AuthService {
         if (existingUser.isPresent()) {
             throw new ResourceConflictException("User with " + user.getUsername() + " username already exists");
         }
-        String password = user.getPassword();
+        String password = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(password);
         Role role = roleRepository.findRoleByRole("ROLE_USER").orElseThrow(() -> new ResourceNotFoundException("Role not found"));
         Set<Role> roles = new HashSet<>();
@@ -92,8 +96,10 @@ public class AuthService {
         return new UserResponse(
                 userCreated.getId(),
                 userCreated.getUsername(),
+                userCreated.getEmail(),
                 userCreated.getRoles().stream().map(Role::getRole).toList(),
-                userCreated.isActive()
+                userCreated.isActive(),
+                userCreated.getCreatedAt()
         );
     }
 
@@ -113,6 +119,21 @@ public class AuthService {
         return userMapper.toUserResponse(
                 userRepository.findUserByUsernameWithRoles(user.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"))
         );
+    }
+
+    private String generateRandomPassword() {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!#$%&";
+        String password = RandomStringUtils.random( 8, characters );
+
+        String regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@!#$%&])(?=\\S+$).{8,}$";
+        Pattern pattern = Pattern.compile( regex );
+        Matcher matcher = pattern.matcher( password );
+
+        if (matcher.matches()) {
+            return password;
+        } else {
+            return generateRandomPassword();
+        }
     }
 
 
