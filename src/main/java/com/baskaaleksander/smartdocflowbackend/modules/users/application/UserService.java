@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
@@ -113,5 +114,9 @@ public class UserService {
         user = userRepository.save(user);
 
         return userMapper.toUserResponse(user);
+    }
+
+    public UserStatsResponse getUserStats() {
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.persistence;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserRoleCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -35,6 +37,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("update User u set u.roles = :roles where u.id = :userId")
     @Modifying
     int updateUserRoles(UUID userId, Set<Role> roles);
+
+    @Query("""
+    SELECT r.role AS role, COUNT(DISTINCT u) AS count
+    FROM Role r
+    LEFT JOIN r.users u
+    GROUP BY r.role
+    """)
+    List<UserRoleCount> countUsersPerRole();
+
+
 
     Page<User> findAll(Pageable pageable);
 }
