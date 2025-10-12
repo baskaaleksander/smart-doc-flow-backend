@@ -6,6 +6,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserRoleCount;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
@@ -19,10 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -117,6 +116,27 @@ public class UserService {
     }
 
     public UserStatsResponse getUserStats() {
-        return null;
+        List<UserRoleCount> roleCounts = userRepository.countUsersPerRole();
+        List<UserStatusCount> statusCounts = userRepository.countUsersPerStatus();
+
+        Map<String, Long> roleStats = roleCounts.stream()
+                .collect(Collectors.toMap(UserRoleCount::getRole, UserRoleCount::getCount));
+
+        Map<Boolean, Long> statusStats = statusCounts.stream()
+                .collect(Collectors.toMap(UserStatusCount::getActive, UserStatusCount::getCount));
+
+        Long total = 0L;
+
+        for (var entry : statusStats.entrySet()) {
+            total += entry.getValue();
+        }
+
+
+        return new UserStatsResponse(
+                Optional.of(total).orElse(0L),
+                Optional.ofNullable(statusStats.get(true)).orElse(0L),
+                Optional.of(roleStats.get("ROLE_ADMIN") + roleStats.get("ROLE_REVIEW")).orElse(0L)
+
+        );
     }
 }

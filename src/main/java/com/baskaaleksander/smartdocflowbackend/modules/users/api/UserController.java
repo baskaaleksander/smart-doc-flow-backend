@@ -7,6 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,13 @@ public class UserController {
 
         return userService.getAllUsers(request);
     }
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<UserStatsResponse> getUserStats() {
+        return new ResponseEntity<>(userService.getUserStats(), HttpStatus.OK);
+    }
+
 
     @GetMapping("/me/documents")
     public ResponseEntity<PagingResult<DocumentResponse>> getPersonalDocuments(

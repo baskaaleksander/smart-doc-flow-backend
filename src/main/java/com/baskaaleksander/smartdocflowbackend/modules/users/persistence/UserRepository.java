@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.users.persistence;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserRoleCount;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserStatusCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -46,7 +47,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     """)
     List<UserRoleCount> countUsersPerRole();
 
-
+    @Query("select u.active as active, count(u) as count from User u group by u.active")
+    List<UserStatusCount> countUsersPerStatus();
 
     Page<User> findAll(Pageable pageable);
 }

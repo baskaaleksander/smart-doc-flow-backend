@@ -233,8 +233,6 @@ public class DocumentService {
         Map<DocumentStatus, Long> stats = counts.stream()
                 .collect(Collectors.toMap(DocumentStatusCount::getStatus, DocumentStatusCount::getCount));
 
-        System.out.println(stats);
-
         Long failed = Optional.ofNullable(stats.get(DocumentStatus.OCR_FAILED)).orElse(0L)
                 + Optional.ofNullable(stats.get(DocumentStatus.EMBED_FAILED)).orElse(0L);
 
