@@ -16,6 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"owner", "review"})
+@Table(name = "documents")
 public class Document {
 
     @Id

@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenRespons
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
@@ -18,6 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -41,6 +43,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final CookieUtil cookieUtil;
     private final UserMapper userMapper;
+    private final ApplicationEventPublisher publisher;
+
 
     @Autowired
     public AuthService(
@@ -49,7 +53,10 @@ public class AuthService {
             RoleRepository roleRepository,
             JwtUtil jwtUtil,
             PasswordEncoder passwordEncoder,
-            CookieUtil cookieUtil, UserMapper userMapper) {
+            CookieUtil cookieUtil,
+            UserMapper userMapper,
+            ApplicationEventPublisher publisher
+    ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -57,6 +64,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.cookieUtil = cookieUtil;
         this.userMapper = userMapper;
+        this.publisher = publisher;
     }
 
     public TokenResponse loginUser(UserLoginRequest user) {
@@ -76,9 +84,17 @@ public class AuthService {
     public UserResponse registerUser(UserRequest user) {
 
         Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
-        if (existingUser.isPresent()) {
+
+        if(existingUser.isPresent()) {
             throw new ResourceConflictException("User with " + user.getUsername() + " username already exists");
         }
+
+        Optional<User> existingUser2 = userRepository.findByEmail(user.getEmail());
+
+        if(existingUser2.isPresent()) {
+            throw new ResourceConflictException("User with " + user.getEmail() + " email already exists");
+        }
+
         String password = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(password);
         Role role = roleRepository.findRoleByRole("ROLE_USER").orElseThrow(() -> new ResourceNotFoundException("Role not found"));
@@ -88,10 +104,13 @@ public class AuthService {
         User newUser = new User();
 
         newUser.setUsername(user.getUsername());
+        newUser.setEmail(user.getEmail());
         newUser.setPassword(encodedPassword);
         newUser.setRoles(roles);
 
         User userCreated = userRepository.save(newUser);
+
+        publisher.publishEvent(new UserRegisteredEvent(userCreated.getEmail(), password));
 
         return new UserResponse(
                 userCreated.getId(),
@@ -123,7 +142,8 @@ public class AuthService {
 
     private String generateRandomPassword() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!#$%&";
-        String password = RandomStringUtils.random( 8, characters );
+        String password = RandomStringUtils.random( 14, characters );
+
 
         String regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@!#$%&])(?=\\S+$).{8,}$";
         Pattern pattern = Pattern.compile( regex );
