@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
@@ -64,13 +65,13 @@ public class AuthServiceTest {
     @Mock
     private UserDetails userDetails;
 
-    private UserRequest loginRequest;
+    private UserLoginRequest loginRequest;
     private UserRequest registerRequest;
 
     @BeforeEach
     void setUp() {
-        loginRequest = new UserRequest("john", "secret");
-        registerRequest = new UserRequest("newuser", "pwd123");
+        loginRequest = new UserLoginRequest("john", "secret");
+        registerRequest = new UserRequest("newuser", "newuser@example.com");
     }
 
     @Test
@@ -115,7 +116,7 @@ public class AuthServiceTest {
     @Test
     void registerUser_shouldThrowException_whenRoleNotFound() {
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encoded");
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
         when(roleRepository.findRoleByRole(anyString())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.registerUser(registerRequest)).isInstanceOf(ResourceNotFoundException.class);
@@ -128,7 +129,7 @@ public class AuthServiceTest {
         role.setRole("ROLE_USER");
 
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("encoded");
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
         when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.of(role));
 
         User saved = new User();
