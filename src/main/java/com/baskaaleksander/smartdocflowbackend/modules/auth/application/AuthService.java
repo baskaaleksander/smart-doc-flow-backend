@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegisterRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
@@ -81,7 +81,7 @@ public class AuthService {
     }
 
     @Transactional
-    public UserResponse registerUser(UserRequest user) {
+    public UserResponse registerUser(UserRegisterRequest user) {
 
         Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
 

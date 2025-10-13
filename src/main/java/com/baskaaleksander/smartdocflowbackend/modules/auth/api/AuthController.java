@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.api;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegisterRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.application.AuthService;
@@ -44,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> registerUser(@RequestBody @Valid UserRequest user) {
+    public ResponseEntity<UserResponse> registerUser(@RequestBody @Valid UserRegisterRequest user) {
         return new ResponseEntity<>(authService.registerUser(user), HttpStatus.CREATED);
     }
 

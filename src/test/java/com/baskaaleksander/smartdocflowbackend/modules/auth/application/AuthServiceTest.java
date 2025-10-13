@@ -6,7 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegisterRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
@@ -14,7 +14,6 @@ import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,12 +65,12 @@ public class AuthServiceTest {
     private UserDetails userDetails;
 
     private UserLoginRequest loginRequest;
-    private UserRequest registerRequest;
+    private UserRegisterRequest registerRequest;
 
     @BeforeEach
     void setUp() {
         loginRequest = new UserLoginRequest("john", "secret");
-        registerRequest = new UserRequest("newuser", "newuser@example.com");
+        registerRequest = new UserRegisterRequest("newuser", "newuser@example.com", Set.of("ROLE_USER"));
     }
 
     @Test
