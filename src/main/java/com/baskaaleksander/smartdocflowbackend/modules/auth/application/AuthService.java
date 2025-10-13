@@ -110,7 +110,7 @@ public class AuthService {
 
         User userCreated = userRepository.save(newUser);
 
-        publisher.publishEvent(new UserRegisteredEvent(userCreated.getEmail(), password));
+        publisher.publishEvent(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
 
         return new UserResponse(
                 userCreated.getId(),
