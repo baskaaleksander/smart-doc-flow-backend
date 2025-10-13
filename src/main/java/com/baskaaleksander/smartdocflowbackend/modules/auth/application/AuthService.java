@@ -32,6 +32,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
@@ -95,14 +96,12 @@ public class AuthService {
             throw new ResourceConflictException("User with " + user.getEmail() + " email already exists");
         }
 
+
         String password = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(password);
-        Role role = roleRepository.findRoleByRole("ROLE_USER").orElseThrow(() -> new ResourceNotFoundException("Role not found"));
-        Set<Role> roles = new HashSet<>();
-        roles.add(role);
+        Set<Role> roles = roleRepository.findAllByRoleIn(user.getRoles());
 
         User newUser = new User();
-
         newUser.setUsername(user.getUsername());
         newUser.setEmail(user.getEmail());
         newUser.setPassword(encodedPassword);
