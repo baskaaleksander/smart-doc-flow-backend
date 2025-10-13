@@ -7,6 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserService;
 import jakarta.validation.Valid;
@@ -85,6 +86,16 @@ public class UserController {
     @PreAuthorize("@userAccess.canManage(#userId, authentication)")
     public ResponseEntity<UserResponse> getUserById(@PathVariable("userId") String userId) {
         return new ResponseEntity<>(userService.getUserById(userId), HttpStatus.OK);
+    }
+
+    @PatchMapping("/{userId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<UserResponse> editUserAccount(
+            @PathVariable("userId") UUID userId,
+            @Valid @RequestBody EditUserAccountRequest body
+            ) {
+        System.out.println(body.getRoles());
+        return new ResponseEntity<>(userService.editUserAccount(userId, body), HttpStatus.OK);
     }
 
     @PatchMapping("/{userId}/roles")

@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserRoleCount;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserStatusCount;
@@ -95,6 +96,26 @@ public class UserService {
         userRepository.setIsActive(userUUID, true);
 
         return "User activated";
+    }
+
+    public UserResponse editUserAccount(UUID userId, EditUserAccountRequest editRequest) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Set<Role> roles = roleRepository.findAllByRoleIn(editRequest.getRoles());
+
+        if (editRequest.getRoles().size() != roles.size()) {
+            throw new ResourceNotFoundException("One or more roles not found");
+        }
+
+        user.setEmail(editRequest.getEmail());
+        user.setRoles(roles);
+        user.setActive(editRequest.getActive());
+
+        userRepository.save(user);
+
+        return userMapper.toUserResponse(user);
     }
 
     @Transactional
