@@ -21,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -55,6 +56,8 @@ public class AuthServiceTest {
     private CookieUtil cookieUtil;
     @Mock
     private UserMapper userMapper;
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @InjectMocks
     private AuthService authService;
@@ -115,8 +118,10 @@ public class AuthServiceTest {
     @Test
     void registerUser_shouldThrowException_whenRoleNotFound() {
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
+
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-        when(roleRepository.findRoleByRole(anyString())).thenReturn(Optional.empty());
+        when(roleRepository.findAllByRoleIn(anySet())).thenReturn(Set.of());
 
         assertThatThrownBy(() -> authService.registerUser(registerRequest)).isInstanceOf(ResourceNotFoundException.class);
         verifyNoMoreInteractions(userRepository);
@@ -129,8 +134,7 @@ public class AuthServiceTest {
 
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.of(role));
-
+        when(roleRepository.findAllByRoleIn(Set.of("ROLE_USER"))).thenReturn(Set.of(role));
         User saved = new User();
         saved.setId(UUID.randomUUID());
         saved.setUsername(registerRequest.getUsername());

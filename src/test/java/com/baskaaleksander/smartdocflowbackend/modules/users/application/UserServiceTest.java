@@ -173,7 +173,7 @@ public class UserServiceTest {
     void updateUserRoles_shouldThrowException_whenRoleNotFound() {
         Set<String> roles = Set.of("ROLE_USER");
 
-        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.empty());
+        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of());
 
         assertThatThrownBy(() -> userService.updateUserRoles(UUID.randomUUID(), roles))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -185,7 +185,7 @@ public class UserServiceTest {
         Set<String> roles = Set.of("ROLE_USER");
         UUID id = UUID.randomUUID();
 
-        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.of(new Role()));
+        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of(new Role()));
         when(userRepository.findUserByIdWithRoles(id)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> userService.updateUserRoles(id, roles))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -201,7 +201,7 @@ public class UserServiceTest {
 
         user1.setRoles(new HashSet<>(Set.of(userRole)));
 
-        when(roleRepository.findRoleByRole("ROLE_USER")).thenReturn(Optional.of(userRole));
+        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of(userRole));
         when(userRepository.findUserByIdWithRoles(user1.getId())).thenReturn(Optional.of(user1));
         when(userRepository.save(user1)).thenReturn(user1);
 

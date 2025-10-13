@@ -101,6 +101,10 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(password);
         Set<Role> roles = roleRepository.findAllByRoleIn(user.getRoles());
 
+        if (roles.size() != user.getRoles().size()) {
+            throw new ResourceNotFoundException("One or more roles not found");
+        }
+
         User newUser = new User();
         newUser.setUsername(user.getUsername());
         newUser.setEmail(user.getEmail());

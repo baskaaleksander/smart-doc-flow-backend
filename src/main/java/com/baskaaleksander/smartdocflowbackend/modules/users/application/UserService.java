@@ -100,10 +100,11 @@ public class UserService {
     @Transactional
     public UserResponse updateUserRoles(UUID userId, Set<String> roleNames) {
 
-        Set<Role> rolesSet = roleNames.stream()
-                .map(name -> roleRepository.findRoleByRole(name)
-                        .orElseThrow(() -> new ResourceNotFoundException("Role " + name + " not found")))
-                .collect(Collectors.toSet());
+        Set<Role> rolesSet = roleRepository.findAllByRoleIn(roleNames);
+
+        if (rolesSet.size() != roleNames.size()) {
+            throw new ResourceNotFoundException("One or more roles not found");
+        }
 
         User user = userRepository.findUserByIdWithRoles(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " not found"));
