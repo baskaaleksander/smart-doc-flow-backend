@@ -103,6 +103,12 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        Optional<User> userEmail = userRepository.findByEmail(editRequest.getEmail());
+
+        if (userEmail.isPresent()) {
+            throw new ResourceConflictException("User with that email is already registered");
+        }
+
         Set<Role> roles = roleRepository.findAllByRoleIn(editRequest.getRoles());
 
         if (editRequest.getRoles().size() != roles.size()) {
@@ -114,25 +120,6 @@ public class UserService {
         user.setActive(editRequest.getActive());
 
         userRepository.save(user);
-
-        return userMapper.toUserResponse(user);
-    }
-
-    @Transactional
-    public UserResponse updateUserRoles(UUID userId, Set<String> roleNames) {
-
-        Set<Role> rolesSet = roleRepository.findAllByRoleIn(roleNames);
-
-        if (rolesSet.size() != roleNames.size()) {
-            throw new ResourceNotFoundException("One or more roles not found");
-        }
-
-        User user = userRepository.findUserByIdWithRoles(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " not found"));
-
-        user.setRoles(rolesSet);
-
-        user = userRepository.save(user);
 
         return userMapper.toUserResponse(user);
     }

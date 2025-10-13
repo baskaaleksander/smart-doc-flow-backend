@@ -98,12 +98,6 @@ public class UserController {
         return new ResponseEntity<>(userService.editUserAccount(userId, body), HttpStatus.OK);
     }
 
-    @PatchMapping("/{userId}/roles")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<UserResponse> assignRoles(@PathVariable("userId") UUID userId, @RequestBody @Valid UserRolesRequest userRolesRequest) {
-        return new ResponseEntity<>(userService.updateUserRoles(userId, userRolesRequest.getRoles()), HttpStatus.OK);
-    }
-
     @DeleteMapping("/{userId}")
     @PreAuthorize("@userAccess.canManage(#userId, authentication)")
     public ResponseEntity<String> inactivateUserAccount(@PathVariable("userId") String userId) {
