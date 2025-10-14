@@ -98,6 +98,7 @@ public class UserService {
         return "User activated";
     }
 
+    //TODO: test that
     public UserResponse editUserAccount(UUID userId, EditUserAccountRequest editRequest) {
 
         User user = userRepository.findById(userId)

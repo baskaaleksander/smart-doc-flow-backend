@@ -17,8 +17,6 @@ import java.util.UUID;
 @Mapper(componentModel = "spring")
 public interface DocumentMapper {
 
-    DocumentMapper INSTANCE = Mappers.getMapper(DocumentMapper.class);
-
     @Mappings({
             @Mapping(target = "owner", source = "owner", qualifiedByName = "ownerToBasicInfo"),
             @Mapping(target = "review", source = "review", qualifiedByName = "reviewToBasicInfo"),

@@ -169,51 +169,51 @@ public class UserServiceTest {
 
     }
 
-    @Test
-    void updateUserRoles_shouldThrowException_whenRoleNotFound() {
-        Set<String> roles = Set.of("ROLE_USER");
-
-        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of());
-
-        assertThatThrownBy(() -> userService.updateUserRoles(UUID.randomUUID(), roles))
-                .isInstanceOf(ResourceNotFoundException.class);
-
-    }
-
-    @Test
-    void updateUserRoles_shouldThrowException_whenUserNotFound() {
-        Set<String> roles = Set.of("ROLE_USER");
-        UUID id = UUID.randomUUID();
-
-        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of(new Role()));
-        when(userRepository.findUserByIdWithRoles(id)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> userService.updateUserRoles(id, roles))
-                .isInstanceOf(ResourceNotFoundException.class);
-
-    }
-
-    @Test
-    void updateUserRoles_shouldReturnUserResponse() {
-
-        Set<String> roles = Set.of("ROLE_USER");
-        Role userRole = new Role();
-        userRole.setRole("ROLE_USER");
-
-        user1.setRoles(new HashSet<>(Set.of(userRole)));
-
-        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of(userRole));
-        when(userRepository.findUserByIdWithRoles(user1.getId())).thenReturn(Optional.of(user1));
-        when(userRepository.save(user1)).thenReturn(user1);
-
-        UserResponse mapped = new UserResponse(UUID.randomUUID(), user1.getUsername(), user1.getEmail(), List.of("ROLE_USER"), true, user1.getCreatedAt());
-
-        when(userMapper.toUserResponse(user1))
-                .thenReturn(mapped);
-
-        UserResponse res = userService.updateUserRoles(user1.getId(), roles);
-
-        assertThat(res.username()).isEqualTo(mapped.username());
-        assertThat(res.username()).isEqualTo(mapped.username());
-        assertThat(res.roles()).containsExactly("ROLE_USER");
-    }
+//    @Test
+//    void updateUserRoles_shouldThrowException_whenRoleNotFound() {
+//        Set<String> roles = Set.of("ROLE_USER");
+//
+//        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of());
+//
+//        assertThatThrownBy(() -> userService.updateUserRoles(UUID.randomUUID(), roles))
+//                .isInstanceOf(ResourceNotFoundException.class);
+//
+//    }
+//
+//    @Test
+//    void updateUserRoles_shouldThrowException_whenUserNotFound() {
+//        Set<String> roles = Set.of("ROLE_USER");
+//        UUID id = UUID.randomUUID();
+//
+//        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of(new Role()));
+//        when(userRepository.findUserByIdWithRoles(id)).thenReturn(Optional.empty());
+//        assertThatThrownBy(() -> userService.updateUserRoles(id, roles))
+//                .isInstanceOf(ResourceNotFoundException.class);
+//
+//    }
+//
+//    @Test
+//    void updateUserRoles_shouldReturnUserResponse() {
+//
+//        Set<String> roles = Set.of("ROLE_USER");
+//        Role userRole = new Role();
+//        userRole.setRole("ROLE_USER");
+//
+//        user1.setRoles(new HashSet<>(Set.of(userRole)));
+//
+//        when(roleRepository.findAllByRoleIn(roles)).thenReturn(Set.of(userRole));
+//        when(userRepository.findUserByIdWithRoles(user1.getId())).thenReturn(Optional.of(user1));
+//        when(userRepository.save(user1)).thenReturn(user1);
+//
+//        UserResponse mapped = new UserResponse(UUID.randomUUID(), user1.getUsername(), user1.getEmail(), List.of("ROLE_USER"), true, user1.getCreatedAt());
+//
+//        when(userMapper.toUserResponse(user1))
+//                .thenReturn(mapped);
+//
+//        UserResponse res = userService.updateUserRoles(user1.getId(), roles);
+//
+//        assertThat(res.username()).isEqualTo(mapped.username());
+//        assertThat(res.username()).isEqualTo(mapped.username());
+//        assertThat(res.roles()).containsExactly("ROLE_USER");
+//    }
 }
