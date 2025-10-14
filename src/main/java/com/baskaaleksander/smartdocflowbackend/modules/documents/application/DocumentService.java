@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
@@ -25,6 +26,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -53,10 +55,10 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
-    private final NotificationService notificationService;
     private final S3Presigner s3Presigner;
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
     private final ObjectMapper MAPPER = new ObjectMapper();
+    private final ApplicationEventPublisher publisher;
 
 
     @Value(value = "${minio.bucket.name}")
@@ -68,17 +70,18 @@ public class DocumentService {
             UserRepository userRepository,
             ReviewRepository reviewRepository,
             DocumentMapper documentMapper,
-            NotificationService notificationService,
             S3Presigner s3Presigner,
-            OcrTaskPublisher ocrTaskPublisher) {
+            OcrTaskPublisher ocrTaskPublisher,
+            ApplicationEventPublisher publisher
+            ) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
         this.documentMapper = documentMapper;
-        this.notificationService = notificationService;
         this.s3Presigner = s3Presigner;
         this.ocrTaskPublisher = ocrTaskPublisher;
+        this.publisher = publisher;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -118,7 +121,7 @@ public class DocumentService {
 
         saveDocToDb(document);
 
-        notificationService.sendNotification(username, "document_uploaded", "Document successfully uploaded!");
+        publisher.publishEvent(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
 
         ocrTaskPublisher.enqueue(docId);
 

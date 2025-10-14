@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
@@ -15,15 +16,14 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMap
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -42,7 +42,7 @@ public class ReviewService {
     private final DocumentRepository documentRepository;
     private final ReviewEventRepository reviewEventRepository;
     private final ReviewEventMapper reviewEventMapper;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher publisher;
 
     @Autowired
     public ReviewService(
@@ -52,14 +52,15 @@ public class ReviewService {
             DocumentRepository documentRepository,
             ReviewEventRepository reviewEventRepository,
             ReviewEventMapper reviewEventMapper,
-            NotificationService notificationService) {
+            ApplicationEventPublisher publisher
+            ) {
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
         this.documentRepository = documentRepository;
         this.reviewEventRepository = reviewEventRepository;
         this.reviewEventMapper = reviewEventMapper;
-        this.notificationService = notificationService;
+        this.publisher = publisher;
     }
 
     @Transactional
@@ -87,7 +88,7 @@ public class ReviewService {
         User reviewer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        notificationService.sendNotification(username, "review_comment", "Document " + review.getDocument().getId() + " received comment");
+        publisher.publishEvent(new NotificationEvent(username, "review_comment", "Document " + review.getDocument().getId() + " received comment"));
 
         return reviewEventMapper.toReviewEventResponse(logReviewEvent(reviewer, review, ReviewEventType.COMMENT, comment));
     }
@@ -123,7 +124,7 @@ public class ReviewService {
 
         logReviewEvent(reviewer, review,  ReviewEventType.ASSIGNED, null);
 
-        notificationService.sendNotification(username, "document_in_review", "Document " + review.getDocument().getId() + " is in review process!");
+        publisher.publishEvent(new NotificationEvent(username, "document_in_review", "Document " + review.getDocument().getId() + " is in review process!"));
 
         return reviewMapper.toReviewResponse(review);
     }
@@ -182,7 +183,8 @@ public class ReviewService {
 
         logReviewEvent(reviewer, review,  ReviewEventType.APPROVED, comment);
 
-        notificationService.sendNotification(username, "document_reviewed", "Document " + review.getDocument().getId() + " is approved.");
+        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocument().getId() + " is approved."));
+
         return reviewMapper.toReviewResponse(review);
     }
 
@@ -210,7 +212,7 @@ public class ReviewService {
 
         logReviewEvent(reviewer, review,  ReviewEventType.REJECTED, comment);
 
-        notificationService.sendNotification(username, "document_reviewed", "Document " + review.getDocument().getId() + " got rejected.");
+        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocument().getId() + " got rejected."));
 
         return reviewMapper.toReviewResponse(review);
     }

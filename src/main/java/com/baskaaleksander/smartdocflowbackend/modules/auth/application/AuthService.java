@@ -45,7 +45,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final CookieUtil cookieUtil;
     private final UserMapper userMapper;
-    private final ApplicationEventPublisher publisher;
     private final CredentialsEmailTaskPublisher credentialsEmailTaskPublisher;
 
 
@@ -58,7 +57,6 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             CookieUtil cookieUtil,
             UserMapper userMapper,
-            ApplicationEventPublisher publisher,
             CredentialsEmailTaskPublisher credentialsEmailTaskPublisher) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -67,7 +65,6 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.cookieUtil = cookieUtil;
         this.userMapper = userMapper;
-        this.publisher = publisher;
         this.credentialsEmailTaskPublisher = credentialsEmailTaskPublisher;
     }
 
