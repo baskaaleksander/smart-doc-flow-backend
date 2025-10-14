@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenRespons
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email.CredentialsEmailTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
@@ -45,6 +46,7 @@ public class AuthService {
     private final CookieUtil cookieUtil;
     private final UserMapper userMapper;
     private final ApplicationEventPublisher publisher;
+    private final CredentialsEmailTaskPublisher credentialsEmailTaskPublisher;
 
 
     @Autowired
@@ -56,8 +58,8 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             CookieUtil cookieUtil,
             UserMapper userMapper,
-            ApplicationEventPublisher publisher
-    ) {
+            ApplicationEventPublisher publisher,
+            CredentialsEmailTaskPublisher credentialsEmailTaskPublisher) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -66,6 +68,7 @@ public class AuthService {
         this.cookieUtil = cookieUtil;
         this.userMapper = userMapper;
         this.publisher = publisher;
+        this.credentialsEmailTaskPublisher = credentialsEmailTaskPublisher;
     }
 
     public TokenResponse loginUser(UserLoginRequest user) {
@@ -113,7 +116,7 @@ public class AuthService {
 
         User userCreated = userRepository.save(newUser);
 
-        publisher.publishEvent(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
+        credentialsEmailTaskPublisher.enqueue(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
 
         return new UserResponse(
                 userCreated.getId(),
