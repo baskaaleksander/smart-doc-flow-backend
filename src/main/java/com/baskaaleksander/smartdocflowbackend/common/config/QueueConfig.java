@@ -27,15 +27,19 @@ public class QueueConfig {
     public static final String EMBED_ROUTING_KEY = "tasks.embed";
     public static final String CREDENTIALS_EMAIL_QUEUE = "tasks.credentials-email";
     public static final String CREDENTIALS_EMAIL_ROUTING_KEY = "tasks.credentials-email";
+    public static final String PASSWORD_RESET_EMAIL_QUEUE = "tasks.password-reset";
+    public static final String PASSWORD_RESET_EMAIL_ROUTING_KEY = "tasks.password-reset";
 
 
     public static final String OCR_DLQ = "tasks.ocr.dlq";
     public static final String EMBED_DLQ = "tasks.embed.dlq";
     public static final String CREDENTIALS_EMAIL_DLQ = "tasks.credentials-email.dlq";
+    public static final String PASSWORD_RESET_EMAIL_DLQ = "tasks.password-reset.dlq";
     public static final String DLX = "app.exchange.dlx";
     public static final String OCR_DLK = "tasks.ocr.dlq";
     public static final String EMBED_DLK = "tasks.embed.dlq";
     public static final String CREDENTIALS_EMAIL_DLK = "tasks.credentials-email.dlq";
+    public static final String PASSWORD_RESET_EMAIL_DLK = "tasks.password-reset.dlq";
 
     @Bean
     public TopicExchange exchange() {
@@ -73,6 +77,15 @@ public class QueueConfig {
     }
 
     @Bean
+    public Queue passwordResetEmailQueue() {
+        return QueueBuilder
+                .durable(PASSWORD_RESET_EMAIL_QUEUE)
+                .withArgument("x-dead-letter-exchange", DLX)
+                .withArgument("x-dead-letter-routing-key", PASSWORD_RESET_EMAIL_DLK)
+                .build();
+    }
+
+    @Bean
     public Queue ocrDlq() {
         return QueueBuilder.durable(OCR_DLQ).build();
     }
@@ -85,6 +98,11 @@ public class QueueConfig {
     @Bean
     public Queue credentialsEmailDlq() {
         return QueueBuilder.durable(CREDENTIALS_EMAIL_DLQ).build();
+    }
+
+    @Bean
+    public Queue passwordResetEmailDlq() {
+        return QueueBuilder.durable(PASSWORD_RESET_EMAIL_DLQ).build();
     }
 
     @Bean
@@ -103,6 +121,11 @@ public class QueueConfig {
     }
 
     @Bean
+    public Binding passwordResetEmailBinding() {
+        return BindingBuilder.bind(passwordResetEmailQueue()).to(exchange()).with(PASSWORD_RESET_EMAIL_ROUTING_KEY);
+    }
+
+    @Bean
     public Binding ocrDlqBinding() {
         return BindingBuilder.bind(ocrDlq()).to(deadLetterExchange()).with(OCR_DLK);
     }
@@ -115,6 +138,11 @@ public class QueueConfig {
     @Bean
     public Binding credentialsEmailDlqBinding() {
         return BindingBuilder.bind(credentialsEmailDlq()).to(deadLetterExchange()).with(CREDENTIALS_EMAIL_DLK);
+    }
+
+    @Bean
+    public Binding passwordResetEmailDlqBinding() {
+        return BindingBuilder.bind(passwordResetEmailDlq()).to(deadLetterExchange()).with(PASSWORD_RESET_EMAIL_DLK);
     }
 
     @Bean
