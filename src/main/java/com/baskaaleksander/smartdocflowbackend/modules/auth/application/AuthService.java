@@ -1,9 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegisterRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordException;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email.CredentialsEmailTaskPublisher;
@@ -31,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -143,6 +142,24 @@ public class AuthService {
         );
     }
 
+    public String updatePassword(UUID userId, ChangePasswordRequest passwordRequest) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (passwordEncoder.matches(passwordRequest.oldPassword(), user.getPassword())) {
+            String newPassword = passwordEncoder.encode(passwordRequest.newPassword());
+
+            user.setPassword(newPassword);
+
+            userRepository.save(user);
+        } else {
+            throw new WrongPasswordException("Old password is wrong");
+        }
+
+        return "Password changed";
+    }
+
     private String generateRandomPassword() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!#$%&";
         String password = RandomStringUtils.random( 14, characters );
@@ -158,6 +175,5 @@ public class AuthService {
             return generateRandomPassword();
         }
     }
-
 
 }

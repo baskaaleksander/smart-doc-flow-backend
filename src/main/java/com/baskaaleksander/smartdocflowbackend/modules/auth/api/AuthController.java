@@ -1,9 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.api;
 
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegisterRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.application.AuthService;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -69,6 +67,14 @@ public class AuthController {
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails user) {
 
         return new ResponseEntity<>(authService.getMe(user), HttpStatus.OK);
+    }
+
+    @PutMapping("/update-password")
+    public ResponseEntity<String> updatePassword(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ChangePasswordRequest changePasswordRequest
+            ) {
+        return new ResponseEntity<>(authService.updatePassword(userDetails.getId(), changePasswordRequest), HttpStatus.OK);
     }
 
 }
