@@ -1,12 +1,12 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRolesRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserService;
@@ -19,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -88,13 +87,20 @@ public class UserController {
         return new ResponseEntity<>(userService.getUserById(userId), HttpStatus.OK);
     }
 
-    @PatchMapping("/{userId}")
+    @PatchMapping("/me")
+    public ResponseEntity<UserResponse> changeSelfDetails(
+            @Valid @RequestBody EditUserAccountRequest body,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return new ResponseEntity<>(userService.editSelfAccount(body, userDetails.getId()), HttpStatus.OK);
+    }
+
+    @PutMapping("/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserResponse> editUserAccount(
             @PathVariable("userId") UUID userId,
-            @Valid @RequestBody EditUserAccountRequest body
+            @Valid @RequestBody EditUserAccountAdminRequest body
             ) {
-        System.out.println(body.getRoles());
         return new ResponseEntity<>(userService.editUserAccount(userId, body), HttpStatus.OK);
     }
 

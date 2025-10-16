@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.UserRoleCount;
@@ -15,8 +16,6 @@ import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
-import jakarta.transaction.Transactional;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -99,7 +98,7 @@ public class UserService {
     }
 
     //TODO: test that
-    public UserResponse editUserAccount(UUID userId, EditUserAccountRequest editRequest) {
+    public UserResponse editUserAccount(UUID userId, EditUserAccountAdminRequest editRequest) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -121,6 +120,23 @@ public class UserService {
         user.setActive(editRequest.getActive());
 
         userRepository.save(user);
+
+        return userMapper.toUserResponse(user);
+    }
+
+    public UserResponse editSelfAccount(EditUserAccountRequest editRequest, UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (editRequest.email() != null) {
+            Optional<User> userEmail = userRepository.findByEmail(editRequest.email());
+
+            if (userEmail.isPresent()) {
+                throw new ResourceConflictException("User with that email is already registered");
+            }
+
+            user.setEmail(editRequest.email());
+        }
 
         return userMapper.toUserResponse(user);
     }

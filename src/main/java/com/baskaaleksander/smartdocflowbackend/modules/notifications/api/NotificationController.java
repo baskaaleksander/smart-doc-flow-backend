@@ -44,15 +44,17 @@ public class NotificationController {
         return new ResponseEntity<>(notificationService.getUnreadNotificationsCount(userDetails.getUsername()), HttpStatus.OK);
     }
 
+    @PatchMapping("")
+    public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return new ResponseEntity<>(notificationService.markAllAsRead(userDetails.getUsername(), body), HttpStatus.OK);
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<Integer> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return new ResponseEntity<>(notificationService.markOneAsRead(userDetails.getUsername(), id, body), HttpStatus.OK);
     }
 
-    @PatchMapping("")
-    public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return new ResponseEntity<>(notificationService.markAllAsRead(userDetails.getUsername(), body), HttpStatus.OK);
-    }
+
 
 
 }
