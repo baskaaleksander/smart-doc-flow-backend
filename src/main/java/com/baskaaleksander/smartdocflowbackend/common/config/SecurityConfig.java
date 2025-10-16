@@ -77,7 +77,7 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/auth/**", "/ws-sockjs/**", "/ws/**", "/actuator/**").permitAll()
+                                .requestMatchers("/auth/**", "/ws-sockjs/**", "/ws/**", "/actuator/**", "/auth/request-password-reset").permitAll()
                                 .anyRequest().authenticated()
                 );
 

@@ -76,9 +76,9 @@ public class AuthController {
     @PutMapping("/update-password")
     public ResponseEntity<String> updatePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody ChangePasswordRequest changePasswordRequest
+            @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest
             ) {
-        return new ResponseEntity<>(passwordChangeService.updatePassword(userDetails.getId(), changePasswordRequest), HttpStatus.OK);
+        return new ResponseEntity<>(passwordChangeService.updatePassword(userDetails.getId(), updatePasswordRequest), HttpStatus.OK);
     }
 
     @PostMapping("/request-password-reset")
@@ -86,6 +86,18 @@ public class AuthController {
             @Valid @RequestBody PasswordResetRequest passwordResetRequest
     ) {
         return new ResponseEntity<>(passwordChangeService.requestPasswordReset(passwordResetRequest.email()), HttpStatus.OK);
+    }
+
+    @GetMapping("/check-token/{token}")
+    public ResponseEntity<Boolean> checkPasswordResetToken(@PathVariable("token") String token) {
+        return null;
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @Valid @RequestBody ChangePasswordRequest changePasswordRequest
+    ) {
+        return null;
     }
 
 }
