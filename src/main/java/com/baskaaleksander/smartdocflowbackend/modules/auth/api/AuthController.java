@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.application.AuthService;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.application.PasswordChangeService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,14 +22,17 @@ public class AuthController {
 
     private final AuthService authService;
     private final CookieUtil cookieUtil;
+    private final PasswordChangeService passwordChangeService;
 
     @Autowired
     public AuthController(
             AuthService authService,
-            CookieUtil cookieUtil
+            CookieUtil cookieUtil,
+            PasswordChangeService passwordChangeService
     ) {
         this.authService = authService;
         this.cookieUtil = cookieUtil;
+        this.passwordChangeService = passwordChangeService;
     }
 
 
@@ -74,7 +78,7 @@ public class AuthController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest changePasswordRequest
             ) {
-        return new ResponseEntity<>(authService.updatePassword(userDetails.getId(), changePasswordRequest), HttpStatus.OK);
+        return new ResponseEntity<>(passwordChangeService.updatePassword(userDetails.getId(), changePasswordRequest), HttpStatus.OK);
     }
 
 }

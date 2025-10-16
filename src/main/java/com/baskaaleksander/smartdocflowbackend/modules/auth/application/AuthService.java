@@ -142,23 +142,6 @@ public class AuthService {
         );
     }
 
-    public String updatePassword(UUID userId, ChangePasswordRequest passwordRequest) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        if (passwordEncoder.matches(passwordRequest.oldPassword(), user.getPassword())) {
-            String newPassword = passwordEncoder.encode(passwordRequest.newPassword());
-
-            user.setPassword(newPassword);
-
-            userRepository.save(user);
-        } else {
-            throw new WrongPasswordException("Old password is wrong");
-        }
-
-        return "Password changed";
-    }
 
     private String generateRandomPassword() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!#$%&";
