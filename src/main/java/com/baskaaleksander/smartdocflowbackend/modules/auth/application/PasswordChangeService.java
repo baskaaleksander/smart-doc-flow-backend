@@ -37,14 +37,13 @@ public class PasswordChangeService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
-    private String updatePassword(User user, String newPassword) {
+    private void updatePassword(User user, String newPassword) {
         String password = passwordEncoder.encode(newPassword);
 
         user.setPassword(password);
 
         userRepository.save(user);
 
-        return "Password changed";
 
     }
 
@@ -55,18 +54,24 @@ public class PasswordChangeService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (passwordEncoder.matches(passwordRequest.oldPassword(), user.getPassword())) {
-            return updatePassword(user, passwordRequest.newPassword());
+            updatePassword(user, passwordRequest.newPassword());
         } else {
             throw new WrongPasswordException("Old password is wrong");
         }
 
+        return "Password changed";
     }
 
     public String changePassword(ChangePasswordRequest changePasswordRequest) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(changePasswordRequest.token())
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 
-        return updatePassword(resetToken.getUser(), changePasswordRequest.newPassword());
+        updatePassword(resetToken.getUser(), changePasswordRequest.newPassword());
+
+        resetToken.setRevoked(true);
+        passwordResetTokenRepository.save(resetToken);
+
+        return "Password changed";
     }
 
     public Boolean checkToken(String token) {
