@@ -138,6 +138,8 @@ public class UserService {
             user.setEmail(editRequest.email());
         }
 
+        user = userRepository.save(user);
+
         return userMapper.toUserResponse(user);
     }
 
