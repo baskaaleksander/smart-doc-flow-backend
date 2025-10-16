@@ -81,4 +81,11 @@ public class AuthController {
         return new ResponseEntity<>(passwordChangeService.updatePassword(userDetails.getId(), changePasswordRequest), HttpStatus.OK);
     }
 
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<String> requestPasswordReset(
+            @Valid @RequestBody PasswordResetRequest passwordResetRequest
+    ) {
+        return new ResponseEntity<>(passwordChangeService.requestPasswordReset(passwordResetRequest.email()), HttpStatus.OK);
+    }
+
 }
