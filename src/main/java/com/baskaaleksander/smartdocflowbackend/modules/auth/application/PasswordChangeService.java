@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidResetToke
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordException;
 import com.baskaaleksander.smartdocflowbackend.common.util.TokenGenerator;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.ChangePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UpdatePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetToken;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenRepository;
@@ -61,11 +62,22 @@ public class PasswordChangeService {
 
     }
 
-    public String changePassword(String token, String password) {
+    public String changePassword(ChangePasswordRequest changePasswordRequest) {
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(changePasswordRequest.token())
+                .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
+
+        return updatePassword(resetToken.getUser(), changePasswordRequest.newPassword());
+    }
+
+    public Boolean checkToken(String token) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 
-        return updatePassword(resetToken.getUser(), password);
+        if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
+
+        if (resetToken.getExpiresAt().isBefore(Instant.now())) { throw new InvalidResetTokenException("Token is expired"); }
+
+        return true;
     }
 
     public String requestPasswordReset(String email) {

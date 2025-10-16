@@ -90,14 +90,14 @@ public class AuthController {
 
     @GetMapping("/check-token/{token}")
     public ResponseEntity<Boolean> checkPasswordResetToken(@PathVariable("token") String token) {
-        return null;
+        return new ResponseEntity<>(passwordChangeService.checkToken(token), HttpStatus.OK);
     }
 
     @PutMapping("/change-password")
     public ResponseEntity<String> changePassword(
             @Valid @RequestBody ChangePasswordRequest changePasswordRequest
     ) {
-        return null;
+        return new ResponseEntity<>(passwordChangeService.changePassword(changePasswordRequest), HttpStatus.OK);
     }
 
 }
