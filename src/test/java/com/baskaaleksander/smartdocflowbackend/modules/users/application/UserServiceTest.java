@@ -7,9 +7,9 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,6 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +33,7 @@ import static org.mockito.Mockito.when;
 public class UserServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private SpringDataUserRepository userRepository;
 
     @Mock
     private UserMapper userMapper;
@@ -43,15 +42,15 @@ public class UserServiceTest {
     private RoleRepository roleRepository;
 
     @InjectMocks
-    private UserService userService;
+    private UserApplicationService userService;
 
-    private User user1;
+    private UserEntity user1;
 
     @BeforeEach
     void setUp() {
         Role role = new Role();
         role.setRole("ROLE_USER");
-        user1 = new User();
+        user1 = new UserEntity();
         user1.setUsername("u1");
         user1.setEmail("u1@example.com");
         user1.setId(UUID.randomUUID());
@@ -63,7 +62,7 @@ public class UserServiceTest {
 
     @Test
     void getAllUsers_shouldReturnPagingResult() {
-        Page<User> page = new PageImpl<>(List.of(user1), PageRequest.of(0, 10), 25);
+        Page<UserEntity> page = new PageImpl<>(List.of(user1), PageRequest.of(0, 10), 25);
         when(userRepository.findAll(any(Pageable.class))).thenReturn(page);
 
         UserResponse dto1 = new UserResponse(UUID.randomUUID(), user1.getUsername(), user1.getEmail(), List.of("ROLE_USER"), true, user1.getCreatedAt());

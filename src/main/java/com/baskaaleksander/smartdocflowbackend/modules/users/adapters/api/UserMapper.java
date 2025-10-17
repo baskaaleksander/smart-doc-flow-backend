@@ -1,15 +1,14 @@
-package com.baskaaleksander.smartdocflowbackend.modules.users.mapping;
+package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    UserResponse toUserResponse(User user);
+    UserResponse toUserResponse(UserEntity user);
 
     default String map(Role role) {
         return role.getRole();

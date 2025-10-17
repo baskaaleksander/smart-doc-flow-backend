@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -42,4 +43,7 @@ public interface DocumentRepository extends JpaRepository<Document, UUID> {
 
     @Query("select d.status as status, count(d) as count from Document d group by d.status")
     List<DocumentStatusCount> countDocumentsByStatus();
+
+    @Query("select d from Document d where d.id in :ids")
+    Set<Document> findAllByIdIn(Set<UUID> ids);
 }

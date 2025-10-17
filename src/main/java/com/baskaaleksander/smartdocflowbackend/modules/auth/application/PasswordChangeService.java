@@ -10,8 +10,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Password
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email.PasswordResetEmailTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.PasswordResetEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,7 +29,7 @@ import java.util.UUID;
 @Transactional
 public class PasswordChangeService {
 
-    private final UserRepository userRepository;
+    private final SpringDataUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -39,7 +39,7 @@ public class PasswordChangeService {
     private long ttlHours;
 
     public PasswordChangeService(
-            UserRepository userRepository,
+            SpringDataUserRepository userRepository,
             PasswordEncoder passwordEncoder,
             PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher,
             PasswordResetTokenRepository passwordResetTokenRepository,
@@ -52,7 +52,7 @@ public class PasswordChangeService {
         this.clock = clock;
     }
 
-    private void updatePassword(User user, String newPassword) {
+    private void updatePassword(UserEntity user, String newPassword) {
         String password = passwordEncoder.encode(newPassword);
 
         user.setPassword(password);
@@ -64,7 +64,7 @@ public class PasswordChangeService {
 
     public String updatePassword(UUID userId, UpdatePasswordRequest passwordRequest) {
 
-        User user = userRepository.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (passwordEncoder.matches(passwordRequest.oldPassword(), user.getPassword())) {
@@ -104,11 +104,11 @@ public class PasswordChangeService {
     }
 
     public String requestPasswordReset(String email) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        Optional<UserEntity> userOptional = userRepository.findByEmail(email);
 
         if (userOptional.isPresent()) {
 
-            User user = userOptional.get();
+            UserEntity user = userOptional.get();
 
             PasswordResetToken passwordResetToken = new PasswordResetToken();
             passwordResetToken.setUser(user);

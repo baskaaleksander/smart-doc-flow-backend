@@ -10,9 +10,9 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegister
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +45,7 @@ public class AuthServiceTest {
     @Mock
     private AuthenticationManager authenticationManager;
     @Mock
-    private UserRepository userRepository;
+    private SpringDataUserRepository userRepository;
     @Mock
     private RoleRepository roleRepository;
     @Mock
@@ -106,7 +106,7 @@ public class AuthServiceTest {
 
     @Test
     void registerUser_shouldThrowException_whenUserExists() {
-        when(userRepository.findByUsername("newuser")).thenReturn(Optional.of(new User()));
+        when(userRepository.findByUsername("newuser")).thenReturn(Optional.of(new UserEntity()));
 
 
         assertThatThrownBy(() -> authService.registerUser(registerRequest)).isInstanceOf(ResourceConflictException.class);
@@ -135,14 +135,14 @@ public class AuthServiceTest {
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
         when(roleRepository.findAllByRoleIn(Set.of("ROLE_USER"))).thenReturn(Set.of(role));
-        User saved = new User();
+        UserEntity saved = new UserEntity();
         saved.setId(UUID.randomUUID());
         saved.setUsername(registerRequest.getUsername());
         saved.setPassword("encoded");
         saved.setRoles(Set.of(role));
         saved.setActive(true);
 
-        when(userRepository.save(any(User.class))).thenReturn(saved);
+        when(userRepository.save(any(UserEntity.class))).thenReturn(saved);
         UserResponse res = authService.registerUser(registerRequest);
 
         assertThat(res.username()).isEqualTo(registerRequest.getUsername());
@@ -169,7 +169,7 @@ public class AuthServiceTest {
 
         Role role = new Role();
         role.setRole("ROLE_USER");
-        User entity = new User();
+        UserEntity entity = new UserEntity();
         entity.setUsername("john");
         entity.setRoles(Set.of(role));
 

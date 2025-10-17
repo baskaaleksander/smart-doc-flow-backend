@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.users.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Table(name = "users")
 @Getter @Setter
-public class User {
+public class UserEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -52,8 +52,8 @@ public class User {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof User other)) return false;
-        return this.id == ((User) o).getId();
+        if (!(o instanceof UserEntity other)) return false;
+        return this.id == ((UserEntity) o).getId();
     }
 
     @Override

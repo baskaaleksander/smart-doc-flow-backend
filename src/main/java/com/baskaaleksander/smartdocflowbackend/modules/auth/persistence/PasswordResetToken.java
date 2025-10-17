@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,7 +22,7 @@ public class PasswordResetToken {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity user;
 
     @Column(nullable = false)
     private String token;

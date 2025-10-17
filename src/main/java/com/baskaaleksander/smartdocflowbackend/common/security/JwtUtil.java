@@ -3,9 +3,9 @@ package com.baskaaleksander.smartdocflowbackend.common.security;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidJwtTokenException;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RefreshToken;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RefreshTokenRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -28,7 +28,7 @@ public class JwtUtil {
 
     private final UserDetailsService userDetailsService;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final UserRepository userRepository;
+    private final SpringDataUserRepository userRepository;
     @Value("${jwt.access.secret}")
     private String jwtAccessSecret;
     @Value("${jwt.access.expiration}")
@@ -41,7 +41,7 @@ public class JwtUtil {
     private SecretKey refreshKey;
 
     @Autowired
-    public JwtUtil(UserDetailsService userDetailsService, RefreshTokenRepository refreshTokenRepository, UserRepository userRepository) {
+    public JwtUtil(UserDetailsService userDetailsService, RefreshTokenRepository refreshTokenRepository, SpringDataUserRepository userRepository) {
         this.userDetailsService = userDetailsService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
@@ -57,7 +57,7 @@ public class JwtUtil {
         String jti = UUID.randomUUID().toString();
         String accessToken = generateAccessToken(username);
         String refreshToken = generateRefreshToken(username, jti);
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new InvalidJwtTokenException("User not found"));
+        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new InvalidJwtTokenException("User not found"));
         LocalDateTime now = LocalDateTime.now();
 
         RefreshToken token = new RefreshToken(

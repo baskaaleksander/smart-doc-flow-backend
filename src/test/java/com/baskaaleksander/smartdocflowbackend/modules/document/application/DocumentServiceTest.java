@@ -18,8 +18,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.notifications.application
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ public class DocumentServiceTest {
     @Mock
     private OcrTaskPublisher ocrTaskPublisher;
     @Mock
-    private UserRepository userRepository;
+    private SpringDataUserRepository userRepository;
     @Mock
     private DocumentMapper documentMapper;
     @Mock
@@ -82,7 +82,7 @@ public class DocumentServiceTest {
 
     private Document document;
     private Review review;
-    private User owner;
+    private UserEntity owner;
     private DocumentResponse mapped;
     private DocumentReviewBasicInfo reviewBasic;
     private DocumentOwnerBasicInfo ownerBasic;
@@ -91,7 +91,7 @@ public class DocumentServiceTest {
     @BeforeEach
     void setUp() {
         documentService = spy(realService);
-        User reviewer = new User();
+        UserEntity reviewer = new UserEntity();
         reviewer.setUsername("reviewer");
         reviewer.setId(UUID.randomUUID());
 
@@ -101,7 +101,7 @@ public class DocumentServiceTest {
         review.setUpdatedAt(Instant.now());
         review.setReviewer(reviewer);
 
-        owner = new User();
+        owner = new UserEntity();
         owner.setId(UUID.randomUUID());
         owner.setUsername("owner");
 
@@ -154,7 +154,7 @@ public class DocumentServiceTest {
         when(sc.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(sc);
 
-        User user = new User();
+        UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
         user.setUsername(username);
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
@@ -281,7 +281,7 @@ public class DocumentServiceTest {
         when(sc.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(sc);
 
-        User user = new User();
+        UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
 
@@ -312,7 +312,7 @@ public class DocumentServiceTest {
         when(sc.getAuthentication()).thenReturn(auth);
         SecurityContextHolder.setContext(sc);
 
-        User user = new User();
+        UserEntity user = new UserEntity();
         user.setId(UUID.randomUUID());
         user.setUsername(username);
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));

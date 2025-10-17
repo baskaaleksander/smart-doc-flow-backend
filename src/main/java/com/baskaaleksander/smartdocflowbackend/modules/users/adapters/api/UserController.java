@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.users.api;
+package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
@@ -6,10 +6,10 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
-import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountAdminRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.EditUserAccountRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.users.api.dto.UserStatsResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserService;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountAdminRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -25,11 +25,11 @@ import java.util.UUID;
 @RequestMapping("/users")
 public class UserController {
 
-    private final UserService userService;
+    private final UserApplicationService userService;
     private final DocumentService documentService;
 
     @Autowired
-    public UserController(UserService userService, DocumentService documentService) {
+    public UserController(UserApplicationService userService, DocumentService documentService) {
         this.userService = userService;
         this.documentService = documentService;
     }

@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,5 +24,5 @@ public class Role {
 
     @ManyToMany(mappedBy = "roles")
     @JsonIgnore
-    private Set<User> users = new HashSet<>();
+    private Set<UserEntity> users = new HashSet<>();
 }

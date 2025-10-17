@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence;
 
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,7 +30,7 @@ public class ReviewEvent {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reviewer_id", nullable = false)
-    private User reviewer;
+    private UserEntity reviewer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id", nullable = false)

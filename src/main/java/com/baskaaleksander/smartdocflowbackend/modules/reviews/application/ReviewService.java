@@ -15,11 +15,11 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEve
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,7 @@ import java.util.UUID;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final UserRepository userRepository;
+    private final SpringDataUserRepository userRepository;
     private final ReviewMapper reviewMapper;
     private final DocumentRepository documentRepository;
     private final ReviewEventRepository reviewEventRepository;
@@ -47,7 +47,7 @@ public class ReviewService {
     @Autowired
     public ReviewService(
             ReviewRepository reviewRepository,
-            UserRepository userRepository,
+            SpringDataUserRepository userRepository,
             ReviewMapper reviewMapper,
             DocumentRepository documentRepository,
             ReviewEventRepository reviewEventRepository,
@@ -85,7 +85,7 @@ public class ReviewService {
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
-        User reviewer = userRepository.findByUsername(username)
+        UserEntity reviewer = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         publisher.publishEvent(new NotificationEvent(username, "review_comment", "Document " + review.getDocument().getId() + " received comment"));
@@ -93,7 +93,7 @@ public class ReviewService {
         return reviewEventMapper.toReviewEventResponse(logReviewEvent(reviewer, review, ReviewEventType.COMMENT, comment));
     }
 
-    private ReviewEvent logReviewEvent(User reviewer, Review review, ReviewEventType eventType, String comment) {
+    private ReviewEvent logReviewEvent(UserEntity reviewer, Review review, ReviewEventType eventType, String comment) {
         ReviewEvent reviewEvent = new ReviewEvent();
 
         reviewEvent.setReviewer(reviewer);
@@ -113,7 +113,7 @@ public class ReviewService {
             throw new ResourceConflictException("Review with ID " + reviewId + " is already claimed");
         }
 
-        User reviewer = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User with username " + username + " not found"));
+        UserEntity reviewer = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User with username " + username + " not found"));
         review.setReviewer(reviewer);
 
         reviewRepository.updateStatus(review.getId(), ReviewStatus.IN_PROGRESS);
@@ -134,7 +134,7 @@ public class ReviewService {
         Review review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
-        User reviewer = review.getReviewer();
+        UserEntity reviewer = review.getReviewer();
 
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be released");
@@ -167,7 +167,7 @@ public class ReviewService {
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
-        User reviewer = review.getReviewer();
+        UserEntity reviewer = review.getReviewer();
 
 
         if(!reviewer.getUsername().equalsIgnoreCase(username)) {
@@ -197,7 +197,7 @@ public class ReviewService {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
 
-        User reviewer = review.getReviewer();
+        UserEntity reviewer = review.getReviewer();
 
         if(!reviewer.getUsername().equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to reject this document");

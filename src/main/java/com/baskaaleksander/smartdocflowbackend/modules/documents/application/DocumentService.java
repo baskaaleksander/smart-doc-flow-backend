@@ -15,12 +15,11 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteExceptio
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -52,7 +51,7 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
     private final OcrTaskPublisher ocrTaskPublisher;
-    private final UserRepository userRepository;
+    private final SpringDataUserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
     private final S3Presigner s3Presigner;
@@ -67,7 +66,7 @@ public class DocumentService {
     public DocumentService(
             DocumentRepository documentRepository,
             S3Client s3Client,
-            UserRepository userRepository,
+            SpringDataUserRepository userRepository,
             ReviewRepository reviewRepository,
             DocumentMapper documentMapper,
             S3Presigner s3Presigner,
@@ -90,7 +89,7 @@ public class DocumentService {
         String filename = docId + "_" + originalFilename;
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!"application/pdf".equalsIgnoreCase(String.valueOf(file.getContentType()))) {
             System.out.println("Incorrect filetype");;

@@ -1,16 +1,15 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
-import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordException;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email.CredentialsEmailTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.UserRegisteredEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.users.mapping.UserMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +17,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,19 +24,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
+    private final SpringDataUserRepository userRepository;
     private final RoleRepository roleRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
@@ -50,7 +45,7 @@ public class AuthService {
     @Autowired
     public AuthService(
             AuthenticationManager authenticationManager,
-            UserRepository userRepository,
+            SpringDataUserRepository userRepository,
             RoleRepository roleRepository,
             JwtUtil jwtUtil,
             PasswordEncoder passwordEncoder,
@@ -83,13 +78,13 @@ public class AuthService {
     @Transactional
     public UserResponse registerUser(UserRegisterRequest user) {
 
-        Optional<User> existingUser = userRepository.findByUsername(user.getUsername());
+        Optional<UserEntity> existingUser = userRepository.findByUsername(user.getUsername());
 
         if(existingUser.isPresent()) {
             throw new ResourceConflictException("User with " + user.getUsername() + " username already exists");
         }
 
-        Optional<User> existingUser2 = userRepository.findByEmail(user.getEmail());
+        Optional<UserEntity> existingUser2 = userRepository.findByEmail(user.getEmail());
 
         if(existingUser2.isPresent()) {
             throw new ResourceConflictException("User with " + user.getEmail() + " email already exists");
@@ -104,13 +99,13 @@ public class AuthService {
             throw new ResourceNotFoundException("One or more roles not found");
         }
 
-        User newUser = new User();
+        UserEntity newUser = new UserEntity();
         newUser.setUsername(user.getUsername());
         newUser.setEmail(user.getEmail());
         newUser.setPassword(encodedPassword);
         newUser.setRoles(roles);
 
-        User userCreated = userRepository.save(newUser);
+        UserEntity userCreated = userRepository.save(newUser);
 
         credentialsEmailTaskPublisher.enqueue(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
 

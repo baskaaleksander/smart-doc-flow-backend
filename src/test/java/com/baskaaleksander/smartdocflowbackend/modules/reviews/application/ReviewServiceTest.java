@@ -20,8 +20,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Revie
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +48,7 @@ public class ReviewServiceTest {
     @Mock
     private ReviewRepository reviewRepository;
     @Mock
-    private UserRepository userRepository;
+    private SpringDataUserRepository userRepository;
     @Mock
     private ReviewMapper reviewMapper;
     @Mock
@@ -64,14 +64,14 @@ public class ReviewServiceTest {
     private ReviewService realService;
 
     private ReviewService reviewService;
-    private User reviewer;
+    private UserEntity reviewer;
     private Review review;
     private Document document;
 
     @BeforeEach
     void setUp() {
         reviewService = spy(realService);
-        reviewer = new User();
+        reviewer = new UserEntity();
         reviewer.setId(UUID.randomUUID());
         reviewer.setUsername("user-123");
 
@@ -369,7 +369,7 @@ public class ReviewServiceTest {
     void releaseReview_shouldThrowException_whenUserNotOwner() {
         review.setStatus(ReviewStatus.IN_PROGRESS);
 
-        User someoneElse = new User();
+        UserEntity someoneElse = new UserEntity();
         someoneElse.setId(UUID.randomUUID());
         someoneElse.setUsername("not-the-owner");
 

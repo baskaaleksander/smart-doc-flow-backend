@@ -10,7 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEve
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +49,7 @@ public class ReviewEventServiceTest {
     @BeforeEach
     void setUp() {
         reviewEvent = new ReviewEvent();
-        User reviewer = new User();
+        UserEntity reviewer = new UserEntity();
         Review review = new Review();
 
         reviewer.setId(UUID.randomUUID());

@@ -5,12 +5,11 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentReviewBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
-import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.Named;
-import org.mapstruct.factory.Mappers;
 
 import java.util.UUID;
 
@@ -27,7 +26,7 @@ public interface DocumentMapper {
     default DocumentReviewBasicInfo reviewToBasicInfo(Review review) {
         if (review == null) return null;
 
-        User reviewer = review.getReviewer();
+        UserEntity reviewer = review.getReviewer();
         UUID reviewerId = reviewer != null ? reviewer.getId() : null;
         String reviewerUsername = reviewer != null ? reviewer.getUsername() : null;
 
@@ -41,7 +40,7 @@ public interface DocumentMapper {
     }
 
     @Named("ownerToBasicInfo")
-    default DocumentOwnerBasicInfo ownerToBasicInfo(User owner) {
+    default DocumentOwnerBasicInfo ownerToBasicInfo(UserEntity owner) {
         return owner == null ? null :
                 new DocumentOwnerBasicInfo(
                         owner.getId(),
