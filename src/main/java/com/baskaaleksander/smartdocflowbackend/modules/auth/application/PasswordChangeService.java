@@ -33,6 +33,7 @@ public class PasswordChangeService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final Clock clock;
 
     @Value("${auth.reset-token.ttl-hours:24}")
     private long ttlHours;
@@ -41,12 +42,14 @@ public class PasswordChangeService {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher,
-            PasswordResetTokenRepository passwordResetTokenRepository
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            Clock clock
             ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetEmailTaskPublisher = passwordResetEmailTaskPublisher;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.clock = clock;
     }
 
     private void updatePassword(User user, String newPassword) {
@@ -79,7 +82,7 @@ public class PasswordChangeService {
 
         if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
 
-        if (resetToken.getExpiresAt().isBefore(Instant.now())) { throw new InvalidResetTokenException("Token is expired"); }
+        if (resetToken.getExpiresAt().isBefore(Instant.now(clock))) { throw new InvalidResetTokenException("Token is expired"); }
 
         updatePassword(resetToken.getUser(), changePasswordRequest.newPassword());
 
@@ -95,7 +98,7 @@ public class PasswordChangeService {
 
         if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
 
-        if (resetToken.getExpiresAt().isBefore(Instant.now())) { throw new InvalidResetTokenException("Token is expired"); }
+        if (resetToken.getExpiresAt().isBefore(Instant.now(clock))) { throw new InvalidResetTokenException("Token is expired"); }
 
         return true;
     }
@@ -113,7 +116,7 @@ public class PasswordChangeService {
             String token = TokenGenerator.generateToken();
 
             passwordResetToken.setToken(token);
-            passwordResetToken.setExpiresAt(Instant.now().plus(Duration.ofHours(ttlHours)));
+            passwordResetToken.setExpiresAt(Instant.now(clock).plus(Duration.ofHours(ttlHours)));
 
             passwordResetTokenRepository.invalidateAllTokens(user.getId());
 
