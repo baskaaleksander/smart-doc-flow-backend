@@ -12,14 +12,19 @@ import com.baskaaleksander.smartdocflowbackend.modules.notifications.application
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.User;
 import com.baskaaleksander.smartdocflowbackend.modules.users.persistence.UserRepository;
+import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class PasswordChangeService {
 
     private final UserRepository userRepository;
@@ -27,10 +32,15 @@ public class PasswordChangeService {
     private final PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
 
+    @Value("${auth.reset-token.ttl-hours:24}")
+    private long ttlHours;
+
     public PasswordChangeService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher, PasswordResetTokenRepository passwordResetTokenRepository) {
+            PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher,
+            PasswordResetTokenRepository passwordResetTokenRepository
+            ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetEmailTaskPublisher = passwordResetEmailTaskPublisher;
@@ -43,7 +53,6 @@ public class PasswordChangeService {
         user.setPassword(password);
 
         userRepository.save(user);
-
 
     }
 
@@ -66,6 +75,10 @@ public class PasswordChangeService {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(changePasswordRequest.token())
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 
+        if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
+
+        if (resetToken.getExpiresAt().isBefore(Instant.now())) { throw new InvalidResetTokenException("Token is expired"); }
+
         updatePassword(resetToken.getUser(), changePasswordRequest.newPassword());
 
         resetToken.setRevoked(true);
@@ -86,22 +99,28 @@ public class PasswordChangeService {
     }
 
     public String requestPasswordReset(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Optional<User> userOptional = userRepository.findByEmail(email);
 
-        PasswordResetToken passwordResetToken = new PasswordResetToken();
-        passwordResetToken.setUser(user);
+        if (userOptional.isPresent()) {
 
-        String token = TokenGenerator.generateToken();
+            User user = userOptional.get();
 
-        passwordResetToken.setToken(token);
-        passwordResetToken.setExpiresAt(Instant.now().plus(Duration.ofHours(24)));
+            PasswordResetToken passwordResetToken = new PasswordResetToken();
+            passwordResetToken.setUser(user);
 
-        passwordResetEmailTaskPublisher.enqueue(new PasswordResetEvent(
-                email,
-                token
-        ));
+            String token = TokenGenerator.generateToken();
 
-        return "Token generated";
+            passwordResetToken.setToken(token);
+            passwordResetToken.setExpiresAt(Instant.now().plus(Duration.ofHours(ttlHours)));
+
+            passwordResetTokenRepository.save(passwordResetToken);
+
+            passwordResetEmailTaskPublisher.enqueue(new PasswordResetEvent(
+                    email,
+                    token
+            ));
+        }
+
+        return "If user exists token will be sent.";
     }
 }
