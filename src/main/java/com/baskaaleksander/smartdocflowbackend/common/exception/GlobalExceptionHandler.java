@@ -22,6 +22,21 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(InvalidResetTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidResetTokenException(
+            InvalidResetTokenException ex, HttpServletRequest request
+    ) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                401,
+                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now()
+        );
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(WrongPasswordException.class)
     public ResponseEntity<ErrorResponse> handleWrongPasswordException(
             WrongPasswordException ex, HttpServletRequest request
