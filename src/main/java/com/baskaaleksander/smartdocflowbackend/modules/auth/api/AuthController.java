@@ -68,9 +68,9 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal CustomUserDetails user) {
 
-        return new ResponseEntity<>(authService.getMe(user), HttpStatus.OK);
+        return new ResponseEntity<>(authService.getMe(user.getId()), HttpStatus.OK);
     }
 
     @PutMapping("/update-password")

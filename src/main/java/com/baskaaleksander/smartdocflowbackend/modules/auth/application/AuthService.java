@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -131,9 +133,9 @@ public class AuthService {
         return "Logout successful";
     }
 
-    public UserResponse getMe(UserDetails user) {
+    public UserResponse getMe(UUID userId) {
         return userMapper.toUserResponse(
-                userRepository.findUserByUsernameWithRoles(user.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"))
+                userRepository.findUserByIdWithRoles(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"))
         );
     }
 

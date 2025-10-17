@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
 
+// TODO: delete this
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 

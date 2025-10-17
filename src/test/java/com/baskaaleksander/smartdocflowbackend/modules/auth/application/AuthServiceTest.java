@@ -164,38 +164,38 @@ public class AuthServiceTest {
 
     @Test
     void getMe_shouldReturnMappedUserResponse() {
-        org.springframework.security.core.userdetails.User springUser =
-                new org.springframework.security.core.userdetails.User("john", "x", List.of());
 
+        UUID id = UUID.randomUUID();
         Role role = new Role();
         role.setRole("ROLE_USER");
         UserEntity entity = new UserEntity();
+        entity.setId(id);
         entity.setUsername("john");
         entity.setRoles(Set.of(role));
 
-        when(userRepository.findUserByUsernameWithRoles("john")).thenReturn(Optional.of(entity));
+        when(userRepository.findUserByIdWithRoles(id)).thenReturn(Optional.of(entity));
 
         UserResponse mapped = new UserResponse(UUID.randomUUID(), "john", "john@example.com", List.of("ROLE_USER"), true, Instant.now());
         when(userMapper.toUserResponse(entity)).thenReturn(mapped);
 
-        UserResponse res = authService.getMe(springUser);
+        UserResponse res = authService.getMe(entity.getId());
 
         assertThat(res.id()).isEqualTo(mapped.id());
         assertThat(res.username()).isEqualTo(mapped.username());
         assertThat(res.roles()).isEqualTo(mapped.roles());
         assertThat(res.active()).isEqualTo(mapped.active());
-        verify(userRepository).findUserByUsernameWithRoles("john");
+        verify(userRepository).findUserByIdWithRoles(id);
         verify(userMapper).toUserResponse(entity);
     }
 
     @Test
     void getMe_shouldThrowException() {
-        org.springframework.security.core.userdetails.User springUser =
-                new org.springframework.security.core.userdetails.User("john", "x", List.of());
 
-        when(userRepository.findUserByUsernameWithRoles(anyString())).thenReturn(Optional.empty());
+        UUID userId = UUID.randomUUID();
 
-        assertThatThrownBy(() -> authService.getMe(springUser)).isInstanceOf(ResourceNotFoundException.class);
+        when(userRepository.findUserByIdWithRoles(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.getMe(userId)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test

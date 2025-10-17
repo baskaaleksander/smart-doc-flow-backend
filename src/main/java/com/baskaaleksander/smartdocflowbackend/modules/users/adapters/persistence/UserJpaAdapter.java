@@ -123,11 +123,6 @@ public class UserJpaAdapter implements UserQueryPort, UserCommandPort, RoleQuery
     }
 
     @Override
-    public Optional<User> findUserByUsernameWithRoles(String username) {
-        return userRepo.findUserByUsernameWithRoles(username).map(mapper::toDomain);
-    }
-
-    @Override
     public Optional<User> findUserByIdWithRoles(UUID userId) {
         return userRepo.findUserByIdWithRoles(userId).map(mapper::toDomain);
     }
