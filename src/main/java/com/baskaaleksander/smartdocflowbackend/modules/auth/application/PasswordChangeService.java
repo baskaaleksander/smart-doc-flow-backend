@@ -16,6 +16,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -113,12 +115,15 @@ public class PasswordChangeService {
             passwordResetToken.setToken(token);
             passwordResetToken.setExpiresAt(Instant.now().plus(Duration.ofHours(ttlHours)));
 
+            passwordResetTokenRepository.invalidateAllTokens(user.getId());
+
             passwordResetTokenRepository.save(passwordResetToken);
 
-            passwordResetEmailTaskPublisher.enqueue(new PasswordResetEvent(
-                    email,
-                    token
-            ));
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() {
+                    passwordResetEmailTaskPublisher.enqueue(new PasswordResetEvent(email, token));
+                }
+            });
         }
 
         return "If user exists token will be sent.";

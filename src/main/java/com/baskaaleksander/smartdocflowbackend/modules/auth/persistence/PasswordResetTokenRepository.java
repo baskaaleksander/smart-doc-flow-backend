@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,8 @@ public interface PasswordResetTokenRepository extends JpaRepository<PasswordRese
 
     @Query("select t from PasswordResetToken t left join fetch t.user")
     Optional<PasswordResetToken> findByToken(String token);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update PasswordResetToken t set t.revoked = true where t.user.id = :userId")
+    Integer invalidateAllTokens(UUID userId);
 }
