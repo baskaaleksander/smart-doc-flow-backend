@@ -88,8 +88,8 @@ public class AuthController {
         return new ResponseEntity<>(passwordChangeService.requestPasswordReset(passwordResetRequest.email()), HttpStatus.OK);
     }
 
-    @GetMapping("/check-token/{token}")
-    public ResponseEntity<Boolean> checkPasswordResetToken(@PathVariable("token") String token) {
+    @GetMapping("/check-token")
+    public ResponseEntity<Boolean> checkPasswordResetToken(@RequestParam("token") String token) {
         return new ResponseEntity<>(passwordChangeService.checkToken(token), HttpStatus.OK);
     }
 
