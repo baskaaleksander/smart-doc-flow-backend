@@ -11,16 +11,10 @@ import lombok.Setter;
 
 import java.util.Set;
 
-@Getter @Setter
-@AllArgsConstructor @NoArgsConstructor
-public class EditUserAccountAdminRequest {
+public record EditUserAccountAdminRequest(
+        @NotBlank @Email String email,
+        @NotEmpty Set<String> roles,
+        @NotNull Boolean active
+) {
 
-    @NotBlank @Email
-    private String email;
-
-    @NotEmpty
-    private Set<String> roles;
-
-    @NotNull
-    private Boolean active;
 }

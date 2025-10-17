@@ -106,20 +106,20 @@ public class UserApplicationService {
         User user = userQueryPort.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        userQueryPort.findByEmail(editRequest.getEmail())
+        userQueryPort.findByEmail(editRequest.email())
                 .filter(u -> !u.getId().equals(userId))
                 .ifPresent(u -> { throw new ResourceConflictException("User with that email is already registered"); });
 
 
-        Set<String> roles = roleQueryPort.findAllByRoleIn(editRequest.getRoles());
+        Set<String> roles = roleQueryPort.findAllByRoleIn(editRequest.roles());
 
-        if (editRequest.getRoles().size() != roles.size()) {
+        if (editRequest.roles().size() != roles.size()) {
             throw new ResourceNotFoundException("One or more roles not found");
         }
 
-        user.setEmail(editRequest.getEmail());
+        user.setEmail(editRequest.email());
         user.setRoles(roles);
-        user.setActive(editRequest.getActive());
+        user.setActive(editRequest.active());
 
         User saved = userCommandPort.save(user);
 
