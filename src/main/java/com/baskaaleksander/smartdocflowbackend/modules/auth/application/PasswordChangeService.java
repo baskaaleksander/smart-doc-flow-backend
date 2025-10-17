@@ -4,7 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidResetToke
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordException;
 import com.baskaaleksander.smartdocflowbackend.common.util.TokenGenerator;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.ChangePasswordRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.ResetPasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UpdatePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetToken;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenRepository;
@@ -76,7 +76,7 @@ public class PasswordChangeService {
         return "Password changed";
     }
 
-    public String changePassword(ChangePasswordRequest changePasswordRequest) {
+    public String resetPassword(ResetPasswordRequest changePasswordRequest) {
         PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(changePasswordRequest.token())
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 

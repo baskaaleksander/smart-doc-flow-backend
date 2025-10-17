@@ -93,11 +93,11 @@ public class AuthController {
         return new ResponseEntity<>(passwordChangeService.checkToken(token), HttpStatus.OK);
     }
 
-    @PutMapping("/change-password")
-    public ResponseEntity<String> changePassword(
-            @Valid @RequestBody ChangePasswordRequest changePasswordRequest
+    @PutMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
     ) {
-        return new ResponseEntity<>(passwordChangeService.changePassword(changePasswordRequest), HttpStatus.OK);
+        return new ResponseEntity<>(passwordChangeService.resetPassword(resetPasswordRequest), HttpStatus.OK);
     }
 
 }
