@@ -15,7 +15,7 @@ public class ReviewEvent {
     private UUID id;
     private ReviewEventType eventType;
     private String comment;
-    private UUID reviewerId;
+    private ReviewerBasic reviewer;
     private UUID reviewId;
     private Instant createdAt;
 }

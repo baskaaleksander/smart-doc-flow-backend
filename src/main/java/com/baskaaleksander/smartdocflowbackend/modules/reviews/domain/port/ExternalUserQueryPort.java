@@ -12,5 +12,5 @@ public interface ExternalUserQueryPort {
 
     Optional<UUID> findIdByUsername(String username);
 
-    Optional<ReviewerBasic> findReviewerByUsername(String username);
+    Optional<ReviewerBasic> findReviewerById(UUID id);
 }

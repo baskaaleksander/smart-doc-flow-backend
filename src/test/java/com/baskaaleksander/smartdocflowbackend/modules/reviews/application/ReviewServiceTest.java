@@ -8,12 +8,12 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Document
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.EventReviewerBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewerBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
@@ -192,7 +192,7 @@ public class ReviewServiceTest {
                 .thenAnswer(inv -> {
                     ReviewEventEntity ev = inv.getArgument(0);
 
-                    EventReviewerBasicInfo reviewerBasicInfo = new EventReviewerBasicInfo(
+                    ReviewerBasic reviewerBasicInfo = new ReviewerBasic(
                             ev.getReviewer().getId(),
                             ev.getReviewer().getUsername()
                     );
@@ -206,7 +206,7 @@ public class ReviewServiceTest {
                     );
                 });
 
-        EventReviewerBasicInfo reviewerBasicInfo = new EventReviewerBasicInfo(
+        ReviewerBasic reviewerBasicInfo = new ReviewerBasic(
                 reviewer.getId(),
                 reviewer.getUsername()
         );

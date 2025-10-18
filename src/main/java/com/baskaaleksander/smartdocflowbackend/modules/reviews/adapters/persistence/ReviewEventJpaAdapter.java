@@ -94,7 +94,7 @@ public class ReviewEventJpaAdapter implements ReviewEventQueryPort, ReviewEventC
             entity.setComment(reviewEvent.getComment());
         }
 
-        entity.setReviewer(userRepo.getReferenceById(reviewEvent.getReviewerId()));
+        entity.setReviewer(userRepo.getReferenceById(reviewEvent.getReviewer().id()));
         entity.setReview(reviewRepo.getReferenceById(reviewEvent.getReviewId()));
 
         ReviewEventEntity saved = reviewEventRepo.save(entity);

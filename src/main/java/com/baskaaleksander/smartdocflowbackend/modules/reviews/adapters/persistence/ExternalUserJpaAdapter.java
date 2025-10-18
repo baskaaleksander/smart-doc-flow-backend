@@ -36,8 +36,8 @@ public class ExternalUserJpaAdapter implements ExternalUserQueryPort {
     }
 
     @Override
-    public Optional<ReviewerBasic> findReviewerByUsername(String username) {
-        return userRepo.findByUsername(username).map(u -> new ReviewerBasic(u.getId(), u.getUsername()));
+    public Optional<ReviewerBasic> findReviewerById(UUID id) {
+        return userRepo.findById(id).map(u -> new ReviewerBasic(u.getId(), u.getUsername()));
     }
 
 }

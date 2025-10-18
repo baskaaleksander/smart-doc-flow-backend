@@ -73,7 +73,7 @@ public class ReviewJpaAdapter implements ReviewCommandPort, ReviewQueryPort {
                     ReviewEventEntity de = new ReviewEventEntity();
                     de.setEventType(re.getEventType());
                     de.setComment((re.getComment() != null && !re.getComment().isBlank()) ? re.getComment() : null);
-                    de.setReviewer(userRepo.getReferenceById(re.getReviewerId()));
+                    de.setReviewer(userRepo.getReferenceById(re.getReviewer().id()));
                     de.setReview(entity);
                     entity.getReviewEvents().add(de);
                 }

@@ -3,9 +3,9 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.EventReviewerBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewerBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
@@ -77,7 +77,7 @@ public class ReviewEventServiceTest {
         when(reviewEventRepository.getReviewEventById(reviewEvent.getId()))
                 .thenReturn(Optional.of(reviewEvent));
 
-        EventReviewerBasicInfo reviewerBasicInfo = new EventReviewerBasicInfo(
+        ReviewerBasic reviewerBasicInfo = new ReviewerBasic(
                 UUID.randomUUID(),
                 "reviewer"
         );
@@ -110,7 +110,7 @@ public class ReviewEventServiceTest {
         when(reviewEventRepository.findByReviewId(any(Pageable.class), eq(reviewEvent.getReview().getId())))
                 .thenReturn(page);
 
-        EventReviewerBasicInfo reviewerBasicInfo = new EventReviewerBasicInfo(
+        ReviewerBasic reviewerBasicInfo = new ReviewerBasic(
                 UUID.randomUUID(),
                 "reviewer"
         );

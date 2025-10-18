@@ -8,10 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewEventApiMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Review;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.*;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.*;
@@ -90,7 +87,10 @@ public class ReviewApplicationService {
     private ReviewEvent logReviewEvent(UUID reviewerId, UUID reviewId, ReviewEventType eventType, String comment) {
         ReviewEvent reviewEvent = new ReviewEvent();
 
-        reviewEvent.setReviewerId(reviewerId);
+        ReviewerBasic reviewer = externalUserQueryPort.findReviewerById(reviewerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Reviewer not found"));
+
+        reviewEvent.setReviewer(reviewer);
         reviewEvent.setReviewId(reviewId);
         reviewEvent.setEventType(eventType);
         if (comment != null) reviewEvent.setComment(comment);
