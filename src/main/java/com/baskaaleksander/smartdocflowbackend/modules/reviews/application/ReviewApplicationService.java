@@ -16,8 +16,6 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflict
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.*;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +27,7 @@ import java.util.UUID;
 public class ReviewApplicationService {
 
 
-    private final ApplicationEventPublisher publisher;
+    private final DomainEventPublisherPort publisher;
     private final ReviewCommandPort reviewCommandPort;
     private final ReviewQueryPort reviewQueryPort;
     private final ReviewEventCommandPort reviewEventCommandPort;
@@ -38,7 +36,6 @@ public class ReviewApplicationService {
     private final ReviewApiMapper mapper;
     private final ReviewEventApiMapper eventMapper;
 
-    @Autowired
     public ReviewApplicationService(
             ReviewCommandPort reviewCommandPort,
             ReviewQueryPort reviewQueryPort,
@@ -47,7 +44,7 @@ public class ReviewApplicationService {
             ExternalUserQueryPort externalUserQueryPort,
             ReviewApiMapper mapper,
             ReviewEventApiMapper eventMapper,
-            ApplicationEventPublisher publisher
+            DomainEventPublisherPort publisher
             ) {
 
         this.reviewCommandPort = reviewCommandPort;
@@ -85,7 +82,7 @@ public class ReviewApplicationService {
         UUID reviewerId = externalUserQueryPort.findIdByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        publisher.publishEvent(new NotificationEvent(username, "review_comment", "Document " + review.getDocumentId() + " received comment"));
+        publisher.publish(new NotificationEvent(username, "review_comment", "Document " + review.getDocumentId() + " received comment"));
 
         return eventMapper.toEventResponse(logReviewEvent(reviewerId, review.getId(), ReviewEventType.COMMENT, comment));
     }
@@ -121,7 +118,7 @@ public class ReviewApplicationService {
 
         logReviewEvent(reviewer, review.getId(),  ReviewEventType.ASSIGNED, null);
 
-        publisher.publishEvent(new NotificationEvent(username, "document_in_review", "Document " + review.getDocumentId() + " is in review process!"));
+        publisher.publish(new NotificationEvent(username, "document_in_review", "Document " + review.getDocumentId() + " is in review process!"));
 
         return mapper.toReviewResponse(review);
     }
@@ -178,7 +175,7 @@ public class ReviewApplicationService {
 
         logReviewEvent(review.getReviewerId(), review.getId(),  ReviewEventType.APPROVED, comment);
 
-        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " is approved."));
+        publisher.publish(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " is approved."));
 
         return mapper.toReviewResponse(review);
     }
@@ -208,7 +205,7 @@ public class ReviewApplicationService {
 
         logReviewEvent(review.getReviewerId(), reviewId,  ReviewEventType.REJECTED, comment);
 
-        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " got rejected."));
+        publisher.publish(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " got rejected."));
 
         return mapper.toReviewResponse(review);
     }
