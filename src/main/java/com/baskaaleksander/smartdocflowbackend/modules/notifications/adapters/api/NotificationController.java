@@ -1,8 +1,8 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.api;
+package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto.ReadNotificationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto.NotificationResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;

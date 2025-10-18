@@ -2,11 +2,11 @@ package com.baskaaleksander.smartdocflowbackend.modules.notifications.applicatio
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto.NotificationResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.mapping.NotificationMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.entity.NotificationEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.spring.SpringDataNotificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class NotificationServiceTest {
 
-    @Mock private NotificationRepository notificationRepository;
+    @Mock private SpringDataNotificationRepository notificationRepository;
     @Mock private SimpMessagingTemplate simpMessagingTemplate;
     @Mock private NotificationMapper notificationMapper;
 

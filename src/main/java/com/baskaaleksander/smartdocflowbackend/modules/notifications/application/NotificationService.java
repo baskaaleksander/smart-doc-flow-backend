@@ -1,15 +1,15 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto.ReadNotificationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto.NotificationResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PageMetadata;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagedResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.mapping.NotificationMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.entity.NotificationEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.spring.SpringDataNotificationRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
@@ -23,12 +23,12 @@ import java.util.UUID;
 @Service
 public class NotificationService {
 
-    private final NotificationRepository notificationRepository;
+    private final SpringDataNotificationRepository notificationRepository;
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final NotificationMapper notificationMapper;
 
     public NotificationService(
-            NotificationRepository notificationRepository,
+            SpringDataNotificationRepository notificationRepository,
             SimpMessagingTemplate simpMessagingTemplate,
             NotificationMapper notificationMapper) {
         this.notificationRepository = notificationRepository;

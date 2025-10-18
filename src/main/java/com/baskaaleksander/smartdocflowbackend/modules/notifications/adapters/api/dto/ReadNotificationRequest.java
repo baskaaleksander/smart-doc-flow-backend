@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto;
+package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.entity;
 
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import jakarta.persistence.*;

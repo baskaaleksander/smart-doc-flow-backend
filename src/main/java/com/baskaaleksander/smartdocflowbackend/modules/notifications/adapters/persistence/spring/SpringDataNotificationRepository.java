@@ -1,5 +1,6 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.spring;
 
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.entity.NotificationEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<NotificationEntity, UUID> {
+public interface SpringDataNotificationRepository extends JpaRepository<NotificationEntity, UUID> {
 
     Page<NotificationEntity> findAllByUsernameAndRead(Pageable pageable, String username, boolean read);
 
