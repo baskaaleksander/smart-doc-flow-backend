@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.NotificationApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PageMetadata;
@@ -29,103 +30,62 @@ import java.util.UUID;
 @Service
 public class NotificationApplicationService implements NotificationEventIngressPort, AuthEventIngressPort {
 
-    private final SpringDataNotificationRepository notificationRepository;
-    private final NotificationMapper notificationMapper;
     private final RealtimePushPort push;
     private final EmailSenderPort emailPort;
     private final NotificationCommandPort notificationCommandPort;
     private final NotificationQueryPort notificationQueryPort;
+    private final NotificationApiMapper mapper;
+
 
     @Value(value = "${app.frontend-url}")
     private String frontendUrl;
 
     public NotificationApplicationService(
-            SpringDataNotificationRepository notificationRepository,
-            NotificationMapper notificationMapper,
             RealtimePushPort push,
             EmailSenderPort emailPort,
             NotificationCommandPort notificationCommandPort,
-            NotificationQueryPort notificationQueryPort
+            NotificationQueryPort notificationQueryPort,
+            NotificationApiMapper mapper
             ) {
-        this.notificationRepository = notificationRepository;
-        this.notificationMapper = notificationMapper;
         this.push = push;
         this.emailPort = emailPort;
         this.notificationCommandPort = notificationCommandPort;
         this.notificationQueryPort = notificationQueryPort;
+        this.mapper = mapper;
     }
 
     public PagingResult<NotificationResponse> getNotifications(String username, PaginationRequest request, Boolean read) {
-        Pageable pageable = PaginationUtil.getPageable(request);
-        PagedResponse result;
+        PagingResult<Notification> pagingResult;
 
         if (read == null) {
-            result = getAllUserNotifications(pageable, username);
+            pagingResult = notificationQueryPort.findAllByUsername(request, username);
         } else {
-            result = getAllUserNotificationsByRead(pageable, username, read);
+            pagingResult = notificationQueryPort.findAllByUsernameAndRead(request, username, read);
         }
 
 
-        List<NotificationResponse> items = result.items();
-        PageMetadata pageMetadata = result.pageMetadata();
-        Integer currentPage = request.getPage();
+        List<NotificationResponse> content = pagingResult.content().stream().map(mapper::toResponse).toList();
 
         return new PagingResult<>(
-                items,
-                pageMetadata.totalPages(),
-                pageMetadata.totalElements(),
-                pageMetadata.size(),
-                pageMetadata.number(),
-                currentPage + 1 == pageMetadata.totalPages(),
-                currentPage + 1 < pageMetadata.totalPages()
-
+                content,
+                pagingResult.totalPages(),
+                pagingResult.totalElements(),
+                pagingResult.size(),
+                pagingResult.page(),
+                pagingResult.last(),
+                pagingResult.next()
         );
-    }
-
-    private PagedResponse<NotificationResponse> getAllUserNotificationsByRead(Pageable pageable, String username, Boolean read) {
-        Page<NotificationEntity> notifications = notificationRepository.findAllByUsernameAndRead(pageable, username, read);
-
-        List<NotificationResponse> notificationsList = notifications
-                .stream()
-                .map(notificationMapper::toNotificationResponse)
-                .toList();
-        PageMetadata pageMetadata = new PageMetadata(
-                notifications.getTotalPages(),
-                notifications.getTotalElements(),
-                notifications.getSize(),
-                notifications.getNumber()
-        );
-
-        return new PagedResponse<>(notificationsList, pageMetadata);
-    }
-
-    private PagedResponse<NotificationResponse> getAllUserNotifications(Pageable pageable, String username) {
-        Page<NotificationEntity> notifications = notificationRepository.findAllByUsername(pageable, username);
-
-        List<NotificationResponse> notificationsList = notifications
-                .stream()
-                .map(notificationMapper::toNotificationResponse)
-                .toList();
-
-        PageMetadata pageMetadata = new PageMetadata(
-                notifications.getTotalPages(),
-                notifications.getTotalElements(),
-                notifications.getSize(),
-                notifications.getNumber()
-        );
-
-        return new PagedResponse<>(notificationsList, pageMetadata);
     }
 
     public Integer getUnreadNotificationsCount(String username) {
-        return notificationRepository.getNotificationsCountByUsernameAndRead(username, false);
+        return notificationQueryPort.getNotificationsCountByUsernameAndRead(username, false);
     }
 
     @Transactional
     public Integer markAllAsRead(String username, ReadNotificationRequest body) {
 
         if (body.getRead()) {
-            return notificationRepository.markAllRead(username);
+            return notificationCommandPort.markAllRead(username);
         }
         return 0;
     }
@@ -133,7 +93,7 @@ public class NotificationApplicationService implements NotificationEventIngressP
     @Transactional
     public Integer markOneAsRead(String username, UUID id, ReadNotificationRequest body) {
         if (body.getRead()) {
-            return notificationRepository.markOneRead(username, id);
+            return notificationCommandPort.markOneRead(username, id);
         }
         return 0;
     }
@@ -151,7 +111,6 @@ public class NotificationApplicationService implements NotificationEventIngressP
 
         notificationCommandPort.save(notification);
 
-        //add save to db
         push.sendToUser(event.username(), "/queue/notifications", event);
     }
 

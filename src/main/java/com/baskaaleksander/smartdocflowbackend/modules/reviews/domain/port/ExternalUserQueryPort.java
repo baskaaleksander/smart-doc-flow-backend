@@ -1,5 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port;
 
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewerBasic;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -9,4 +11,6 @@ public interface ExternalUserQueryPort {
     Optional<String> findById(UUID id);
 
     Optional<UUID> findIdByUsername(String username);
+
+    Optional<ReviewerBasic> findReviewerByUsername(String username);
 }

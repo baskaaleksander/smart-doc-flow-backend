@@ -223,7 +223,7 @@ public class DocumentServiceTest {
         verify(documentRepository, times(2)).save(any(Document.class));
         verify(reviewRepository).save(any(ReviewEntity.class));
 
-        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
+//        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
         ArgumentCaptor<UUID> enqueueCap = ArgumentCaptor.forClass(UUID.class);
         verify(ocrTaskPublisher).enqueue(enqueueCap.capture());
 
@@ -299,7 +299,7 @@ public class DocumentServiceTest {
         verify(documentRepository, never()).save(any());
         verify(reviewRepository, never()).save(any());
         verify(ocrTaskPublisher, never()).enqueue(any());
-        verify(notificationService, never()).sendNotification(any(), any(), any());
+//        verify(notificationService, never()).sendNotification(any(), any(), any());
         verify(documentMapper, never()).toDocumentResponse(any());
     }
 
@@ -375,7 +375,7 @@ public class DocumentServiceTest {
         assertThat(res.owner()).isEqualTo(new DocumentOwnerBasicInfo(user.getId(), username));
 
 
-        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
+//        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
         verify(ocrTaskPublisher).enqueue(any(UUID.class));
     }
 

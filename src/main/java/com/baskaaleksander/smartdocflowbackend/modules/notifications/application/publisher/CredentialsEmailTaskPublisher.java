@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email;
+package com.baskaaleksander.smartdocflowbackend.modules.notifications.application.publisher;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;

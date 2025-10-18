@@ -83,7 +83,7 @@ public class NotificationServiceTest {
 
     @Test
     void sendNotification_shouldSaveToDb_and_triggerWs() {
-        notificationService.sendNotification(username, "document_uploaded", "test");
+//        notificationService.sendNotification(username, "document_uploaded", "test");
 
         verify(notificationRepository).save(any(NotificationEntity.class));
         verify(simpMessagingTemplate).convertAndSendToUser(

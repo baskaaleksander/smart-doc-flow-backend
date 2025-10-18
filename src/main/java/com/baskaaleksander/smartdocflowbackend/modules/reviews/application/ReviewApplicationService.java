@@ -45,7 +45,7 @@ public class ReviewApplicationService {
             ReviewApiMapper mapper,
             ReviewEventApiMapper eventMapper,
             DomainEventPublisherPort publisher
-            ) {
+    ) {
 
         this.reviewCommandPort = reviewCommandPort;
         this.reviewQueryPort = reviewQueryPort;

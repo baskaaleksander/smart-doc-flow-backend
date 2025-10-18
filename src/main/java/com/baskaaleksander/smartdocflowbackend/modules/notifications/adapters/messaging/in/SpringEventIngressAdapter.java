@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.m
 
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.port.NotificationEventIngressPort;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -16,7 +17,7 @@ public class SpringEventIngressAdapter {
         this.ingress = ingress;
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void handle(NotificationEvent event) {
         ingress.onNotificationSent(event);
     }

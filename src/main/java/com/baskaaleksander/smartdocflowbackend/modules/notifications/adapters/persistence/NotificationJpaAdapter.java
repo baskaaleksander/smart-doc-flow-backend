@@ -30,9 +30,11 @@ public class NotificationJpaAdapter implements NotificationCommandPort, Notifica
         this.mapper = mapper;
     }
     @Override
+    @Transactional
     public Notification save(Notification notification) {
-        NotificationEntity entity = notificationRepo.findById(notification.getId())
-                .orElseGet(NotificationEntity::new);
+        NotificationEntity entity = (notification.getId() != null) ?
+                notificationRepo.findById(notification.getId()).orElseGet(NotificationEntity::new) :
+                new NotificationEntity();
 
         entity.setUsername(notification.getUsername());
         entity.setType(notification.getType());
@@ -45,11 +47,13 @@ public class NotificationJpaAdapter implements NotificationCommandPort, Notifica
     }
 
     @Override
+    @Transactional
     public Integer markOneRead(String username, UUID id) {
         return notificationRepo.markOneRead(username, id);
     }
 
     @Override
+    @Transactional
     public Integer markAllRead(String username) {
         return notificationRepo.markAllRead(username);
     }
@@ -60,6 +64,10 @@ public class NotificationJpaAdapter implements NotificationCommandPort, Notifica
         Page<NotificationEntity> entities = notificationRepo.findAllByUsernameAndRead(pageable, username, read);
 
         List<Notification> content = entities.getContent().stream().map(mapper::toDomain).toList();
+
+        for (Notification c : content) {
+            System.out.println(c.getMessage());
+        }
 
         return new PagingResult<>(
                 content,
