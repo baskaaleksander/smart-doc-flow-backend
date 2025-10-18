@@ -5,7 +5,10 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewEventApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewEventQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
@@ -19,47 +22,45 @@ import java.util.UUID;
 @Service
 public class ReviewEventApplicationService {
 
+    private final ReviewEventQueryPort reviewEventQueryPort;
+    private final ReviewEventApiMapper mapper;
 
-    private final SpringDataReviewEventRepository reviewEventRepository;
-    private final ReviewEventMapper reviewEventMapper;
-
-    public ReviewEventApplicationService(SpringDataReviewEventRepository reviewEventRepository, ReviewEventMapper reviewEventMapper) {
-        this.reviewEventRepository = reviewEventRepository;
-        this.reviewEventMapper = reviewEventMapper;
+    public ReviewEventApplicationService(
+            ReviewEventQueryPort reviewEventQueryPort,
+            ReviewEventApiMapper mapper
+            ) {
+        this.reviewEventQueryPort = reviewEventQueryPort;
+        this.mapper = mapper;
     }
 
     public ReviewEventResponse getReviewEventById(UUID id) {
-        return reviewEventMapper.toReviewEventResponse(
-                reviewEventRepository.getReviewEventById(id).orElseThrow(() -> new ResourceNotFoundException("Review event with id " + id + " not found"))
+        return mapper.toEventResponse(
+                reviewEventQueryPort.getReviewEventById(id).orElseThrow(() -> new ResourceNotFoundException("Review event not found"))
         );
     }
 
     public PagingResult<ReviewEventResponse> getReviewEvents(UUID id, PaginationRequest request, String eventType) {
-        Pageable pageable = PaginationUtil.getPageable(request);
-        Page<ReviewEventEntity> reviewEvents;
+        PagingResult<ReviewEvent> reviewEvents;
 
         if (eventType.equalsIgnoreCase("ALL")) {
-            reviewEvents = reviewEventRepository.findByReviewId(pageable, id);
+            reviewEvents = reviewEventQueryPort.findByReviewId(request, id);
         } else {
-            reviewEvents = reviewEventRepository.findByReviewIdWithType(pageable, id, ReviewEventType.fromString(eventType));
+            reviewEvents = reviewEventQueryPort.findByReviewIdWithType(request, id, ReviewEventType.fromString(eventType));
         }
 
-        List<ReviewEventResponse> reviewEventsList = reviewEvents
+        List<ReviewEventResponse> reviewEventsList = reviewEvents.content()
                 .stream()
-                .map(reviewEventMapper::toReviewEventResponse)
+                .map(mapper::toEventResponse)
                 .toList();
-
-        Integer currentPage = request.getPage();
-        int totalPages = reviewEvents.getTotalPages();
 
         return new PagingResult<>(
                 reviewEventsList,
-                totalPages,
-                reviewEvents.getTotalElements(),
-                reviewEvents.getSize(),
-                reviewEvents.getNumber(),
-                currentPage + 1 == totalPages,
-                currentPage + 1 < totalPages
+                reviewEvents.totalPages(),
+                reviewEvents.totalElements(),
+                reviewEvents.size(),
+                reviewEvents.page(),
+                reviewEvents.last(),
+                reviewEvents.next()
         );
     }
 }
