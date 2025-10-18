@@ -83,6 +83,7 @@ public class ReviewEventJpaAdapter implements ReviewEventQueryPort, ReviewEventC
     }
 
     @Override
+    @Transactional
     public ReviewEvent save(ReviewEvent reviewEvent) {
         ReviewEventEntity entity = reviewEventRepo.getReviewEventById(reviewEvent.getId())
                 .orElseGet(ReviewEventEntity::new);
