@@ -13,9 +13,9 @@ import java.util.UUID;
 @Repository
 public interface SpringDataNotificationRepository extends JpaRepository<NotificationEntity, UUID> {
 
-    Page<NotificationEntity> findAllByUsernameAndRead(Pageable pageable, String username, boolean read);
+    Page<NotificationEntity> findAllByUsernameAndRead(String username, boolean read, Pageable pageable);
 
-    Page<NotificationEntity> findAllByUsername(Pageable pageable, String username);
+    Page<NotificationEntity> findAllByUsername(String username, Pageable pageable);
 
     @Query("select count(n) from NotificationEntity n where n.username = :username and n.read = :read")
     Integer getNotificationsCountByUsernameAndRead(String username, boolean read);

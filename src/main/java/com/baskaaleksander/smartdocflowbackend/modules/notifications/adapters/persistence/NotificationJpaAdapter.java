@@ -61,7 +61,11 @@ public class NotificationJpaAdapter implements NotificationCommandPort, Notifica
     @Override
     public PagingResult<Notification> findAllByUsernameAndRead(PaginationRequest request, String username, boolean read) {
         Pageable pageable = PaginationUtil.getPageable(request);
-        Page<NotificationEntity> entities = notificationRepo.findAllByUsernameAndRead(pageable, username, read);
+        Page<NotificationEntity> entities = notificationRepo.findAllByUsernameAndRead(username, read, pageable);
+
+        for (var n : entities.getContent()) {
+            System.out.println(n.getMessage());
+        }
 
         List<Notification> content = entities.getContent().stream().map(mapper::toDomain).toList();
 
@@ -83,9 +87,17 @@ public class NotificationJpaAdapter implements NotificationCommandPort, Notifica
     @Override
     public PagingResult<Notification> findAllByUsername(PaginationRequest request, String username) {
         Pageable pageable = PaginationUtil.getPageable(request);
-        Page<NotificationEntity> entities = notificationRepo.findAllByUsername(pageable, username);
+        Page<NotificationEntity> entities = notificationRepo.findAllByUsername(username, pageable);
+
+        for (var n : entities.getContent()) {
+            System.out.println(n.getMessage());
+        }
 
         List<Notification> content = entities.getContent().stream().map(mapper::toDomain).toList();
+
+//        for (Notification c : content) {
+//            System.out.println(c.getMessage());
+//        }
 
         return new PagingResult<>(
                 content,

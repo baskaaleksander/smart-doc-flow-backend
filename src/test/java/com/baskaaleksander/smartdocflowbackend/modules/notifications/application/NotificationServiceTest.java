@@ -99,7 +99,7 @@ public class NotificationServiceTest {
         Pageable pageable = PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<NotificationEntity> page = new PageImpl<>(List.of(n1, n2), pageable, 5);
-        when(notificationRepository.findAllByUsername(pageable, username)).thenReturn(page);
+        when(notificationRepository.findAllByUsername(username, pageable)).thenReturn(page);
 
         stubMapper();
 
@@ -113,7 +113,7 @@ public class NotificationServiceTest {
         assertThat(res.last()).isFalse();
         assertThat(res.next()).isTrue();
 
-        verify(notificationRepository).findAllByUsername(pageable, username);
+        verify(notificationRepository).findAllByUsername(username, pageable);
     }
 
     @Test
@@ -122,7 +122,7 @@ public class NotificationServiceTest {
         Pageable pageable = PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<NotificationEntity> page = new PageImpl<>(List.of(n1), pageable, 4);
-        when(notificationRepository.findAllByUsernameAndRead(pageable, username, true)).thenReturn(page);
+        when(notificationRepository.findAllByUsernameAndRead(username, true, pageable)).thenReturn(page);
 
         stubMapper();
 
@@ -136,7 +136,7 @@ public class NotificationServiceTest {
         assertThat(res.last()).isTrue();
         assertThat(res.next()).isFalse();
 
-        verify(notificationRepository).findAllByUsernameAndRead(pageable, username, true);
+        verify(notificationRepository).findAllByUsernameAndRead(username, true, pageable);
     }
 
     @Test
@@ -145,7 +145,7 @@ public class NotificationServiceTest {
         Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Direction.ASC, "createdAt"));
 
         Page<NotificationEntity> page = new PageImpl<>(List.of(n2), pageable, 1);
-        when(notificationRepository.findAllByUsernameAndRead(pageable, username, false)).thenReturn(page);
+        when(notificationRepository.findAllByUsernameAndRead(username, false, pageable)).thenReturn(page);
 
         stubMapper();
 
@@ -159,6 +159,6 @@ public class NotificationServiceTest {
         assertThat(res.last()).isTrue();
         assertThat(res.next()).isFalse();
 
-        verify(notificationRepository).findAllByUsernameAndRead(pageable, username, false);
+        verify(notificationRepository).findAllByUsernameAndRead(username, false, pageable);
     }
 }

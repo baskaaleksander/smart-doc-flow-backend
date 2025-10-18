@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -20,9 +21,17 @@ public class NotificationEntity {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false)
     private String username;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private NotificationType type;
+    @Column(nullable = false)
     private String message;
+    @Column(nullable = false)
     private boolean read = false;
+    @Column(nullable = false)
+    @CreationTimestamp
     private Instant createdAt = Instant.now();
 }
