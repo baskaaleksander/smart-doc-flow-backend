@@ -31,7 +31,17 @@ public class NotificationJpaAdapter implements NotificationCommandPort, Notifica
     }
     @Override
     public Notification save(Notification notification) {
-        return null;
+        NotificationEntity entity = notificationRepo.findById(notification.getId())
+                .orElseGet(NotificationEntity::new);
+
+        entity.setUsername(notification.getUsername());
+        entity.setType(notification.getType());
+        entity.setMessage(notification.getMessage());
+        entity.setRead(notification.isRead());
+
+        NotificationEntity saved = notificationRepo.save(entity);
+
+        return mapper.toDomain(saved);
     }
 
     @Override
