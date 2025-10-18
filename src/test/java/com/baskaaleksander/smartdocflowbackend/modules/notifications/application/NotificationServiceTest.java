@@ -5,7 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.mapping.NotificationMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.Notification;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,16 +35,16 @@ public class NotificationServiceTest {
 
     @InjectMocks private NotificationService notificationService;
 
-    private Notification n1;
-    private Notification n2;
+    private NotificationEntity n1;
+    private NotificationEntity n2;
     private NotificationResponse r1;
     private NotificationResponse r2;
     private final String username = "user-123";
 
     @BeforeEach
     void setUp() {
-        n1 = new Notification();
-        n2 = new Notification();
+        n1 = new NotificationEntity();
+        n2 = new NotificationEntity();
 
         r1 = new NotificationResponse(
                 UUID.randomUUID(),
@@ -65,9 +65,9 @@ public class NotificationServiceTest {
     }
 
     private void stubMapper() {
-        when(notificationMapper.toNotificationResponse(any(Notification.class)))
+        when(notificationMapper.toNotificationResponse(any(NotificationEntity.class)))
                 .thenAnswer(inv -> {
-                    Notification arg = inv.getArgument(0);
+                    NotificationEntity arg = inv.getArgument(0);
                     if (arg == n1) return r1;
                     if (arg == n2) return r2;
                     return new NotificationResponse(
@@ -85,11 +85,11 @@ public class NotificationServiceTest {
     void sendNotification_shouldSaveToDb_and_triggerWs() {
         notificationService.sendNotification(username, "document_uploaded", "test");
 
-        verify(notificationRepository).save(any(Notification.class));
+        verify(notificationRepository).save(any(NotificationEntity.class));
         verify(simpMessagingTemplate).convertAndSendToUser(
                 eq(username),
                 eq("/queue/notifications"),
-                any(Notification.class)
+                any(NotificationEntity.class)
         );
     }
 
@@ -98,7 +98,7 @@ public class NotificationServiceTest {
         PaginationRequest req = new PaginationRequest(0, 2, "createdAt", Sort.Direction.DESC);
         Pageable pageable = PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Notification> page = new PageImpl<>(List.of(n1, n2), pageable, 5);
+        Page<NotificationEntity> page = new PageImpl<>(List.of(n1, n2), pageable, 5);
         when(notificationRepository.findAllByUsername(pageable, username)).thenReturn(page);
 
         stubMapper();
@@ -121,7 +121,7 @@ public class NotificationServiceTest {
         PaginationRequest req = new PaginationRequest(1, 2, "createdAt", Sort.Direction.DESC);
         Pageable pageable = PageRequest.of(1, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Notification> page = new PageImpl<>(List.of(n1), pageable, 4);
+        Page<NotificationEntity> page = new PageImpl<>(List.of(n1), pageable, 4);
         when(notificationRepository.findAllByUsernameAndRead(pageable, username, true)).thenReturn(page);
 
         stubMapper();
@@ -144,7 +144,7 @@ public class NotificationServiceTest {
         PaginationRequest req = new PaginationRequest(0, 3, "createdAt", Sort.Direction.ASC);
         Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Direction.ASC, "createdAt"));
 
-        Page<Notification> page = new PageImpl<>(List.of(n2), pageable, 1);
+        Page<NotificationEntity> page = new PageImpl<>(List.of(n2), pageable, 1);
         when(notificationRepository.findAllByUsernameAndRead(pageable, username, false)).thenReturn(page);
 
         stubMapper();

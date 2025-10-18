@@ -14,7 +14,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Notification {
+public class NotificationEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

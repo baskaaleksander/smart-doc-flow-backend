@@ -10,20 +10,20 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+public interface NotificationRepository extends JpaRepository<NotificationEntity, UUID> {
 
-    Page<Notification> findAllByUsernameAndRead(Pageable pageable, String username, boolean read);
+    Page<NotificationEntity> findAllByUsernameAndRead(Pageable pageable, String username, boolean read);
 
-    Page<Notification> findAllByUsername(Pageable pageable, String username);
+    Page<NotificationEntity> findAllByUsername(Pageable pageable, String username);
 
-    @Query("select count(n) from Notification n where n.username = :username and n.read = :read")
+    @Query("select count(n) from NotificationEntity n where n.username = :username and n.read = :read")
     Integer getNotificationsCountByUsernameAndRead(String username, boolean read);
 
-    @Query("update Notification n set n.read = true where n.username = :username and n.id = :id and n.read = false")
+    @Query("update NotificationEntity n set n.read = true where n.username = :username and n.id = :id and n.read = false")
     @Modifying
     Integer markOneRead(String username, UUID id);
 
-    @Query("update Notification n set n.read = true where n.username = :username and n.read = false")
+    @Query("update NotificationEntity n set n.read = true where n.username = :username and n.read = false")
     @Modifying
     Integer markAllRead(String username);
 }

@@ -8,7 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagedResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.mapping.NotificationMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.Notification;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import jakarta.transaction.Transactional;
@@ -38,7 +38,7 @@ public class NotificationService {
 
     @Transactional
     public void sendNotification(String username, String type, String message) {
-        Notification notification = new Notification();
+        NotificationEntity notification = new NotificationEntity();
 
         notification.setUsername(username);
         notification.setType(NotificationType.fromString(type));
@@ -82,7 +82,7 @@ public class NotificationService {
     }
 
     private PagedResponse<NotificationResponse> getAllUserNotificationsByRead(Pageable pageable, String username, Boolean read) {
-        Page<Notification> notifications = notificationRepository.findAllByUsernameAndRead(pageable, username, read);
+        Page<NotificationEntity> notifications = notificationRepository.findAllByUsernameAndRead(pageable, username, read);
 
         List<NotificationResponse> notificationsList = notifications
                 .stream()
@@ -99,7 +99,7 @@ public class NotificationService {
     }
 
     private PagedResponse<NotificationResponse> getAllUserNotifications(Pageable pageable, String username) {
-        Page<Notification> notifications = notificationRepository.findAllByUsername(pageable, username);
+        Page<NotificationEntity> notifications = notificationRepository.findAllByUsername(pageable, username);
 
         List<NotificationResponse> notificationsList = notifications
                 .stream()
