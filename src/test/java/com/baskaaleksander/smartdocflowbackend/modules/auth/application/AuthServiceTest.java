@@ -4,12 +4,12 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflict
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegisterRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserLoginRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserRegisterRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
@@ -47,7 +47,7 @@ public class AuthServiceTest {
     @Mock
     private SpringDataUserRepository userRepository;
     @Mock
-    private RoleRepository roleRepository;
+    private SpringDataRoleRepository roleRepository;
     @Mock
     private JwtUtil jwtUtil;
     @Mock
@@ -60,7 +60,7 @@ public class AuthServiceTest {
     private ApplicationEventPublisher publisher;
 
     @InjectMocks
-    private AuthService authService;
+    private AuthApplicationService authService;
 
     @Mock
     private Authentication authentication;

@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto;
+package com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto;
 
 
 import java.time.Instant;

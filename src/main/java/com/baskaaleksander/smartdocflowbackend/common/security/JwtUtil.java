@@ -1,10 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.common.security;
 
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidJwtTokenException;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RefreshTokenEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RefreshTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RefreshTokenRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRefreshTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -27,7 +27,7 @@ import java.util.UUID;
 public class JwtUtil {
 
     private final UserDetailsService userDetailsService;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final SpringDataRefreshTokenRepository refreshTokenRepository;
     private final SpringDataUserRepository userRepository;
     @Value("${jwt.access.secret}")
     private String jwtAccessSecret;
@@ -41,7 +41,7 @@ public class JwtUtil {
     private SecretKey refreshKey;
 
     @Autowired
-    public JwtUtil(UserDetailsService userDetailsService, RefreshTokenRepository refreshTokenRepository, SpringDataUserRepository userRepository) {
+    public JwtUtil(UserDetailsService userDetailsService, SpringDataRefreshTokenRepository refreshTokenRepository, SpringDataUserRepository userRepository) {
         this.userDetailsService = userDetailsService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;

@@ -4,10 +4,10 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidResetToke
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordException;
 import com.baskaaleksander.smartdocflowbackend.common.util.TokenGenerator;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.ResetPasswordRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UpdatePasswordRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.ResetPasswordRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UpdatePasswordRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.publisher.PasswordResetEmailTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
@@ -27,22 +27,22 @@ import java.util.UUID;
 
 @Service
 @Transactional
-public class PasswordChangeService {
+public class PasswordChangeApplicationService {
 
     private final SpringDataUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final SpringDataPasswordResetTokenRepository passwordResetTokenRepository;
     private final Clock clock;
 
     @Value("${auth.reset-token.ttl-hours:24}")
     private long ttlHours;
 
-    public PasswordChangeService(
+    public PasswordChangeApplicationService(
             SpringDataUserRepository userRepository,
             PasswordEncoder passwordEncoder,
             PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher,
-            PasswordResetTokenRepository passwordResetTokenRepository,
+            SpringDataPasswordResetTokenRepository passwordResetTokenRepository,
             Clock clock
             ) {
         this.userRepository = userRepository;

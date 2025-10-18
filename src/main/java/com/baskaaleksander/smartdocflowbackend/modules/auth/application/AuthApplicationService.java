@@ -1,14 +1,17 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.*;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserLoginRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserRegisterRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.publisher.CredentialsEmailTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
@@ -31,11 +34,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-public class AuthService {
+public class AuthApplicationService {
 
     private final AuthenticationManager authenticationManager;
     private final SpringDataUserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final SpringDataRoleRepository roleRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final CookieUtil cookieUtil;
@@ -44,10 +47,10 @@ public class AuthService {
 
 
     @Autowired
-    public AuthService(
+    public AuthApplicationService(
             AuthenticationManager authenticationManager,
             SpringDataUserRepository userRepository,
-            RoleRepository roleRepository,
+            SpringDataRoleRepository roleRepository,
             JwtUtil jwtUtil,
             PasswordEncoder passwordEncoder,
             CookieUtil cookieUtil,

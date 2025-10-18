@@ -1,5 +1,6 @@
-package com.baskaaleksander.smartdocflowbackend.modules.auth.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring;
 
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetTokenEntity, UUID> {
+public interface SpringDataPasswordResetTokenRepository extends JpaRepository<PasswordResetTokenEntity, UUID> {
 
     @Query("select t from PasswordResetTokenEntity t left join fetch t.user")
     Optional<PasswordResetTokenEntity> findByToken(String token);

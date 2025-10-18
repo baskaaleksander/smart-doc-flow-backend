@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.auth.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity;
 
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;

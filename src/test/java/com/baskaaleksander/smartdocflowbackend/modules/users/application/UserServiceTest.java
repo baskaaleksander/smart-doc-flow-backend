@@ -4,9 +4,9 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflict
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
@@ -39,7 +39,7 @@ public class UserServiceTest {
     private UserMapper userMapper;
 
     @Mock
-    private RoleRepository roleRepository;
+    private SpringDataRoleRepository roleRepository;
 
     @InjectMocks
     private UserApplicationService userService;

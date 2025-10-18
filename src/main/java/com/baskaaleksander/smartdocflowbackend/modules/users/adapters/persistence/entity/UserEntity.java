@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity;
 
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import jakarta.persistence.*;
 import lombok.*;

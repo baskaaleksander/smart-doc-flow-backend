@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api;
 
-import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
 

@@ -4,8 +4,8 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
@@ -32,13 +32,13 @@ import java.util.stream.Collectors;
 public class UserJpaAdapter implements UserQueryPort, UserCommandPort, RoleQueryPort {
 
     private final SpringDataUserRepository userRepo;
-    private final RoleRepository roleRepo;
+    private final SpringDataRoleRepository roleRepo;
     private final DocumentRepository documentRepo;
     private final UserPersistenceMapper mapper;
 
     public UserJpaAdapter(
             SpringDataUserRepository userRepo,
-            RoleRepository roleRepo,
+            SpringDataRoleRepository roleRepo,
             DocumentRepository documentRepo,
             UserPersistenceMapper mapper
     ) {
