@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto;
+package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

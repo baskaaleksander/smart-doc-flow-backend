@@ -8,18 +8,18 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Document
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.EventReviewerBasicInfo;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.EventReviewerBasicInfo;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.*;
 public class ReviewServiceTest {
 
     @Mock
-    private ReviewRepository reviewRepository;
+    private SpringDataReviewRepository reviewRepository;
     @Mock
     private SpringDataUserRepository userRepository;
     @Mock
@@ -54,18 +54,18 @@ public class ReviewServiceTest {
     @Mock
     private DocumentRepository documentRepository;
     @Mock
-    private ReviewEventRepository reviewEventRepository;
+    private SpringDataReviewEventRepository reviewEventRepository;
     @Mock
     private ReviewEventMapper reviewEventMapper;
     @Mock
     private NotificationService notificationService;
 
     @InjectMocks
-    private ReviewService realService;
+    private ReviewApplicationService realService;
 
-    private ReviewService reviewService;
+    private ReviewApplicationService reviewService;
     private UserEntity reviewer;
-    private Review review;
+    private ReviewEntity review;
     private Document document;
 
     @BeforeEach
@@ -78,7 +78,7 @@ public class ReviewServiceTest {
         document = new Document();
         document.setId(UUID.randomUUID());
 
-        review = new Review();
+        review = new ReviewEntity();
         review.setId(UUID.randomUUID());
         review.setDocument(document);
     }
@@ -168,7 +168,7 @@ public class ReviewServiceTest {
     void commentReview_shouldThrowException_whenReviewerNotFound() {
         UUID id = UUID.randomUUID();
 
-        when(reviewRepository.getReviewById(id)).thenReturn(Optional.of(new Review()));
+        when(reviewRepository.getReviewById(id)).thenReturn(Optional.of(new ReviewEntity()));
 
         when(userRepository.findByUsername("user-123"))
                 .thenReturn(Optional.empty());
@@ -185,17 +185,17 @@ public class ReviewServiceTest {
         when(userRepository.findByUsername(reviewer.getUsername()))
                 .thenReturn(Optional.of(reviewer));
 
-        when(reviewEventRepository.save(any(ReviewEvent.class)))
+        when(reviewEventRepository.save(any(ReviewEventEntity.class)))
                 .thenAnswer(inv -> {
-                    ReviewEvent ev = inv.getArgument(0);
+                    ReviewEventEntity ev = inv.getArgument(0);
                     if (ev.getId() == null) ev.setId(UUID.randomUUID());
                     if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
                     return ev;
                 });
 
-        when(reviewEventMapper.toReviewEventResponse(any(ReviewEvent.class)))
+        when(reviewEventMapper.toReviewEventResponse(any(ReviewEventEntity.class)))
                 .thenAnswer(inv -> {
-                    ReviewEvent ev = inv.getArgument(0);
+                    ReviewEventEntity ev = inv.getArgument(0);
 
                     EventReviewerBasicInfo reviewerBasicInfo = new EventReviewerBasicInfo(
                             ev.getReviewer().getId(),
@@ -399,20 +399,20 @@ public class ReviewServiceTest {
         doNothing().when(documentRepository)
                 .updateStatus(eq(document.getId()), eq(DocumentStatus.REVIEW_PENDING));
 
-        when(reviewRepository.save(any(Review.class)))
+        when(reviewRepository.save(any(ReviewEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        when(reviewEventRepository.save(any(ReviewEvent.class)))
+        when(reviewEventRepository.save(any(ReviewEventEntity.class)))
                 .thenAnswer(inv -> {
-                    ReviewEvent ev = inv.getArgument(0);
+                    ReviewEventEntity ev = inv.getArgument(0);
                     if (ev.getId() == null) ev.setId(UUID.randomUUID());
                     if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
                     return ev;
                 });
 
-        when(reviewMapper.toReviewResponse(any(Review.class)))
+        when(reviewMapper.toReviewResponse(any(ReviewEntity.class)))
                 .thenAnswer(inv -> {
-                    Review r = inv.getArgument(0);
+                    ReviewEntity r = inv.getArgument(0);
                     return new ReviewResponse(
                             r.getId(),
                             r.getDocument().getId(),
@@ -436,9 +436,9 @@ public class ReviewServiceTest {
         verify(reviewRepository).getReviewById(review.getId());
         verify(reviewRepository).updateStatus(review.getId(), ReviewStatus.PENDING);
         verify(documentRepository).updateStatus(document.getId(), DocumentStatus.REVIEW_PENDING);
-        verify(reviewRepository).save(any(Review.class));
-        verify(reviewEventRepository).save(any(ReviewEvent.class));
-        verify(reviewMapper).toReviewResponse(any(Review.class));
+        verify(reviewRepository).save(any(ReviewEntity.class));
+        verify(reviewEventRepository).save(any(ReviewEventEntity.class));
+        verify(reviewMapper).toReviewResponse(any(ReviewEntity.class));
     }
 
     @Test
@@ -492,20 +492,20 @@ public class ReviewServiceTest {
         doNothing().when(documentRepository)
                 .updateStatus(eq(document.getId()), eq(DocumentStatus.REVIEWED));
 
-        when(reviewRepository.save(any(Review.class)))
+        when(reviewRepository.save(any(ReviewEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        when(reviewEventRepository.save(any(ReviewEvent.class)))
+        when(reviewEventRepository.save(any(ReviewEventEntity.class)))
                 .thenAnswer(inv -> {
-                    ReviewEvent ev = inv.getArgument(0);
+                    ReviewEventEntity ev = inv.getArgument(0);
                     if (ev.getId() == null) ev.setId(UUID.randomUUID());
                     if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
                     return ev;
                 });
 
-        when(reviewMapper.toReviewResponse(any(Review.class)))
+        when(reviewMapper.toReviewResponse(any(ReviewEntity.class)))
                 .thenAnswer(inv -> {
-                    Review r = inv.getArgument(0);
+                    ReviewEntity r = inv.getArgument(0);
                     return new ReviewResponse(
                             r.getId(),
                             r.getDocument().getId(),
@@ -531,8 +531,8 @@ public class ReviewServiceTest {
         verify(reviewRepository).getReviewById(review.getId());
         verify(reviewRepository).updateStatus(review.getId(), ReviewStatus.APPROVED);
         verify(documentRepository).updateStatus(document.getId(), DocumentStatus.REVIEWED);
-        verify(reviewRepository).save(any(Review.class));
-        verify(reviewMapper).toReviewResponse(any(Review.class));
+        verify(reviewRepository).save(any(ReviewEntity.class));
+        verify(reviewMapper).toReviewResponse(any(ReviewEntity.class));
 
         verify(notificationService).sendNotification(
                 eq(reviewer.getUsername()),
@@ -590,20 +590,20 @@ public class ReviewServiceTest {
         doNothing().when(documentRepository)
                 .updateStatus(eq(document.getId()), eq(DocumentStatus.REVIEWED));
 
-        when(reviewRepository.save(any(Review.class)))
+        when(reviewRepository.save(any(ReviewEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        when(reviewEventRepository.save(any(ReviewEvent.class)))
+        when(reviewEventRepository.save(any(ReviewEventEntity.class)))
                 .thenAnswer(inv -> {
-                    ReviewEvent ev = inv.getArgument(0);
+                    ReviewEventEntity ev = inv.getArgument(0);
                     if (ev.getId() == null) ev.setId(UUID.randomUUID());
                     if (ev.getCreatedAt() == null) ev.setCreatedAt(Instant.now());
                     return ev;
                 });
 
-        when(reviewMapper.toReviewResponse(any(Review.class)))
+        when(reviewMapper.toReviewResponse(any(ReviewEntity.class)))
                 .thenAnswer(inv -> {
-                    Review r = inv.getArgument(0);
+                    ReviewEntity r = inv.getArgument(0);
                     return new ReviewResponse(
                             r.getId(),
                             r.getDocument().getId(),
@@ -629,8 +629,8 @@ public class ReviewServiceTest {
         verify(reviewRepository).getReviewById(review.getId());
         verify(reviewRepository).updateStatus(review.getId(), ReviewStatus.REJECTED);
         verify(documentRepository).updateStatus(document.getId(), DocumentStatus.REVIEWED);
-        verify(reviewRepository).save(any(Review.class));
-        verify(reviewMapper).toReviewResponse(any(Review.class));
+        verify(reviewRepository).save(any(ReviewEntity.class));
+        verify(reviewMapper).toReviewResponse(any(ReviewEntity.class));
 
 
         verify(notificationService).sendNotification(
@@ -642,7 +642,7 @@ public class ReviewServiceTest {
 
     @Test
     void getAllReviews_shouldReturnPaginatedResponse() {
-        Page<Review> page = new PageImpl<>(List.of(review), PageRequest.of(0, 10), 25);
+        Page<ReviewEntity> page = new PageImpl<>(List.of(review), PageRequest.of(0, 10), 25);
 
         when(reviewRepository.findAll(any(Pageable.class)))
                 .thenReturn(page);

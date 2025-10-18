@@ -4,11 +4,11 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,13 +17,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class ReviewEventService {
+public class ReviewEventApplicationService {
 
 
-    private final ReviewEventRepository reviewEventRepository;
+    private final SpringDataReviewEventRepository reviewEventRepository;
     private final ReviewEventMapper reviewEventMapper;
 
-    public ReviewEventService(ReviewEventRepository reviewEventRepository, ReviewEventMapper reviewEventMapper) {
+    public ReviewEventApplicationService(SpringDataReviewEventRepository reviewEventRepository, ReviewEventMapper reviewEventMapper) {
         this.reviewEventRepository = reviewEventRepository;
         this.reviewEventMapper = reviewEventMapper;
     }
@@ -36,7 +36,7 @@ public class ReviewEventService {
 
     public PagingResult<ReviewEventResponse> getReviewEvents(UUID id, PaginationRequest request, String eventType) {
         Pageable pageable = PaginationUtil.getPageable(request);
-        Page<ReviewEvent> reviewEvents;
+        Page<ReviewEventEntity> reviewEvents;
 
         if (eventType.equalsIgnoreCase("ALL")) {
             reviewEvents = reviewEventRepository.findByReviewId(pageable, id);

@@ -15,9 +15,9 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.Documen
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,7 +69,7 @@ public class DocumentServiceTest {
     @Mock
     private DocumentMapper documentMapper;
     @Mock
-    private ReviewRepository reviewRepository;
+    private SpringDataReviewRepository reviewRepository;
     @Mock
     private S3Presigner s3Presigner;
     @Mock
@@ -81,7 +81,7 @@ public class DocumentServiceTest {
     private DocumentService realService;
 
     private Document document;
-    private Review review;
+    private ReviewEntity review;
     private UserEntity owner;
     private DocumentResponse mapped;
     private DocumentReviewBasicInfo reviewBasic;
@@ -95,7 +95,7 @@ public class DocumentServiceTest {
         reviewer.setUsername("reviewer");
         reviewer.setId(UUID.randomUUID());
 
-        review = new Review();
+        review = new ReviewEntity();
         review.setId(UUID.randomUUID());
         review.setStatus(ReviewStatus.IN_PROGRESS);
         review.setUpdatedAt(Instant.now());
@@ -167,9 +167,9 @@ public class DocumentServiceTest {
         when(documentRepository.save(any(Document.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        when(reviewRepository.save(any(Review.class)))
+        when(reviewRepository.save(any(ReviewEntity.class)))
                 .thenAnswer(inv -> {
-                    Review r = inv.getArgument(0);
+                    ReviewEntity r = inv.getArgument(0);
                     if (r.getId() == null) r.setId(UUID.randomUUID());
                     return r;
                 });
@@ -221,7 +221,7 @@ public class DocumentServiceTest {
         assertThat(key).endsWith("_my_file.pdf");
 
         verify(documentRepository, times(2)).save(any(Document.class));
-        verify(reviewRepository).save(any(Review.class));
+        verify(reviewRepository).save(any(ReviewEntity.class));
 
         verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
         ArgumentCaptor<UUID> enqueueCap = ArgumentCaptor.forClass(UUID.class);
@@ -324,9 +324,9 @@ public class DocumentServiceTest {
         when(documentRepository.save(any(Document.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        when(reviewRepository.save(any(Review.class)))
+        when(reviewRepository.save(any(ReviewEntity.class)))
                 .thenAnswer(inv -> {
-                    Review r = inv.getArgument(0);
+                    ReviewEntity r = inv.getArgument(0);
                     if (r.getId() == null) r.setId(UUID.randomUUID());
                     return r;
                 });

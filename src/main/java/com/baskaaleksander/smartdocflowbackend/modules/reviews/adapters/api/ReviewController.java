@@ -1,13 +1,13 @@
-package com.baskaaleksander.smartdocflowbackend.modules.reviews.api;
+package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.CommentRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.CommentRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewEventService;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewService;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewEventApplicationService;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -25,12 +25,12 @@ import java.util.UUID;
 @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
 public class ReviewController {
 
-    private final ReviewService reviewService;
-    private final ReviewEventService reviewEventService;
+    private final ReviewApplicationService reviewService;
+    private final ReviewEventApplicationService reviewEventService;
 
     public ReviewController(
-            ReviewService reviewService,
-            ReviewEventService reviewEventService) {
+            ReviewApplicationService reviewService,
+            ReviewEventApplicationService reviewEventService) {
         this.reviewService = reviewService;
         this.reviewEventService = reviewEventService;
     }

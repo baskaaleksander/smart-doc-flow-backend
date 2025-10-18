@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import jakarta.persistence.*;
@@ -45,7 +45,7 @@ public class Document {
 
     @OneToOne
     @JoinColumn(nullable = true)
-    private Review review;
+    private ReviewEntity review;
 
 
 }

@@ -1,6 +1,6 @@
-package com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import jakarta.persistence.*;
@@ -29,7 +29,7 @@ import java.util.UUID;
 )
 @Data
 @EqualsAndHashCode(of = "id")
-public class Review {
+public class ReviewEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -52,7 +52,7 @@ public class Review {
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt ASC")
-    private List<ReviewEvent> reviewEvents = new ArrayList<>();
+    private List<ReviewEventEntity> reviewEvents = new ArrayList<>();
 
     @Column
     private String comment;

@@ -1,16 +1,17 @@
-package com.baskaaleksander.smartdocflowbackend.modules.reviews.domain;
+package com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model;
 
 import java.util.Arrays;
 
-public enum ReviewStatus {
-    IN_PROGRESS("in_progress"),
-    PENDING("pending"),
+public enum ReviewEventType {
+    ASSIGNED("assigned"),
+    RELEASED("released"),
     APPROVED("approved"),
-    REJECTED("rejected");
+    REJECTED("rejected"),
+    COMMENT("comment");
 
     private final String value;
 
-    ReviewStatus(String value) {
+    ReviewEventType(String value) {
         this.value = value;
     }
 
@@ -18,7 +19,7 @@ public enum ReviewStatus {
         return value;
     }
 
-    public static ReviewStatus fromString(String status) {
+    public static ReviewEventType fromString(String status) {
         if (status == null || status.isBlank()) {
             throw new IllegalArgumentException("Status cannot be null or blank");
         }
@@ -26,6 +27,6 @@ public enum ReviewStatus {
         return Arrays.stream(values())
                 .filter(s -> s.value.equalsIgnoreCase(status))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown status: " + status));
+                .orElseThrow(() -> new IllegalArgumentException("Unknown status " + status));
     }
 }

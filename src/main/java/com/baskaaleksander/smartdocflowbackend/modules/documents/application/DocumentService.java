@@ -9,15 +9,15 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Document
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +52,7 @@ public class DocumentService {
     private final S3Client s3Client;
     private final OcrTaskPublisher ocrTaskPublisher;
     private final SpringDataUserRepository userRepository;
-    private final ReviewRepository reviewRepository;
+    private final SpringDataReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
     private final S3Presigner s3Presigner;
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
@@ -67,7 +67,7 @@ public class DocumentService {
             DocumentRepository documentRepository,
             S3Client s3Client,
             SpringDataUserRepository userRepository,
-            ReviewRepository reviewRepository,
+            SpringDataReviewRepository reviewRepository,
             DocumentMapper documentMapper,
             S3Presigner s3Presigner,
             OcrTaskPublisher ocrTaskPublisher,
@@ -131,7 +131,7 @@ public class DocumentService {
     protected void saveDocToDb(Document document) {
         documentRepository.save(document);
 
-        Review review = new Review();
+        ReviewEntity review = new ReviewEntity();
         review.setStatus(ReviewStatus.PENDING);
         review.setDocument(document);
         review = reviewRepository.save(review);

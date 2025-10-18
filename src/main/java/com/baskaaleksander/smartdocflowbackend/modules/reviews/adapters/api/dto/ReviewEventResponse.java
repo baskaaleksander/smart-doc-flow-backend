@@ -1,6 +1,6 @@
-package com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto;
+package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
 
 import java.time.Instant;
 import java.util.UUID;

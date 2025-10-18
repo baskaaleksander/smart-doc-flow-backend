@@ -3,13 +3,13 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.EventReviewerBasicInfo;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.EventReviewerBasicInfo;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,21 +36,21 @@ import static org.mockito.Mockito.when;
 public class ReviewEventServiceTest {
 
     @Mock
-    private ReviewEventRepository reviewEventRepository;
+    private SpringDataReviewEventRepository reviewEventRepository;
 
     @Mock
     private ReviewEventMapper reviewEventMapper;
 
     @InjectMocks
-    private ReviewEventService reviewEventService;
+    private ReviewEventApplicationService reviewEventService;
 
-    private ReviewEvent reviewEvent;
+    private ReviewEventEntity reviewEvent;
 
     @BeforeEach
     void setUp() {
-        reviewEvent = new ReviewEvent();
+        reviewEvent = new ReviewEventEntity();
         UserEntity reviewer = new UserEntity();
-        Review review = new Review();
+        ReviewEntity review = new ReviewEntity();
 
         reviewer.setId(UUID.randomUUID());
         review.setId(UUID.randomUUID());
@@ -106,7 +106,7 @@ public class ReviewEventServiceTest {
 
     @Test
     void getReviewEvents_shouldReturnPaginatedResponse() {
-        Page<ReviewEvent> page = new PageImpl<>(List.of(reviewEvent), PageRequest.of(0, 10), 25);
+        Page<ReviewEventEntity> page = new PageImpl<>(List.of(reviewEvent), PageRequest.of(0, 10), 25);
         when(reviewEventRepository.findByReviewId(any(Pageable.class), eq(reviewEvent.getReview().getId())))
                 .thenReturn(page);
 

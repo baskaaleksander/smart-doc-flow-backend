@@ -1,6 +1,6 @@
-package com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(of = "id")
 @Table(name = "review_events")
-public class ReviewEvent {
+public class ReviewEventEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -34,7 +34,7 @@ public class ReviewEvent {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id", nullable = false)
-    private Review review;
+    private ReviewEntity review;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 
 import java.time.Instant;
 import java.util.UUID;

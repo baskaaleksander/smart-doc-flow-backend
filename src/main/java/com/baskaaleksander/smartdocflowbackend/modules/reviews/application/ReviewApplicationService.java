@@ -2,23 +2,23 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewEventResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto.ReviewResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewEventType;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewEventRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.ReviewRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import jakarta.transaction.Transactional;
@@ -34,23 +34,23 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class ReviewService {
+public class ReviewApplicationService {
 
-    private final ReviewRepository reviewRepository;
+    private final SpringDataReviewRepository reviewRepository;
     private final SpringDataUserRepository userRepository;
     private final ReviewMapper reviewMapper;
     private final DocumentRepository documentRepository;
-    private final ReviewEventRepository reviewEventRepository;
+    private final SpringDataReviewEventRepository reviewEventRepository;
     private final ReviewEventMapper reviewEventMapper;
     private final ApplicationEventPublisher publisher;
 
     @Autowired
-    public ReviewService(
-            ReviewRepository reviewRepository,
+    public ReviewApplicationService(
+            SpringDataReviewRepository reviewRepository,
             SpringDataUserRepository userRepository,
             ReviewMapper reviewMapper,
             DocumentRepository documentRepository,
-            ReviewEventRepository reviewEventRepository,
+            SpringDataReviewEventRepository reviewEventRepository,
             ReviewEventMapper reviewEventMapper,
             ApplicationEventPublisher publisher
             ) {
@@ -82,7 +82,7 @@ public class ReviewService {
 
     @Transactional
     public ReviewEventResponse commentReview(String username, String comment, UUID reviewId) {
-        Review review = reviewRepository.getReviewById(reviewId)
+        ReviewEntity review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         UserEntity reviewer = userRepository.findByUsername(username)
@@ -93,8 +93,8 @@ public class ReviewService {
         return reviewEventMapper.toReviewEventResponse(logReviewEvent(reviewer, review, ReviewEventType.COMMENT, comment));
     }
 
-    private ReviewEvent logReviewEvent(UserEntity reviewer, Review review, ReviewEventType eventType, String comment) {
-        ReviewEvent reviewEvent = new ReviewEvent();
+    private ReviewEventEntity logReviewEvent(UserEntity reviewer, ReviewEntity review, ReviewEventType eventType, String comment) {
+        ReviewEventEntity reviewEvent = new ReviewEventEntity();
 
         reviewEvent.setReviewer(reviewer);
         reviewEvent.setReview(review);
@@ -106,7 +106,7 @@ public class ReviewService {
 
     @Transactional
     public ReviewResponse claimReview(UUID reviewId, String username) {
-        Review review = reviewRepository.getReviewById(reviewId)
+        ReviewEntity review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() != ReviewStatus.PENDING) {
@@ -131,7 +131,7 @@ public class ReviewService {
 
     @Transactional
     public ReviewResponse releaseReview(UUID reviewId, String username) {
-        Review review = reviewRepository.getReviewById(reviewId)
+        ReviewEntity review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         UserEntity reviewer = review.getReviewer();
@@ -161,7 +161,7 @@ public class ReviewService {
 
     @Transactional
     public ReviewResponse approveDocument(UUID reviewId, String username, String comment) {
-        Review review = reviewRepository.getReviewById(reviewId)
+        ReviewEntity review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
@@ -190,7 +190,7 @@ public class ReviewService {
 
     @Transactional
     public ReviewResponse rejectDocument(UUID reviewId, String username, String comment) {
-        Review review = reviewRepository.getReviewById(reviewId)
+        ReviewEntity review = reviewRepository.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
@@ -219,7 +219,7 @@ public class ReviewService {
 
     public PagingResult<ReviewResponse> getAllReviews(Optional<String> status, PaginationRequest request) {
         Pageable pageable = PaginationUtil.getPageable(request);
-        Page<Review> reviews = null;
+        Page<ReviewEntity> reviews = null;
 
         if (status.isPresent()) {
             String statusVal = status.get();

@@ -1,6 +1,6 @@
-package com.baskaaleksander.smartdocflowbackend.modules.reviews.api.dto;
+package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;

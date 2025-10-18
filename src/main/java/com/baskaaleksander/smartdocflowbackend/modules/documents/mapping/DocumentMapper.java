@@ -4,7 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentReviewBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.persistence.Review;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -23,7 +23,7 @@ public interface DocumentMapper {
     DocumentResponse toDocumentResponse(Document document);
 
     @Named("reviewToBasicInfo")
-    default DocumentReviewBasicInfo reviewToBasicInfo(Review review) {
+    default DocumentReviewBasicInfo reviewToBasicInfo(ReviewEntity review) {
         if (review == null) return null;
 
         UserEntity reviewer = review.getReviewer();
