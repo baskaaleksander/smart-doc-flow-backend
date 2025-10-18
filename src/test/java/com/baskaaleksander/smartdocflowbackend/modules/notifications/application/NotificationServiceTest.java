@@ -3,7 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.notifications.applicatio
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto.NotificationResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationType;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.mapping.NotificationMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.Notification;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence.NotificationRepository;

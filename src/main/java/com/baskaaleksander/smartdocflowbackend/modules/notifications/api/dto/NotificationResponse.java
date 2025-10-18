@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.api.dto;
 
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationType;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 
 import java.time.Instant;
 import java.util.UUID;

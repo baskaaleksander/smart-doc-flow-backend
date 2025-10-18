@@ -24,12 +24,4 @@ public class EmailService {
         mailSender.send(message);
     }
 
-    public void sendHtml(String to, String subject, String htmlBody) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(htmlBody, true); // true means this is HTML
-        mailSender.send(message);
-    }
 }

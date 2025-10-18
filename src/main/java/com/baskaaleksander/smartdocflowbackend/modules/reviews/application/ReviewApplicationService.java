@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;

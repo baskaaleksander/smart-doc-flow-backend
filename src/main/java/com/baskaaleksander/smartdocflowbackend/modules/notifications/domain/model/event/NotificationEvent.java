@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.domain;
+package com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event;
 
 public record NotificationEvent(
         String username,

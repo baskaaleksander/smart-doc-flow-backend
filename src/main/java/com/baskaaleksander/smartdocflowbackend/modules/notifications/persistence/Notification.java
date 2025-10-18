@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.NotificationType;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

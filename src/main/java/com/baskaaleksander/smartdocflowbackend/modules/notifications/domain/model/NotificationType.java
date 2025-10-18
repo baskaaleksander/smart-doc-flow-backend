@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.domain;
+package com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model;
 
 import java.util.Arrays;
 
