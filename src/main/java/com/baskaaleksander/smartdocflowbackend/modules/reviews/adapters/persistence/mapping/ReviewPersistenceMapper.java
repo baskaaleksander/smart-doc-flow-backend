@@ -4,6 +4,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persiste
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Review;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class ReviewPersistenceMapper {
 
@@ -13,12 +15,16 @@ public class ReviewPersistenceMapper {
         this.eventMapper = eventMapper;
     }
 
+
     public Review toDomain(ReviewEntity e) {
+
+        UUID reviewerId = (e.getReviewer() != null) ? e.getReviewer().getId() : null;
+
         return new Review(
                 e.getId(),
                 e.getDocument().getId(),
                 e.getStatus(),
-                e.getReviewer().getId(),
+                reviewerId,
                 e.getReviewEvents().stream().map(eventMapper::toDomain).toList(),
                 e.getComment(),
                 e.getCreatedAt(),

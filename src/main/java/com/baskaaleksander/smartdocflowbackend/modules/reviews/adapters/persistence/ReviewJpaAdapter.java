@@ -45,6 +45,7 @@ public class ReviewJpaAdapter implements ReviewCommandPort, ReviewQueryPort {
     }
 
     @Override
+    @Transactional
     public void updateStatus(UUID reviewId, ReviewStatus status) {
         reviewRepo.updateStatus(reviewId, status);
     }

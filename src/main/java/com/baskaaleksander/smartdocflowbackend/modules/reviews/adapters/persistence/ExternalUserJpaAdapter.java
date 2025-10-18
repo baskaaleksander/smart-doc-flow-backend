@@ -20,7 +20,18 @@ public class ExternalUserJpaAdapter implements ExternalUserQueryPort {
     }
 
     @Override
-    public Optional<UUID> findByUsername(String username) {
+    public Optional<String> findByUsername(String username) {
+        return userRepo.findByUsername(username).map(UserEntity::getUsername);
+    }
+
+    @Override
+    public Optional<String> findById(UUID id) {
+        return userRepo.findById(id).map(UserEntity::getUsername);
+    }
+
+    @Override
+    public Optional<UUID> findIdByUsername(String username) {
         return userRepo.findByUsername(username).map(UserEntity::getId);
     }
+
 }

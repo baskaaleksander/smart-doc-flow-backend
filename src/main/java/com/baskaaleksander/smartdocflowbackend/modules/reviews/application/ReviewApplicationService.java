@@ -7,10 +7,15 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewEventApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Review;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
@@ -36,30 +41,35 @@ import java.util.UUID;
 @Service
 public class ReviewApplicationService {
 
-    private final SpringDataReviewRepository reviewRepository;
-    private final SpringDataUserRepository userRepository;
-    private final ReviewMapper reviewMapper;
-    private final DocumentRepository documentRepository;
-    private final SpringDataReviewEventRepository reviewEventRepository;
-    private final ReviewEventMapper reviewEventMapper;
+
     private final ApplicationEventPublisher publisher;
+    private final ReviewCommandPort reviewCommandPort;
+    private final ReviewQueryPort reviewQueryPort;
+    private final ReviewEventCommandPort reviewEventCommandPort;
+    private final DocumentCommandPort documentCommandPort;
+    private final ExternalUserQueryPort externalUserQueryPort;
+    private final ReviewApiMapper mapper;
+    private final ReviewEventApiMapper eventMapper;
 
     @Autowired
     public ReviewApplicationService(
-            SpringDataReviewRepository reviewRepository,
-            SpringDataUserRepository userRepository,
-            ReviewMapper reviewMapper,
-            DocumentRepository documentRepository,
-            SpringDataReviewEventRepository reviewEventRepository,
-            ReviewEventMapper reviewEventMapper,
+            ReviewCommandPort reviewCommandPort,
+            ReviewQueryPort reviewQueryPort,
+            ReviewEventCommandPort reviewEventCommandPort,
+            DocumentCommandPort documentCommandPort,
+            ExternalUserQueryPort externalUserQueryPort,
+            ReviewApiMapper mapper,
+            ReviewEventApiMapper eventMapper,
             ApplicationEventPublisher publisher
             ) {
-        this.reviewRepository = reviewRepository;
-        this.userRepository = userRepository;
-        this.reviewMapper = reviewMapper;
-        this.documentRepository = documentRepository;
-        this.reviewEventRepository = reviewEventRepository;
-        this.reviewEventMapper = reviewEventMapper;
+
+        this.reviewCommandPort = reviewCommandPort;
+        this.reviewQueryPort = reviewQueryPort;
+        this.reviewEventCommandPort = reviewEventCommandPort;
+        this.documentCommandPort = documentCommandPort;
+        this.externalUserQueryPort = externalUserQueryPort;
+        this.mapper = mapper;
+        this.eventMapper = eventMapper;
         this.publisher = publisher;
     }
 
@@ -82,174 +92,171 @@ public class ReviewApplicationService {
 
     @Transactional
     public ReviewEventResponse commentReview(String username, String comment, UUID reviewId) {
-        ReviewEntity review = reviewRepository.getReviewById(reviewId)
+        Review review = reviewQueryPort.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
-        UserEntity reviewer = userRepository.findByUsername(username)
+        UUID reviewerId = externalUserQueryPort.findIdByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        publisher.publishEvent(new NotificationEvent(username, "review_comment", "Document " + review.getDocument().getId() + " received comment"));
+        publisher.publishEvent(new NotificationEvent(username, "review_comment", "Document " + review.getDocumentId() + " received comment"));
 
-        return reviewEventMapper.toReviewEventResponse(logReviewEvent(reviewer, review, ReviewEventType.COMMENT, comment));
+        return eventMapper.toEventResponse(logReviewEvent(reviewerId, review.getId(), ReviewEventType.COMMENT, comment));
     }
 
-    private ReviewEventEntity logReviewEvent(UserEntity reviewer, ReviewEntity review, ReviewEventType eventType, String comment) {
-        ReviewEventEntity reviewEvent = new ReviewEventEntity();
+    private ReviewEvent logReviewEvent(UUID reviewerId, UUID reviewId, ReviewEventType eventType, String comment) {
+        ReviewEvent reviewEvent = new ReviewEvent();
 
-        reviewEvent.setReviewer(reviewer);
-        reviewEvent.setReview(review);
+        reviewEvent.setReviewerId(reviewerId);
+        reviewEvent.setReviewId(reviewId);
         reviewEvent.setEventType(eventType);
         if (comment != null) reviewEvent.setComment(comment);
 
-        return reviewEventRepository.save(reviewEvent);
+        return reviewEventCommandPort.save(reviewEvent);
     }
 
     @Transactional
     public ReviewResponse claimReview(UUID reviewId, String username) {
-        ReviewEntity review = reviewRepository.getReviewById(reviewId)
+        Review review = reviewQueryPort.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() != ReviewStatus.PENDING) {
             throw new ResourceConflictException("Review with ID " + reviewId + " is already claimed");
         }
 
-        UserEntity reviewer = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User with username " + username + " not found"));
-        review.setReviewer(reviewer);
+        UUID reviewer = externalUserQueryPort.findIdByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User with username " + username + " not found"));
+        review.setReviewerId(reviewer);
+        review.setStatus(ReviewStatus.IN_PROGRESS);
 
-        reviewRepository.updateStatus(review.getId(), ReviewStatus.IN_PROGRESS);
 
-        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.IN_REVIEW);
+        documentCommandPort.updateStatus(review.getDocumentId(), "in_review");
 
-        review = reviewRepository.save(review);
+        review = reviewCommandPort.save(review);
 
-        logReviewEvent(reviewer, review,  ReviewEventType.ASSIGNED, null);
+        logReviewEvent(reviewer, review.getId(),  ReviewEventType.ASSIGNED, null);
 
-        publisher.publishEvent(new NotificationEvent(username, "document_in_review", "Document " + review.getDocument().getId() + " is in review process!"));
+        publisher.publishEvent(new NotificationEvent(username, "document_in_review", "Document " + review.getDocumentId() + " is in review process!"));
 
-        return reviewMapper.toReviewResponse(review);
+        return mapper.toReviewResponse(review);
     }
 
     @Transactional
     public ReviewResponse releaseReview(UUID reviewId, String username) {
-        ReviewEntity review = reviewRepository.getReviewById(reviewId)
-                .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
+        Review review = reviewQueryPort.getReviewById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found"));
 
-        UserEntity reviewer = review.getReviewer();
+        UUID reviewerId = review.getReviewerId();
+        String reviewerUsername = externalUserQueryPort.findById(reviewerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Reviewer not found"));
 
-        if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
-            throw new ResourceConflictException("Review with ID " + reviewId + " cannot be released");
+        if (review.getStatus() != ReviewStatus.IN_PROGRESS) {
+            throw new ResourceConflictException("Review cannot be released");
         }
-
-        if(!reviewer.getUsername().equalsIgnoreCase(username)) {
+        if (!reviewerUsername.equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to release this review");
         }
 
-        review.setReviewer(null);
+        review.setReviewerId(null);
+        review.setStatus(ReviewStatus.PENDING);
+        documentCommandPort.updateStatus(review.getDocumentId(), "review_pending");
 
-        reviewRepository.updateStatus(review.getId(), ReviewStatus.PENDING);
-        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.REVIEW_PENDING);
+        review = reviewCommandPort.save(review);
 
+        logReviewEvent(reviewerId, review.getId(), ReviewEventType.RELEASED, null);
 
-        review = reviewRepository.save(review);
-
-        logReviewEvent(reviewer, review,  ReviewEventType.RELEASED, null);
-
-
-        return reviewMapper.toReviewResponse(review);
-
+        return mapper.toReviewResponse(review);
     }
 
     @Transactional
     public ReviewResponse approveDocument(UUID reviewId, String username, String comment) {
-        ReviewEntity review = reviewRepository.getReviewById(reviewId)
+        Review review = reviewQueryPort.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
-        UserEntity reviewer = review.getReviewer();
 
+        String reviewer = externalUserQueryPort.findById(review.getReviewerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Reviewer not found"));
 
-        if(!reviewer.getUsername().equalsIgnoreCase(username)) {
+        if(!reviewer.equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to approve this document");
         }
 
         review.setComment(comment);
-        reviewRepository.updateStatus(reviewId, ReviewStatus.APPROVED);
-        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.REVIEWED);
+        review.setStatus(ReviewStatus.APPROVED);
+        documentCommandPort.updateStatus(review.getDocumentId(), "reviewed");
 
 
-        review = reviewRepository.save(review);
+        review = reviewCommandPort.save(review);
 
-        logReviewEvent(reviewer, review,  ReviewEventType.APPROVED, comment);
+        logReviewEvent(review.getReviewerId(), review.getId(),  ReviewEventType.APPROVED, comment);
 
-        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocument().getId() + " is approved."));
+        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " is approved."));
 
-        return reviewMapper.toReviewResponse(review);
+        return mapper.toReviewResponse(review);
     }
 
     @Transactional
     public ReviewResponse rejectDocument(UUID reviewId, String username, String comment) {
-        ReviewEntity review = reviewRepository.getReviewById(reviewId)
+        Review review = reviewQueryPort.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
         if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
 
-        UserEntity reviewer = review.getReviewer();
+        String reviewer = externalUserQueryPort.findById(review.getReviewerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Reviewer not found"));
 
-        if(!reviewer.getUsername().equalsIgnoreCase(username)) {
+        if(!reviewer.equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to reject this document");
         }
 
+        review.setStatus(ReviewStatus.REJECTED);
         review.setComment(comment);
-        reviewRepository.updateStatus(reviewId, ReviewStatus.REJECTED);
-        documentRepository.updateStatus(review.getDocument().getId(), DocumentStatus.REVIEWED);
+        documentCommandPort.updateStatus(review.getDocumentId(), "reviewed");
 
 
-        review = reviewRepository.save(review);
+        review = reviewCommandPort.save(review);
 
-        logReviewEvent(reviewer, review,  ReviewEventType.REJECTED, comment);
+        logReviewEvent(review.getReviewerId(), reviewId,  ReviewEventType.REJECTED, comment);
 
-        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocument().getId() + " got rejected."));
+        publisher.publishEvent(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " got rejected."));
 
-        return reviewMapper.toReviewResponse(review);
+        return mapper.toReviewResponse(review);
     }
 
     public PagingResult<ReviewResponse> getAllReviews(Optional<String> status, PaginationRequest request) {
-        Pageable pageable = PaginationUtil.getPageable(request);
-        Page<ReviewEntity> reviews = null;
+
+        PagingResult<Review> reviews = null;
 
         if (status.isPresent()) {
             String statusVal = status.get();
-            reviews = reviewRepository.findByStatus(pageable, ReviewStatus.fromString(statusVal));
+            reviews = reviewQueryPort.findByStatus(request, ReviewStatus.fromString(statusVal));
         } else {
-            reviews = reviewRepository.findAll(pageable);
+            reviews = reviewQueryPort.findAll(request);
         }
 
         List<ReviewResponse> reviewsList = reviews
+                .content()
                 .stream()
-                .map(reviewMapper::toReviewResponse)
+                .map(mapper::toReviewResponse)
                 .toList();
-
-        Integer currentPage = request.getPage();
-        int totalPages = reviews.getTotalPages();
 
         return new PagingResult<>(
                 reviewsList,
-                totalPages,
-                reviews.getTotalElements(),
-                reviews.getSize(),
-                reviews.getNumber(),
-                currentPage + 1 == totalPages,
-                currentPage + 1 < totalPages
+                reviews.totalPages(),
+                reviews.totalElements(),
+                reviews.size(),
+                reviews.page(),
+                reviews.last(),
+                reviews.next()
         );
     }
 
     public ReviewResponse getReviewById(UUID id) {
-        return reviewMapper.toReviewResponse(
-                reviewRepository.getReviewById(id).orElseThrow(() -> new ResourceNotFoundException("Review with id " + id + " not found"))
+        return mapper.toReviewResponse(
+                reviewQueryPort.getReviewById(id).orElseThrow(() -> new ResourceNotFoundException("Review not found"))
         );
     }
 

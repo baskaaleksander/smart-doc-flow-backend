@@ -19,6 +19,7 @@ public class DocumentJpaAdapter implements DocumentCommandPort {
     }
 
     @Override
+    @Transactional
     public void updateStatus(UUID documentId, String status) {
         documentRepo.updateStatus(documentId, DocumentStatus.fromString(status));
     }
