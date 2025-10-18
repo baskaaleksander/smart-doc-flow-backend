@@ -63,11 +63,7 @@ public class UserJpaAdapter implements UserQueryPort, UserCommandPort, RoleQuery
     @Override
     public User save(User user) {
         UserEntity entity = userRepo.findById(user.getId())
-                .orElseGet(() -> {
-                    UserEntity e = new UserEntity();
-                    e.setId(user.getId());
-                    return e;
-                });
+                .orElseGet(UserEntity::new);
 
         entity.setUsername(user.getUsername());
         entity.setEmail(user.getEmail());

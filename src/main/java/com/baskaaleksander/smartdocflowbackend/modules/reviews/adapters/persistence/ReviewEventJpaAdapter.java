@@ -1,14 +1,18 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.mapping.ReviewEventPersistenceMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewEventCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewEventQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -20,17 +24,23 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
-public class ReviewEventJpaAdapter implements ReviewEventQueryPort {
+public class ReviewEventJpaAdapter implements ReviewEventQueryPort, ReviewEventCommandPort {
 
     private final SpringDataReviewEventRepository reviewEventRepo;
+    private final SpringDataUserRepository userRepo;
+    private final SpringDataReviewRepository reviewRepo;
     private final ReviewEventPersistenceMapper mapper;
 
     public ReviewEventJpaAdapter(
             SpringDataReviewEventRepository reviewEventRepo,
-            ReviewEventPersistenceMapper mapper
+            ReviewEventPersistenceMapper mapper,
+            SpringDataUserRepository userRepo,
+            SpringDataReviewRepository reviewRepo
     ) {
         this.reviewEventRepo = reviewEventRepo;
         this.mapper = mapper;
+        this.userRepo = userRepo;
+        this.reviewRepo = reviewRepo;
     }
 
     @Override
@@ -70,5 +80,24 @@ public class ReviewEventJpaAdapter implements ReviewEventQueryPort {
                 eventEntityPage.isLast(),
                 eventEntityPage.hasNext()
         );
+    }
+
+    @Override
+    public ReviewEvent save(ReviewEvent reviewEvent) {
+        ReviewEventEntity entity = reviewEventRepo.getReviewEventById(reviewEvent.getId())
+                .orElseGet(ReviewEventEntity::new);
+
+        entity.setEventType(reviewEvent.getEventType());
+
+        if(reviewEvent.getComment() != null && !reviewEvent.getComment().isBlank()){
+            entity.setComment(reviewEvent.getComment());
+        }
+
+        entity.setReviewer(userRepo.getReferenceById(reviewEvent.getReviewerId()));
+        entity.setReview(reviewRepo.getReferenceById(reviewEvent.getReviewId()));
+
+        ReviewEventEntity saved = reviewEventRepo.save(entity);
+
+        return mapper.toDomain(saved);
     }
 }
