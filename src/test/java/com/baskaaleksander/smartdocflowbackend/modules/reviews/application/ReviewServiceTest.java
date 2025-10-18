@@ -85,9 +85,7 @@ public class ReviewServiceTest {
 
     @Test
     void handleReviewStatusChange_shouldThrowExceptionWhileCommentForbidden() {
-        ReviewRequest body = new ReviewRequest();
-        body.setStatus(ReviewStatus.IN_PROGRESS);
-        body.setComment("example");
+        ReviewRequest body = new ReviewRequest(ReviewStatus.IN_PROGRESS, "example");
 
         assertThatThrownBy(() -> reviewService.handleReviewStatusChange(UUID.randomUUID(), "userid", body))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -95,8 +93,7 @@ public class ReviewServiceTest {
 
     @Test
     void handleReviewStatusChange_shouldThrowExceptionWhileCommentRequired() {
-        ReviewRequest body = new ReviewRequest();
-        body.setStatus(ReviewStatus.APPROVED);
+        ReviewRequest body = new ReviewRequest(ReviewStatus.APPROVED, "");
 
         assertThatThrownBy(() -> reviewService.handleReviewStatusChange(UUID.randomUUID(), "userid", body))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -105,9 +102,8 @@ public class ReviewServiceTest {
 
     @Test
     void handleReviewStatusChange_shouldSuccessWithComment() {
-        var body = new ReviewRequest();
-        body.setStatus(ReviewStatus.APPROVED);
-        body.setComment("example");
+        var body = new ReviewRequest(ReviewStatus.APPROVED, "example");
+
 
         UUID id = UUID.randomUUID();
         var response = new ReviewResponse(
@@ -131,8 +127,7 @@ public class ReviewServiceTest {
 
     @Test
     void handleReviewStatusChange_shouldSuccessWithoutComment() {
-        var body = new ReviewRequest();
-        body.setStatus(ReviewStatus.IN_PROGRESS);
+        var body = new ReviewRequest(ReviewStatus.IN_PROGRESS, "");
 
         UUID id = UUID.randomUUID();
         var response = new ReviewResponse(

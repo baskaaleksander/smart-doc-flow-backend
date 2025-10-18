@@ -6,7 +6,6 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewEventApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Review;
@@ -16,21 +15,9 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Revi
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.*;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewEventMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.mapping.ReviewMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -75,16 +62,16 @@ public class ReviewApplicationService {
 
     @Transactional
     public ReviewResponse handleReviewStatusChange(UUID reviewId, String username, ReviewRequest body) {
-        if(body.getComment().isBlank()) {
-            return switch (body.getStatus()) {
+        if(body.comment().isBlank()) {
+            return switch (body.status()) {
                 case IN_PROGRESS -> claimReview(reviewId, username);
                 case PENDING -> releaseReview(reviewId, username);
                 default -> throw new IllegalArgumentException("No action like this possible");
             };
         } else {
-            return switch(body.getStatus()) {
-                case APPROVED -> approveDocument(reviewId, username, body.getComment());
-                case REJECTED -> rejectDocument(reviewId, username, body.getComment());
+            return switch(body.status()) {
+                case APPROVED -> approveDocument(reviewId, username, body.comment());
+                case REJECTED -> rejectDocument(reviewId, username, body.comment());
                 default -> throw new IllegalArgumentException("No action like this possible");
             };
         }

@@ -7,14 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class ReviewRequest {
-
-    @NotNull
-    ReviewStatus status;
-
-    @Size(max = 500)
-    private String comment = "";
+public record ReviewRequest(
+        @NotNull ReviewStatus status,
+        @Size(max = 500) String comment
+) {
 }

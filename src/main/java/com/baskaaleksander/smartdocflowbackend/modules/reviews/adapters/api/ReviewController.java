@@ -74,7 +74,7 @@ public class ReviewController {
         @RequestBody @Valid CommentRequest body,
         @PathVariable("reviewId") UUID reviewId
     ) {
-        return new ResponseEntity<>(reviewService.commentReview(user.getUsername(), body.getComment(), reviewId), HttpStatus.OK);
+        return new ResponseEntity<>(reviewService.commentReview(user.getUsername(), body.comment(), reviewId), HttpStatus.OK);
     }
 
     @GetMapping("/{reviewId}/events")
