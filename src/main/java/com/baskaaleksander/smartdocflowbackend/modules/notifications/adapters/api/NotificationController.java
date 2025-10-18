@@ -5,7 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.ap
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -20,9 +20,9 @@ import java.util.UUID;
 @RequestMapping("/notifications")
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    private final NotificationApplicationService notificationService;
 
-    public NotificationController(NotificationService notificationService) {
+    public NotificationController(NotificationApplicationService notificationService) {
         this.notificationService = notificationService;
     }
 

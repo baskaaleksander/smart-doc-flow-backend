@@ -7,7 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationService;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.EventReviewerBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
@@ -58,7 +58,7 @@ public class ReviewServiceTest {
     @Mock
     private ReviewEventMapper reviewEventMapper;
     @Mock
-    private NotificationService notificationService;
+    private NotificationApplicationService notificationService;
 
     @InjectMocks
     private ReviewApplicationService realService;

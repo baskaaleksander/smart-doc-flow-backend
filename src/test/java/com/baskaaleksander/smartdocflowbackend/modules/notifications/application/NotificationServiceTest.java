@@ -33,7 +33,7 @@ public class NotificationServiceTest {
     @Mock private SimpMessagingTemplate simpMessagingTemplate;
     @Mock private NotificationMapper notificationMapper;
 
-    @InjectMocks private NotificationService notificationService;
+    @InjectMocks private NotificationApplicationService notificationService;
 
     private NotificationEntity n1;
     private NotificationEntity n2;

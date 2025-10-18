@@ -2,15 +2,22 @@ package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.m
 
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.port.NotificationEventIngressPort;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 
-@Service
-public class SpringEventIngressAdapter implements NotificationEventIngressPort {
+@Component
+public class SpringEventIngressAdapter {
 
+    private final NotificationEventIngressPort ingress;
 
-    @Override
-    public void onNotificationSent(NotificationEvent event) {
+    public SpringEventIngressAdapter(NotificationEventIngressPort ingress) {
+        this.ingress = ingress;
+    }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handle(NotificationEvent event) {
+        ingress.onNotificationSent(event);
     }
 }

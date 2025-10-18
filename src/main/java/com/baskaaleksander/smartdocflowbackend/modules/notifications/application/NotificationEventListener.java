@@ -7,10 +7,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationEventListener {
 
-    private final NotificationService notificationService;
+    private final NotificationApplicationService notificationService;
 
     public NotificationEventListener(
-            NotificationService notificationService
+            NotificationApplicationService notificationService
     ) {
         this.notificationService = notificationService;
     }
