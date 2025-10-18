@@ -1,6 +1,5 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model;
 
-import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,7 +13,7 @@ import java.util.UUID;
 @Getter @Setter
 public class Review {
     private UUID id;
-    private UUID documentIds;
+    private UUID documentId;
     private ReviewStatus status;
     private UUID reviewerId;
     private List<ReviewEvent> reviewEvents;
