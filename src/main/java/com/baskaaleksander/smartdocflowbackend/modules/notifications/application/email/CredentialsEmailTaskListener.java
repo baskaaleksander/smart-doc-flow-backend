@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event.UserRegisteredEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

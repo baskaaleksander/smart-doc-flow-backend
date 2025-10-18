@@ -4,7 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email.CredentialsEmailTaskPublisher;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event.UserRegisteredEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;

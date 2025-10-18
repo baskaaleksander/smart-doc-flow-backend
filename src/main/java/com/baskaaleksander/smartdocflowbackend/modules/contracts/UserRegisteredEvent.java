@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event;
+package com.baskaaleksander.smartdocflowbackend.modules.contracts;
 
 public record UserRegisteredEvent(
         String email,

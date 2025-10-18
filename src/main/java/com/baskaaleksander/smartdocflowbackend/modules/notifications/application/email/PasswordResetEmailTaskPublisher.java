@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event.PasswordResetEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 

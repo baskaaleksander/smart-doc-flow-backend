@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.application;
 
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event.NotificationEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 

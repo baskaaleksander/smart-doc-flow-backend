@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email;
 
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event.UserRegisteredEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

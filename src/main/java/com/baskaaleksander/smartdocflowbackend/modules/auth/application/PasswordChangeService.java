@@ -9,7 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UpdatePasswo
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetToken;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.email.PasswordResetEmailTaskPublisher;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.event.PasswordResetEvent;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import jakarta.transaction.Transactional;
