@@ -11,7 +11,7 @@ import java.util.Set;
 @Entity
 @Data @AllArgsConstructor @NoArgsConstructor @RequiredArgsConstructor
 @Table(name = "roles")
-public class Role {
+public class RoleEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;

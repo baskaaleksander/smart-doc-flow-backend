@@ -8,11 +8,11 @@ import java.util.Optional;
 import java.util.Set;
 
 @Repository
-public interface RoleRepository extends JpaRepository<Role, Long> {
+public interface RoleRepository extends JpaRepository<RoleEntity, Long> {
 
-    @Query("select r from Role r where r.role = :role")
-    Optional<Role> findRoleByRole(String role);
+    @Query("select r from RoleEntity r where r.role = :role")
+    Optional<RoleEntity> findRoleByRole(String role);
 
-    @Query("select r from Role r where r.role in :roles")
-    Set<Role> findAllByRoleIn(Set<String> roles);
+    @Query("select r from RoleEntity r where r.role in :roles")
+    Set<RoleEntity> findAllByRoleIn(Set<String> roles);
 }

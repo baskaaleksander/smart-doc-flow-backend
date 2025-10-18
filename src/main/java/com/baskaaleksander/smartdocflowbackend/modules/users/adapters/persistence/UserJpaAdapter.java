@@ -4,7 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
@@ -52,7 +52,7 @@ public class UserJpaAdapter implements UserQueryPort, UserCommandPort, RoleQuery
     public Set<String> findAllByRoleIn(Set<String> roles) {
         if (roles == null || roles.isEmpty()) return Set.of();
 
-        return roleRepo.findAllByRoleIn(roles).stream().map(Role::getRole).collect(Collectors.toSet());
+        return roleRepo.findAllByRoleIn(roles).stream().map(RoleEntity::getRole).collect(Collectors.toSet());
     }
 
     @Override
@@ -74,7 +74,7 @@ public class UserJpaAdapter implements UserQueryPort, UserCommandPort, RoleQuery
         }
 
         Set<String> requestedRoles = Optional.ofNullable(user.getRoles()).orElse(Set.of());
-        Set<Role> roleEntities = requestedRoles.isEmpty()
+        Set<RoleEntity> roleEntities = requestedRoles.isEmpty()
                 ? Set.of()
                 : roleRepo.findAllByRoleIn(requestedRoles);
 

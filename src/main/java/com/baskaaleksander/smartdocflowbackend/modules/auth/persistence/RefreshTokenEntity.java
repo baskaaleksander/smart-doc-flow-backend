@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RefreshToken {
+public class RefreshTokenEntity {
 
     @Id
     private String jti;

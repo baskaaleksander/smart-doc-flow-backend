@@ -9,12 +9,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, UUID> {
+public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetTokenEntity, UUID> {
 
-    @Query("select t from PasswordResetToken t left join fetch t.user")
-    Optional<PasswordResetToken> findByToken(String token);
+    @Query("select t from PasswordResetTokenEntity t left join fetch t.user")
+    Optional<PasswordResetTokenEntity> findByToken(String token);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("update PasswordResetToken t set t.revoked = true where t.user.id = :userId")
+    @Query("update PasswordResetTokenEntity t set t.revoked = true where t.user.id = :userId")
     Integer invalidateAllTokens(UUID userId);
 }

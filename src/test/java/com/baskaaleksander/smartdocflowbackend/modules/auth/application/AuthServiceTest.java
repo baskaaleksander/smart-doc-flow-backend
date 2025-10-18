@@ -8,7 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenRespons
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserLoginRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserRegisterRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
@@ -129,7 +129,7 @@ public class AuthServiceTest {
 
     @Test
     void registerUser_shouldReturnUserResponse_whenOk() {
-        Role role = new Role();
+        RoleEntity role = new RoleEntity();
         role.setRole("ROLE_USER");
 
         when(userRepository.findByUsername(anyString())).thenReturn(Optional.empty());
@@ -166,7 +166,7 @@ public class AuthServiceTest {
     void getMe_shouldReturnMappedUserResponse() {
 
         UUID id = UUID.randomUUID();
-        Role role = new Role();
+        RoleEntity role = new RoleEntity();
         role.setRole("ROLE_USER");
         UserEntity entity = new UserEntity();
         entity.setId(id);

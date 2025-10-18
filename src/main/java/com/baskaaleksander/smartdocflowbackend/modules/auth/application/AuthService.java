@@ -7,7 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.notifications.application
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
@@ -94,7 +94,7 @@ public class AuthService {
 
         String password = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(password);
-        Set<Role> roles = roleRepository.findAllByRoleIn(user.getRoles());
+        Set<RoleEntity> roles = roleRepository.findAllByRoleIn(user.getRoles());
 
         if (roles.size() != user.getRoles().size()) {
             throw new ResourceNotFoundException("One or more roles not found");
@@ -114,7 +114,7 @@ public class AuthService {
                 userCreated.getId(),
                 userCreated.getUsername(),
                 userCreated.getEmail(),
-                userCreated.getRoles().stream().map(Role::getRole).toList(),
+                userCreated.getRoles().stream().map(RoleEntity::getRole).toList(),
                 userCreated.isActive(),
                 userCreated.getCreatedAt()
         );

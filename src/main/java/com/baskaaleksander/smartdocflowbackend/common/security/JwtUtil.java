@@ -2,7 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.common.security;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidJwtTokenException;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RefreshToken;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RefreshTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RefreshTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
@@ -60,7 +60,7 @@ public class JwtUtil {
         UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new InvalidJwtTokenException("User not found"));
         LocalDateTime now = LocalDateTime.now();
 
-        RefreshToken token = new RefreshToken(
+        RefreshTokenEntity token = new RefreshTokenEntity(
                 jti,
                 user,
                 now.plusSeconds(jwtRefreshExpiration / 1000L),
@@ -106,7 +106,7 @@ public class JwtUtil {
     public TokenResponse    refreshAccessToken(String refreshToken) {
         if (validateRefreshToken(refreshToken)) {
             String oldJti = getJtiFromRefreshToken(refreshToken);
-            RefreshToken oldToken = refreshTokenRepository.findByJtiAndRevokedFalse(oldJti)
+            RefreshTokenEntity oldToken = refreshTokenRepository.findByJtiAndRevokedFalse(oldJti)
                     .orElseThrow(() -> new InvalidJwtTokenException("Refresh token not found or revoked"));
             oldToken.setRevoked(true);
             String username = getUsernameFromRefreshToken(refreshToken);
@@ -162,7 +162,7 @@ public class JwtUtil {
                     .setSigningKey(refreshKey).build()
                     .parseClaimsJws(refreshToken);
 
-            RefreshToken token = refreshTokenRepository
+            RefreshTokenEntity token = refreshTokenRepository
                     .findByJtiAndRevokedFalse(getJtiFromRefreshToken(refreshToken))
                     .orElseThrow(() -> new InvalidJwtTokenException("Refresh token not found or revoked"));
 

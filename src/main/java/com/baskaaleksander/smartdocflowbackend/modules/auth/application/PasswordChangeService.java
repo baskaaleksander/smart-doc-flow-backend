@@ -6,7 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordExc
 import com.baskaaleksander.smartdocflowbackend.common.util.TokenGenerator;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.ResetPasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UpdatePasswordRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetToken;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.PasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.publisher.PasswordResetEmailTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
@@ -77,7 +77,7 @@ public class PasswordChangeService {
     }
 
     public String resetPassword(ResetPasswordRequest changePasswordRequest) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(changePasswordRequest.token())
+        PasswordResetTokenEntity resetToken = passwordResetTokenRepository.findByToken(changePasswordRequest.token())
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 
         if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
@@ -93,7 +93,7 @@ public class PasswordChangeService {
     }
 
     public Boolean checkToken(String token) {
-        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(token)
+        PasswordResetTokenEntity resetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 
         if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
@@ -110,7 +110,7 @@ public class PasswordChangeService {
 
             UserEntity user = userOptional.get();
 
-            PasswordResetToken passwordResetToken = new PasswordResetToken();
+            PasswordResetTokenEntity passwordResetToken = new PasswordResetTokenEntity();
             passwordResetToken.setUser(user);
 
             String token = TokenGenerator.generateToken();

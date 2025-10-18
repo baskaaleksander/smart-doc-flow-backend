@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -14,7 +15,7 @@ import java.util.UUID;
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 @Table(name = "password_reset_tokens")
-public class PasswordResetToken {
+public class PasswordResetTokenEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -34,5 +35,6 @@ public class PasswordResetToken {
     private boolean revoked = false;
 
     @Column(nullable = false)
+    @CreationTimestamp
     private Instant createdAt = Instant.now();
 }

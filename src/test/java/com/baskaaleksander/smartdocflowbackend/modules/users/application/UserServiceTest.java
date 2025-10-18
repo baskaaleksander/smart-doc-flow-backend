@@ -5,7 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.api.dto.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
@@ -48,7 +48,7 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        Role role = new Role();
+        RoleEntity role = new RoleEntity();
         role.setRole("ROLE_USER");
         user1 = new UserEntity();
         user1.setUsername("u1");

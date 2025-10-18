@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity;
 
-import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.persistence.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,7 +37,7 @@ public class UserEntity {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     @Column(nullable = false)
-    private Set<Role> roles;
+    private Set<RoleEntity> roles;
 
     @Column(nullable = false)
     private boolean active = true;
