@@ -8,7 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.Res
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UpdatePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.publisher.PasswordResetEmailTaskPublisher;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthEventPublisherPort;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
@@ -31,8 +31,8 @@ public class PasswordChangeApplicationService {
 
     private final SpringDataUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher;
     private final SpringDataPasswordResetTokenRepository passwordResetTokenRepository;
+    private final AuthEventPublisherPort authEventPublisherPort;
     private final Clock clock;
 
     @Value("${auth.reset-token.ttl-hours:24}")
@@ -41,13 +41,13 @@ public class PasswordChangeApplicationService {
     public PasswordChangeApplicationService(
             SpringDataUserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            PasswordResetEmailTaskPublisher passwordResetEmailTaskPublisher,
+            AuthEventPublisherPort authEventPublisherPort,
             SpringDataPasswordResetTokenRepository passwordResetTokenRepository,
             Clock clock
             ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.passwordResetEmailTaskPublisher = passwordResetEmailTaskPublisher;
+        this.authEventPublisherPort = authEventPublisherPort;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.clock = clock;
     }
@@ -124,7 +124,7 @@ public class PasswordChangeApplicationService {
 
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override public void afterCommit() {
-                    passwordResetEmailTaskPublisher.enqueue(new PasswordResetEvent(email, token));
+                    authEventPublisherPort.publish(new PasswordResetEvent(email, token));
                 }
             });
         }

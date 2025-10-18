@@ -6,7 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.Use
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.publisher.CredentialsEmailTaskPublisher;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthEventPublisherPort;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
@@ -43,8 +43,7 @@ public class AuthApplicationService {
     private final PasswordEncoder passwordEncoder;
     private final CookieUtil cookieUtil;
     private final UserMapper userMapper;
-    private final CredentialsEmailTaskPublisher credentialsEmailTaskPublisher;
-
+    private final AuthEventPublisherPort authEventPublisherPort;
 
     @Autowired
     public AuthApplicationService(
@@ -55,7 +54,7 @@ public class AuthApplicationService {
             PasswordEncoder passwordEncoder,
             CookieUtil cookieUtil,
             UserMapper userMapper,
-            CredentialsEmailTaskPublisher credentialsEmailTaskPublisher) {
+            AuthEventPublisherPort authEventPublisherPort) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -63,7 +62,7 @@ public class AuthApplicationService {
         this.passwordEncoder = passwordEncoder;
         this.cookieUtil = cookieUtil;
         this.userMapper = userMapper;
-        this.credentialsEmailTaskPublisher = credentialsEmailTaskPublisher;
+        this.authEventPublisherPort = authEventPublisherPort;
     }
 
     public TokenResponse loginUser(UserLoginRequest user) {
@@ -111,7 +110,7 @@ public class AuthApplicationService {
 
         UserEntity userCreated = userRepository.save(newUser);
 
-        credentialsEmailTaskPublisher.enqueue(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
+        authEventPublisherPort.publish(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
 
         return new UserResponse(
                 userCreated.getId(),

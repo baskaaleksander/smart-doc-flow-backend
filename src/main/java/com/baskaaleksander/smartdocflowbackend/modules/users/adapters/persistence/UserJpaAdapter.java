@@ -11,7 +11,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Doc
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.RoleQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserRoleQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserRoleCount;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 @Repository
 @Transactional(readOnly = true)
-public class UserJpaAdapter implements UserQueryPort, UserCommandPort, RoleQueryPort {
+public class UserJpaAdapter implements UserQueryPort, UserCommandPort, UserRoleQueryPort {
 
     private final SpringDataUserRepository userRepo;
     private final SpringDataRoleRepository roleRepo;

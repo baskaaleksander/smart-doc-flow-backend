@@ -10,7 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.Ed
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.RoleQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserRoleQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserRoleCount;
@@ -28,13 +28,13 @@ public class UserApplicationService {
 
     private final UserQueryPort userQueryPort;
     private final UserCommandPort userCommandPort;
-    private final RoleQueryPort roleQueryPort;
+    private final UserRoleQueryPort roleQueryPort;
     private final UserApiMapper mapper;
 
     @Autowired
     public UserApplicationService(UserQueryPort userQueryPort,
                                   UserCommandPort userCommandPort,
-                                  RoleQueryPort roleQueryPort,
+                                  UserRoleQueryPort roleQueryPort,
                                   UserApiMapper mapper
                                   ) {
 
