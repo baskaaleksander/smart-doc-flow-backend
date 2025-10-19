@@ -1,16 +1,17 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserLoginRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserRegisterRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthEventPublisherPort;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRoleRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
@@ -32,37 +33,44 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthApplicationService {
 
     private final AuthenticationManager authenticationManager;
-    private final SpringDataUserRepository userRepository;
-    private final SpringDataRoleRepository roleRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final CookieUtil cookieUtil;
-    private final UserMapper userMapper;
     private final AuthEventPublisherPort authEventPublisherPort;
+
+    private final AuthUserCommandPort authUserCommandPort;
+    private final AuthUserQueryPort authUserQueryPort;
+    private final RoleQueryPort roleQueryPort;
+    private final AuthUserApiMapper mapper;
 
     @Autowired
     public AuthApplicationService(
             AuthenticationManager authenticationManager,
-            SpringDataUserRepository userRepository,
-            SpringDataRoleRepository roleRepository,
             JwtUtil jwtUtil,
             PasswordEncoder passwordEncoder,
             CookieUtil cookieUtil,
-            UserMapper userMapper,
-            AuthEventPublisherPort authEventPublisherPort) {
+            AuthEventPublisherPort authEventPublisherPort,
+            AuthUserCommandPort authUserCommandPort,
+            AuthUserQueryPort authUserQueryPort,
+            RoleQueryPort roleQueryPort,
+            AuthUserApiMapper mapper
+           ) {
         this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.cookieUtil = cookieUtil;
-        this.userMapper = userMapper;
+
         this.authEventPublisherPort = authEventPublisherPort;
+        this.authUserCommandPort = authUserCommandPort;
+        this.authUserQueryPort = authUserQueryPort;
+        this.roleQueryPort = roleQueryPort;
+        this.mapper = mapper;
     }
 
     public TokenResponse loginUser(UserLoginRequest user) {
@@ -81,13 +89,13 @@ public class AuthApplicationService {
     @Transactional
     public UserResponse registerUser(UserRegisterRequest user) {
 
-        Optional<UserEntity> existingUser = userRepository.findByUsername(user.username());
+        Optional<AuthUser> existingUser = authUserQueryPort.findUserByUsernameWithRoles(user.username());
 
         if(existingUser.isPresent()) {
             throw new ResourceConflictException("User with " + user.username() + " username already exists");
         }
 
-        Optional<UserEntity> existingUser2 = userRepository.findByEmail(user.email());
+        Optional<AuthUser> existingUser2 = authUserQueryPort.findByEmail(user.email());
 
         if(existingUser2.isPresent()) {
             throw new ResourceConflictException("User with " + user.email() + " email already exists");
@@ -96,30 +104,24 @@ public class AuthApplicationService {
 
         String password = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(password);
-        Set<RoleEntity> roles = roleRepository.findAllByRoleIn(user.roles());
+        Set<String> roles = roleQueryPort.findAllByRoleIn(user.roles()).stream().map(Role::getRole).collect(Collectors.toSet());
 
         if (roles.size() != user.roles().size()) {
             throw new ResourceNotFoundException("One or more roles not found");
         }
 
-        UserEntity newUser = new UserEntity();
+        AuthUser newUser = new AuthUser();
         newUser.setUsername(user.username());
-        newUser.setEmail(user.username());
+        newUser.setEmail(user.email());
         newUser.setPassword(encodedPassword);
         newUser.setRoles(roles);
+        newUser.setActive(true);
 
-        UserEntity userCreated = userRepository.save(newUser);
+        AuthUser userCreated = authUserCommandPort.save(newUser);
 
         authEventPublisherPort.publish(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
 
-        return new UserResponse(
-                userCreated.getId(),
-                userCreated.getUsername(),
-                userCreated.getEmail(),
-                userCreated.getRoles().stream().map(RoleEntity::getRole).toList(),
-                userCreated.isActive(),
-                userCreated.getCreatedAt()
-        );
+        return mapper.toResponse(userCreated);
     }
 
     public TokenResponse refreshAccessToken(String refreshToken) {
@@ -135,8 +137,8 @@ public class AuthApplicationService {
     }
 
     public UserResponse getMe(UUID userId) {
-        return userMapper.toUserResponse(
-                userRepository.findUserByIdWithRoles(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"))
+        return mapper.toResponse(
+                authUserQueryPort.findByIdWithRoles(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"))
         );
     }
 

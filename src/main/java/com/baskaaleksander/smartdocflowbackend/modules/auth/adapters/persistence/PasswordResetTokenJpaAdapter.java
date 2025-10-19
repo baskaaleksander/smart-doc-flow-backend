@@ -31,6 +31,7 @@ public class PasswordResetTokenJpaAdapter implements PasswordResetTokenCommandPo
         this.mapper = mapper;
     }
     @Override
+    @Transactional
     public PasswordResetToken save(PasswordResetToken token) {
         PasswordResetTokenEntity entity = (token.getId() != null) ?
                 tokenRepo.findById(token.getId()).orElseGet(() -> {

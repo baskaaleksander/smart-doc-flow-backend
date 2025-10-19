@@ -32,7 +32,8 @@ public class RefreshTokenJpaAdapter implements RefreshTokenCommandPort, RefreshT
     @Override
     @Transactional
     public RefreshToken save(RefreshToken token) {
-        RefreshTokenEntity entity = tokenRepo.findByJti(token.getJti()).orElseGet(RefreshTokenEntity::new);
+        RefreshTokenEntity entity = (token.getJti() != null) ?
+                tokenRepo.findByJti(token.getJti()).orElseGet(RefreshTokenEntity::new) : new RefreshTokenEntity();
 
         entity.setJti(token.getJti());
         entity.setExpiresAt(token.getExpiresAt());

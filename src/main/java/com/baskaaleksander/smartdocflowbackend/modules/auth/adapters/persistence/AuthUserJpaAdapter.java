@@ -35,9 +35,10 @@ public class AuthUserJpaAdapter implements AuthUserQueryPort, AuthUserCommandPor
         this.mapper = mapper;
     }
     @Override
+    @Transactional
     public AuthUser save(AuthUser user) {
-        UserEntity entity = userRepo.findById(user.getId())
-                .orElseGet(UserEntity::new);
+        UserEntity entity = (user.getId() != null) ? userRepo.findById(user.getId())
+                .orElseGet(UserEntity::new) : new UserEntity();
 
         entity.setUsername(user.getUsername());
         entity.setEmail(user.getEmail());
@@ -56,8 +57,7 @@ public class AuthUserJpaAdapter implements AuthUserQueryPort, AuthUserCommandPor
             throw new ResourceNotFoundException("One or more roles not found");
         }
 
-        entity.getRoles().clear();
-        entity.getRoles().addAll(roleEntities);
+        entity.setRoles(roleEntities);
 
         UserEntity saved = userRepo.save(entity);
 
@@ -67,6 +67,11 @@ public class AuthUserJpaAdapter implements AuthUserQueryPort, AuthUserCommandPor
     @Override
     public Optional<AuthUser> findUserByUsernameWithRoles(String username) {
         return userRepo.findUserByUsernameWithRoles(username).map(mapper::toDomain);
+    }
+
+    @Override
+    public Optional<AuthUser> findByIdWithRoles(UUID id) {
+        return userRepo.findUserByIdWithRoles(id).map(mapper::toDomain);
     }
 
     @Override

@@ -137,7 +137,7 @@ public class AuthServiceTest {
         when(roleRepository.findAllByRoleIn(Set.of("ROLE_USER"))).thenReturn(Set.of(role));
         UserEntity saved = new UserEntity();
         saved.setId(UUID.randomUUID());
-        saved.setUsername(registerRequest.getUsername());
+        saved.setUsername(registerRequest.username());
         saved.setPassword("encoded");
         saved.setRoles(Set.of(role));
         saved.setActive(true);
@@ -145,7 +145,7 @@ public class AuthServiceTest {
         when(userRepository.save(any(UserEntity.class))).thenReturn(saved);
         UserResponse res = authService.registerUser(registerRequest);
 
-        assertThat(res.username()).isEqualTo(registerRequest.getUsername());
+        assertThat(res.username()).isEqualTo(registerRequest.username());
         assertThat(res.roles()).containsExactly("ROLE_USER");
         assertThat(res.active()).isTrue();
         assertThat(res.id()).isEqualTo(saved.getId());
