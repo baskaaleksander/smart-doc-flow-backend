@@ -5,10 +5,10 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteExceptio
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentOwnerBasicResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentReviewBasicResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentOwnerBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentReviewBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
@@ -83,8 +83,8 @@ public class DocumentServiceTest {
     private ReviewEntity review;
     private UserEntity owner;
     private DocumentResponse mapped;
-    private DocumentReviewBasicInfo reviewBasic;
-    private DocumentOwnerBasicInfo ownerBasic;
+    private DocumentReviewBasicResponse reviewBasic;
+    private DocumentOwnerBasicResponse ownerBasic;
     private DocumentService documentService;
 
     @BeforeEach
@@ -104,12 +104,12 @@ public class DocumentServiceTest {
         owner.setId(UUID.randomUUID());
         owner.setUsername("owner");
 
-        ownerBasic = new DocumentOwnerBasicInfo(
+        ownerBasic = new DocumentOwnerBasicResponse(
                 owner.getId(),
                 owner.getUsername()
         );
 
-        reviewBasic = new DocumentReviewBasicInfo(
+        reviewBasic = new DocumentReviewBasicResponse(
                 review.getId(),
                 review.getReviewer().getUsername(),
                 review.getReviewer().getId(),
@@ -177,14 +177,14 @@ public class DocumentServiceTest {
                 .thenAnswer(inv -> {
                     DocumentEntity d = inv.getArgument(0);
 
-                    DocumentOwnerBasicInfo ownerInfo = new DocumentOwnerBasicInfo(
+                    DocumentOwnerBasicResponse ownerInfo = new DocumentOwnerBasicResponse(
                             d.getOwner() != null ? d.getOwner().getId() : null,
                             d.getOwner() != null ? d.getOwner().getUsername() : null
                     );
 
-                    DocumentReviewBasicInfo reviewInfo = null;
+                    DocumentReviewBasicResponse reviewInfo = null;
                     if (d.getReview() != null) {
-                        reviewInfo = new DocumentReviewBasicInfo(
+                        reviewInfo = new DocumentReviewBasicResponse(
                                 d.getReview().getId(),
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getUsername() : null,
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getId() : null,
@@ -235,11 +235,11 @@ public class DocumentServiceTest {
         assertThat(res.filename()).isEqualTo("my_file.pdf");
         assertThat(res.mime()).isEqualTo("pdf");
 
-        DocumentOwnerBasicInfo expectedOwner = new DocumentOwnerBasicInfo(user.getId(), username);
+        DocumentOwnerBasicResponse expectedOwner = new DocumentOwnerBasicResponse(user.getId(), username);
         assertThat(res.owner()).isEqualTo(expectedOwner);
 
-        DocumentReviewBasicInfo expectedReview = (lastSaved.getReview() == null) ? null :
-                new DocumentReviewBasicInfo(
+        DocumentReviewBasicResponse expectedReview = (lastSaved.getReview() == null) ? null :
+                new DocumentReviewBasicResponse(
                         lastSaved.getReview().getId(),
                         lastSaved.getReview().getReviewer() != null ? lastSaved.getReview().getReviewer().getUsername() : null,
                         lastSaved.getReview().getReviewer() != null ? lastSaved.getReview().getReviewer().getId() : null,
@@ -334,13 +334,13 @@ public class DocumentServiceTest {
                 .thenAnswer(inv -> {
                     DocumentEntity d = inv.getArgument(0);
 
-                    DocumentOwnerBasicInfo ownerInfo = (d.getOwner() == null)
+                    DocumentOwnerBasicResponse ownerInfo = (d.getOwner() == null)
                             ? null
-                            : new DocumentOwnerBasicInfo(d.getOwner().getId(), d.getOwner().getUsername());
+                            : new DocumentOwnerBasicResponse(d.getOwner().getId(), d.getOwner().getUsername());
 
-                    DocumentReviewBasicInfo reviewInfo = null;
+                    DocumentReviewBasicResponse reviewInfo = null;
                     if (d.getReview() != null) {
-                        reviewInfo = new DocumentReviewBasicInfo(
+                        reviewInfo = new DocumentReviewBasicResponse(
                                 d.getReview().getId(),
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getUsername() : null,
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getId() : null,
@@ -371,7 +371,7 @@ public class DocumentServiceTest {
         verify(s3Client).putObject(putReqCap.capture(), any(RequestBody.class));
         assertThat(putReqCap.getValue().contentType()).isEqualTo("image/png");
 
-        assertThat(res.owner()).isEqualTo(new DocumentOwnerBasicInfo(user.getId(), username));
+        assertThat(res.owner()).isEqualTo(new DocumentOwnerBasicResponse(user.getId(), username));
 
 
 //        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
@@ -433,8 +433,8 @@ public class DocumentServiceTest {
                 d2.getMime(),
                 d2.getSize(),
                 d2.getPageSize(),
-                new DocumentOwnerBasicInfo(owner.getId(), owner.getUsername()),
-                new DocumentReviewBasicInfo(
+                new DocumentOwnerBasicResponse(owner.getId(), owner.getUsername()),
+                new DocumentReviewBasicResponse(
                         review.getId(),
                         review.getReviewer() != null ? review.getReviewer().getUsername() : null,
                         review.getReviewer() != null ? review.getReviewer().getId() : null,

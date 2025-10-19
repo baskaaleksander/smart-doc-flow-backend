@@ -5,5 +5,5 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Revi
 import java.time.Instant;
 import java.util.UUID;
 
-public record DocumentReviewBasicInfo(UUID id, String reviewer, UUID reviewerId, ReviewStatus status, Instant updatedAt) {
+public record DocumentReviewBasicResponse(UUID id, String reviewer, UUID reviewerId, ReviewStatus status, Instant updatedAt) {
 }
