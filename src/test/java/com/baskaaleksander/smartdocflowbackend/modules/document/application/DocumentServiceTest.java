@@ -10,7 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentReviewBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskPublisher;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;

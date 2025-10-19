@@ -1,10 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.OcrResultPage;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.OcrResult;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.OcrResultPage;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;

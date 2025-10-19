@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.EmbedTask;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 

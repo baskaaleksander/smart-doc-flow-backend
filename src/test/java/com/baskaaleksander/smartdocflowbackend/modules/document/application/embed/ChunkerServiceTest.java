@@ -2,7 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.document.application.emb
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.Tokenizer;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

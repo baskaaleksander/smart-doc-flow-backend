@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

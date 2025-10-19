@@ -2,7 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
 
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

@@ -2,7 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.oc
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;

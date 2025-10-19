@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.DocumentCommandPort;
 import org.springframework.stereotype.Repository;

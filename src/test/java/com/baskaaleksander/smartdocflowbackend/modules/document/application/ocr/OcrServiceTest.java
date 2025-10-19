@@ -6,7 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadExcept
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;

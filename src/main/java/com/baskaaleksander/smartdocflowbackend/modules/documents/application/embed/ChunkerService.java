@@ -1,8 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.SentenceSpan;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.WordSpan;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.SentenceSpan;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.WordSpan;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

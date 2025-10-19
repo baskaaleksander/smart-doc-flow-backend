@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatusCount;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

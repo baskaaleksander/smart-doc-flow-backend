@@ -5,8 +5,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskPublisher;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatusCount;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;

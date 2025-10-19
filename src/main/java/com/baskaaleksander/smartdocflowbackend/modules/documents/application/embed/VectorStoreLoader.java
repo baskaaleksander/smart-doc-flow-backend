@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;

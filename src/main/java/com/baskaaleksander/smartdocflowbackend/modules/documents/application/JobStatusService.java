@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;

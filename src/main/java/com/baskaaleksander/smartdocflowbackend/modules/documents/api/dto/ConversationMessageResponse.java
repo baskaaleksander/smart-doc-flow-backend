@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.ConversationSide;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

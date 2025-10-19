@@ -4,8 +4,8 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.VectorStoreLoader;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.Chunk;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
