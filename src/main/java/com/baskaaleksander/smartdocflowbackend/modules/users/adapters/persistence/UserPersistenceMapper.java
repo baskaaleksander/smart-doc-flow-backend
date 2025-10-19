@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,7 @@ public class UserPersistenceMapper {
                 e.getPassword(),
                 e.getRoles().stream().map(RoleEntity::getRole).collect(Collectors.toSet()),
                 e.isActive(),
-                e.getDocuments().stream().map(Document::getId).collect(Collectors.toSet()),
+                e.getDocuments().stream().map(DocumentEntity::getId).collect(Collectors.toSet()),
                 e.getCreatedAt()
         );
     }

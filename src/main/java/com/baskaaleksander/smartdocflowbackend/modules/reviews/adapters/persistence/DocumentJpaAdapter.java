@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.DocumentCommandPort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,9 +12,9 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class DocumentJpaAdapter implements DocumentCommandPort {
 
-    private final DocumentRepository documentRepo;
+    private final SpringDataDocumentRepository documentRepo;
 
-    public DocumentJpaAdapter(DocumentRepository documentRepo) {
+    public DocumentJpaAdapter(SpringDataDocumentRepository documentRepo) {
         this.documentRepo = documentRepo;
     }
 

@@ -5,14 +5,14 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteExceptio
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentOwnerBasicInfo;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentReviewBasicInfo;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentOwnerBasicInfo;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentReviewBasicInfo;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
@@ -58,7 +58,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class DocumentServiceTest {
     @Mock
-    private DocumentRepository documentRepository;
+    private SpringDataDocumentRepository documentRepository;
     @Mock
     private S3Client s3Client;
     @Mock
@@ -79,7 +79,7 @@ public class DocumentServiceTest {
     @InjectMocks
     private DocumentService realService;
 
-    private Document document;
+    private DocumentEntity document;
     private ReviewEntity review;
     private UserEntity owner;
     private DocumentResponse mapped;
@@ -117,7 +117,7 @@ public class DocumentServiceTest {
                 review.getUpdatedAt()
         );
 
-        document = new Document();
+        document = new DocumentEntity();
         document.setId(UUID.randomUUID());
         document.setFilename("filename");
         document.setMime("pdf");
@@ -163,7 +163,7 @@ public class DocumentServiceTest {
                 "file", "my file.pdf", "application/pdf", content
         );
 
-        when(documentRepository.save(any(Document.class)))
+        when(documentRepository.save(any(DocumentEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         when(reviewRepository.save(any(ReviewEntity.class)))
@@ -173,9 +173,9 @@ public class DocumentServiceTest {
                     return r;
                 });
 
-        when(documentMapper.toDocumentResponse(any(Document.class)))
+        when(documentMapper.toDocumentResponse(any(DocumentEntity.class)))
                 .thenAnswer(inv -> {
-                    Document d = inv.getArgument(0);
+                    DocumentEntity d = inv.getArgument(0);
 
                     DocumentOwnerBasicInfo ownerInfo = new DocumentOwnerBasicInfo(
                             d.getOwner() != null ? d.getOwner().getId() : null,
@@ -219,16 +219,16 @@ public class DocumentServiceTest {
         String key = putReq.key();
         assertThat(key).endsWith("_my_file.pdf");
 
-        verify(documentRepository, times(2)).save(any(Document.class));
+        verify(documentRepository, times(2)).save(any(DocumentEntity.class));
         verify(reviewRepository).save(any(ReviewEntity.class));
 
 //        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
         ArgumentCaptor<UUID> enqueueCap = ArgumentCaptor.forClass(UUID.class);
         verify(ocrTaskPublisher).enqueue(enqueueCap.capture());
 
-        ArgumentCaptor<Document> docCap = ArgumentCaptor.forClass(Document.class);
+        ArgumentCaptor<DocumentEntity> docCap = ArgumentCaptor.forClass(DocumentEntity.class);
         verify(documentRepository, atLeastOnce()).save(docCap.capture());
-        Document lastSaved = docCap.getAllValues().get(docCap.getAllValues().size() - 1);
+        DocumentEntity lastSaved = docCap.getAllValues().get(docCap.getAllValues().size() - 1);
         assertThat(enqueueCap.getValue()).isEqualTo(lastSaved.getId());
 
         assertThat(res.id()).isEqualTo(lastSaved.getId());
@@ -320,7 +320,7 @@ public class DocumentServiceTest {
                 "file", "scan doc.png", "image/png", "bytes".getBytes()
         );
 
-        when(documentRepository.save(any(Document.class)))
+        when(documentRepository.save(any(DocumentEntity.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         when(reviewRepository.save(any(ReviewEntity.class)))
@@ -330,9 +330,9 @@ public class DocumentServiceTest {
                     return r;
                 });
 
-        when(documentMapper.toDocumentResponse(any(Document.class)))
+        when(documentMapper.toDocumentResponse(any(DocumentEntity.class)))
                 .thenAnswer(inv -> {
-                    Document d = inv.getArgument(0);
+                    DocumentEntity d = inv.getArgument(0);
 
                     DocumentOwnerBasicInfo ownerInfo = (d.getOwner() == null)
                             ? null
@@ -412,9 +412,9 @@ public class DocumentServiceTest {
 
     @Test
     void getAllDocuments_shouldReturnPagedResult_firstPage() {
-        Document d1 = document;
+        DocumentEntity d1 = document;
 
-        Document d2 = new Document();
+        DocumentEntity d2 = new DocumentEntity();
         d2.setId(UUID.randomUUID());
         d2.setOwner(owner);
         d2.setReview(review);
@@ -448,11 +448,11 @@ public class DocumentServiceTest {
         PaginationRequest req = new PaginationRequest(0, 2, "createdAt", Sort.Direction.DESC);
         Pageable pageable = PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Document> page = new PageImpl<>(List.of(d1, d2), pageable, 5);
+        Page<DocumentEntity> page = new PageImpl<>(List.of(d1, d2), pageable, 5);
         when(documentRepository.findAll(pageable)).thenReturn(page);
 
-        when(documentMapper.toDocumentResponse(any(Document.class))).thenAnswer(inv -> {
-            Document arg = inv.getArgument(0);
+        when(documentMapper.toDocumentResponse(any(DocumentEntity.class))).thenAnswer(inv -> {
+            DocumentEntity arg = inv.getArgument(0);
             if (arg == d1) return r1;
             if (arg == d2) return r2;
             return null;
@@ -473,13 +473,13 @@ public class DocumentServiceTest {
 
     @Test
     void getAllDocuments_shouldReturnPagedResult_lastPage() {
-        Document d1 = document;
+        DocumentEntity d1 = document;
         DocumentResponse r1 = mapped;
 
         PaginationRequest req = new PaginationRequest(2, 2, "createdAt", Sort.Direction.DESC);
         Pageable pageable = PageRequest.of(2, 2, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Document> page = new PageImpl<>(List.of(d1), pageable, 5);
+        Page<DocumentEntity> page = new PageImpl<>(List.of(d1), pageable, 5);
         when(documentRepository.findAll(pageable)).thenReturn(page);
 
         when(documentMapper.toDocumentResponse(d1)).thenReturn(r1);
@@ -501,13 +501,13 @@ public class DocumentServiceTest {
     void getUserDocuments_shouldReturnPagedResult() {
         UUID ownerId = owner.getId();
 
-        Document only = document;
+        DocumentEntity only = document;
         DocumentResponse r = mapped;
 
         PaginationRequest req = new PaginationRequest(0, 3, "updatedAt", Sort.Direction.ASC);
         Pageable pageable = PageRequest.of(0, 3, Sort.by(Sort.Direction.ASC, "updatedAt"));
 
-        Page<Document> page = new PageImpl<>(List.of(only), pageable, 1);
+        Page<DocumentEntity> page = new PageImpl<>(List.of(only), pageable, 1);
         when(documentRepository.findAllByOwner(ownerId, pageable)).thenReturn(page);
         when(documentMapper.toDocumentResponse(only)).thenReturn(r);
 

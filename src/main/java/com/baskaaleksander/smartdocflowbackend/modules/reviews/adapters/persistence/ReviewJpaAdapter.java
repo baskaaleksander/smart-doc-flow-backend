@@ -3,7 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persist
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.mapping.ReviewPersistenceMapper;
@@ -29,13 +29,13 @@ public class ReviewJpaAdapter implements ReviewCommandPort, ReviewQueryPort {
 
     private final SpringDataReviewRepository reviewRepo;
     private final SpringDataUserRepository userRepo;
-    private final DocumentRepository documentRepo;
+    private final SpringDataDocumentRepository documentRepo;
     private final ReviewPersistenceMapper mapper;
 
     public ReviewJpaAdapter(
             SpringDataReviewRepository reviewRepo,
             SpringDataUserRepository userRepo,
-            DocumentRepository documentRepo,
+            SpringDataDocumentRepository documentRepo,
             ReviewPersistenceMapper mapper
     ) {
         this.reviewRepo = reviewRepo;

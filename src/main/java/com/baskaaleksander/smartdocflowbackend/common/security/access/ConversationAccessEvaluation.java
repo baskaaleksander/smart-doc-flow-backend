@@ -2,7 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.common.security.access;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.UnauthorizedAccessException;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataConversationMessageRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,10 +14,10 @@ import java.util.UUID;
 @Component("convoAccess")
 public class ConversationAccessEvaluation {
 
-    private final ConversationMessageRepository conversationMessageRepository;
+    private final SpringDataConversationMessageRepository conversationMessageRepository;
     private final SpringDataReviewRepository reviewRepository;
 
-    public ConversationAccessEvaluation(ConversationMessageRepository conversationMessageRepository, SpringDataReviewRepository reviewRepository) {
+    public ConversationAccessEvaluation(SpringDataConversationMessageRepository conversationMessageRepository, SpringDataReviewRepository reviewRepository) {
         this.conversationMessageRepository = conversationMessageRepository;
         this.reviewRepository = reviewRepository;
     }

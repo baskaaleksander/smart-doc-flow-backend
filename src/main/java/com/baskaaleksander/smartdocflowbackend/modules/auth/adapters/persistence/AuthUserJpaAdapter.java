@@ -7,7 +7,6 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthUserCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthUserQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.springframework.stereotype.Repository;

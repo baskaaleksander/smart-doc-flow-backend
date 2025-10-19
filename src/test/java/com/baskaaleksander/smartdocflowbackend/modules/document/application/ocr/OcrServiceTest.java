@@ -6,10 +6,10 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadExcept
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskConsumerAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,11 +46,11 @@ public class OcrServiceTest {
     @Mock
     private S3Client s3Client;
     @Mock
-    private DocumentRepository documentRepository;
+    private SpringDataDocumentRepository documentRepository;
     @Mock
     private OpenAiChatModel chatModel;
     @Mock
-    private DocumentOcrResultRepository documentOcrResultRepository;
+    private SpringDataDocumentOcrResultRepository documentOcrResultRepository;
     @Mock
     private EmbedTaskPublisher embedTaskPublisher;
 
@@ -58,7 +58,7 @@ public class OcrServiceTest {
     private OcrTaskConsumerAdapter ocrService;
 
     private UUID docId;
-    private Document doc;
+    private DocumentEntity doc;
 
     @BeforeEach
     void setUp() {
@@ -66,7 +66,7 @@ public class OcrServiceTest {
         ReflectionTestUtils.setField(ocrService, "model", "gpt-4o");
 
         docId = UUID.randomUUID();
-        doc = new Document();
+        doc = new DocumentEntity();
         doc.setId(docId);
         doc.setCreatedAt(Instant.now());
         doc.setStatus(DocumentStatus.UPLOADED);
@@ -106,7 +106,7 @@ public class OcrServiceTest {
         stubChatModelReturningJson("{\"pages\":[{\"page\":1,\"text\":\"Hello OCR!\"}]}");
         when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
                 .thenReturn(PutObjectResponse.builder().eTag("etag").build());
-        when(documentOcrResultRepository.save(any(DocumentOcrResult.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(documentOcrResultRepository.save(any(DocumentOcrResultEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ocrService.runOcr(docId);
 
@@ -123,7 +123,7 @@ public class OcrServiceTest {
         assertThat(putCap.getValue().key()).isEqualTo(docId + "_ocr.json");
         assertThat(putCap.getValue().contentType()).isEqualTo("application/json");
 
-        ArgumentCaptor<DocumentOcrResult> ocrCap = ArgumentCaptor.forClass(DocumentOcrResult.class);
+        ArgumentCaptor<DocumentOcrResultEntity> ocrCap = ArgumentCaptor.forClass(DocumentOcrResultEntity.class);
         verify(documentOcrResultRepository).save(ocrCap.capture());
         assertThat(ocrCap.getValue().getDocument()).isEqualTo(doc);
         assertThat(ocrCap.getValue().getStorageKey()).isEqualTo(docId + "_ocr");

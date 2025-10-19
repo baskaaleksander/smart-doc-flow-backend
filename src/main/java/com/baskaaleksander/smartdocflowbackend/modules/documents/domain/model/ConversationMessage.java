@@ -1,6 +1,5 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,9 +10,13 @@ import java.util.UUID;
 
 @AllArgsConstructor @NoArgsConstructor
 @Getter @Setter
-public class ConversationMessageResponse {
+public class ConversationMessage {
     private UUID id;
     private ConversationSide side;
     private String content;
+    private String fingerprint;
+    private UUID conversationId;
+    private UUID documentId;
+    private UUID userId;
     private Instant createdAt;
 }

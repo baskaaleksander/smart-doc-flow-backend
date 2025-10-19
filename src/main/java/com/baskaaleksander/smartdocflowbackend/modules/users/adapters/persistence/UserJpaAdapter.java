@@ -6,8 +6,8 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRoleRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
@@ -33,13 +33,13 @@ public class UserJpaAdapter implements UserQueryPort, UserCommandPort, UserRoleQ
 
     private final SpringDataUserRepository userRepo;
     private final SpringDataRoleRepository roleRepo;
-    private final DocumentRepository documentRepo;
+    private final SpringDataDocumentRepository documentRepo;
     private final UserPersistenceMapper mapper;
 
     public UserJpaAdapter(
             SpringDataUserRepository userRepo,
             SpringDataRoleRepository roleRepo,
-            DocumentRepository documentRepo,
+            SpringDataDocumentRepository documentRepo,
             UserPersistenceMapper mapper
     ) {
         this.userRepo = userRepo;
@@ -87,7 +87,7 @@ public class UserJpaAdapter implements UserQueryPort, UserCommandPort, UserRoleQ
 
         Set<UUID> requestedDocIds = Optional.ofNullable(user.getDocumentIds()).orElse(Set.of());
 
-        Set<Document> docs = requestedDocIds.isEmpty()
+        Set<DocumentEntity> docs = requestedDocIds.isEmpty()
                 ? Set.of()
                 : documentRepo.findAllByIdIn(requestedDocIds);
 

@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
 
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
@@ -10,10 +11,9 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadExcept
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskPublisherPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskConsumerPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -51,13 +51,13 @@ import java.util.UUID;
 @Service
 public class OcrTaskConsumerAdapter implements OcrTaskConsumerPort {
 
-    private final DocumentOcrResultRepository documentOcrResultRepository;
+    private final SpringDataDocumentOcrResultRepository documentOcrResultRepository;
     @Value(value = "${minio.bucket.name}")
     private String bucket;
     @Value(value = "${spring.ai.openai.chat.options.model}")
     private String model;
     private final S3Client s3Client;
-    private final DocumentRepository documentRepository;
+    private final SpringDataDocumentRepository documentRepository;
     private final OpenAiChatModel chatModel;
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final EmbeddingTaskPublisherPort taskPublisher;
@@ -66,9 +66,9 @@ public class OcrTaskConsumerAdapter implements OcrTaskConsumerPort {
     @Autowired
     public OcrTaskConsumerAdapter(
             S3Client s3Client,
-            DocumentRepository documentRepository,
+            SpringDataDocumentRepository documentRepository,
             OpenAiChatModel chatModel,
-            DocumentOcrResultRepository documentOcrResultRepository,
+            SpringDataDocumentOcrResultRepository documentOcrResultRepository,
             EmbeddingTaskConsumerAdapter embeddingService,
             EmbeddingTaskPublisherPort taskPublisher
             ) {
@@ -85,7 +85,7 @@ public class OcrTaskConsumerAdapter implements OcrTaskConsumerPort {
 
         UUID documentId = task.documentId();
 
-        Document doc = documentRepository.getDocumentById(documentId)
+        DocumentEntity doc = documentRepository.getDocumentById(documentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
 
 
@@ -241,9 +241,9 @@ public class OcrTaskConsumerAdapter implements OcrTaskConsumerPort {
 
     private void saveOcrResultToDb(String documentKey, UUID documentId) {
 
-        Document document = documentRepository.getDocumentById(documentId)
+        DocumentEntity document = documentRepository.getDocumentById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
-        DocumentOcrResult ocrResult = new DocumentOcrResult();
+        DocumentOcrResultEntity ocrResult = new DocumentOcrResultEntity();
         ocrResult.setDocument(document);
         ocrResult.setStorageKey(documentKey);
 

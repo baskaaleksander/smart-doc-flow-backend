@@ -1,9 +1,9 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.api;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;

@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +10,9 @@ import java.util.UUID;
 @Service
 public class JobStatusService {
 
-    private final DocumentRepository documentRepository;
+    private final SpringDataDocumentRepository documentRepository;
 
-    public JobStatusService(DocumentRepository documentRepository) {
+    public JobStatusService(SpringDataDocumentRepository documentRepository) {
         this.documentRepository = documentRepository;
     }
 

@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RoleEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -42,7 +42,7 @@ public class UserEntity {
     private boolean active = true;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Set<Document> documents;
+    private Set<DocumentEntity> documents;
 
     @CreationTimestamp
     @Column(nullable = false)

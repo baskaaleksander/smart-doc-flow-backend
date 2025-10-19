@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import jakarta.persistence.*;
@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter @Setter
 @Table(name = "conversation_messages")
-public class ConversationMessage {
+public class ConversationMessageEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

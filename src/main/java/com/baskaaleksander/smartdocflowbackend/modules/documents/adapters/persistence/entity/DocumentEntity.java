@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity;
 
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @EqualsAndHashCode(of = "id")
 @ToString(exclude = {"owner", "review"})
 @Table(name = "documents")
-public class Document {
+public class DocumentEntity {
 
     @Id
     private UUID id;

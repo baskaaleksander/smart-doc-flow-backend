@@ -5,8 +5,8 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
@@ -52,7 +52,7 @@ public class ReviewServiceTest {
     @Mock
     private ReviewMapper reviewMapper;
     @Mock
-    private DocumentRepository documentRepository;
+    private SpringDataDocumentRepository documentRepository;
     @Mock
     private SpringDataReviewEventRepository reviewEventRepository;
     @Mock
@@ -66,7 +66,7 @@ public class ReviewServiceTest {
     private ReviewApplicationService reviewService;
     private UserEntity reviewer;
     private ReviewEntity review;
-    private Document document;
+    private DocumentEntity document;
 
     @BeforeEach
     void setUp() {
@@ -75,7 +75,7 @@ public class ReviewServiceTest {
         reviewer.setId(UUID.randomUUID());
         reviewer.setUsername("user-123");
 
-        document = new Document();
+        document = new DocumentEntity();
         document.setId(UUID.randomUUID());
 
         review = new ReviewEntity();

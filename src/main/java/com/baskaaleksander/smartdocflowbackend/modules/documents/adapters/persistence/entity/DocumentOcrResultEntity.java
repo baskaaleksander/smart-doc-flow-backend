@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.persistence;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "document_ocr_results")
 @Data @NoArgsConstructor @AllArgsConstructor
-public class DocumentOcrResult {
+public class DocumentOcrResultEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -28,7 +28,7 @@ public class DocumentOcrResult {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "document_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private Document document;
+    private DocumentEntity document;
 
     @Version
     private int version = 0;

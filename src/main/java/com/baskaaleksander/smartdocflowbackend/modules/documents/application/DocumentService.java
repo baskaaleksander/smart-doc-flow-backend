@@ -1,9 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentStatsResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskPublisherPort;
@@ -14,10 +15,9 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Revi
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Service
 public class DocumentService {
 
-    private final DocumentRepository documentRepository;
+    private final SpringDataDocumentRepository documentRepository;
     private final S3Client s3Client;
     private final SpringDataUserRepository userRepository;
     private final SpringDataReviewRepository reviewRepository;
@@ -66,7 +66,7 @@ public class DocumentService {
     private String s3Bucket;
 
     public DocumentService(
-            DocumentRepository documentRepository,
+            SpringDataDocumentRepository documentRepository,
             S3Client s3Client,
             SpringDataUserRepository userRepository,
             SpringDataReviewRepository reviewRepository,
@@ -109,7 +109,7 @@ public class DocumentService {
             throw new S3UploadException("Upload to object store failed");
         }
 
-        Document document = new Document();
+        DocumentEntity document = new DocumentEntity();
         document.setId(docId);
         document.setFilename(originalFilename);
         document.setStorageKey(filename);
@@ -130,7 +130,7 @@ public class DocumentService {
     }
 
     @Transactional
-    protected void saveDocToDb(Document document) {
+    protected void saveDocToDb(DocumentEntity document) {
         documentRepository.save(document);
 
         ReviewEntity review = new ReviewEntity();
@@ -144,7 +144,7 @@ public class DocumentService {
     }
 
     public DocumentResponse getById(UUID id) {
-        Document doc = documentRepository.findbyIdWithReview(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
+        DocumentEntity doc = documentRepository.findbyIdWithReview(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
 
         return documentMapper.toDocumentResponse(doc);
     }
@@ -152,7 +152,7 @@ public class DocumentService {
     public PagingResult<DocumentResponse> getAllDocuments(PaginationRequest request, Boolean assignedToMe, UUID userId) {
 
         Pageable pageable = PaginationUtil.getPageable(request);
-        Page<Document> documents;
+        Page<DocumentEntity> documents;
 
         if (assignedToMe) {
             documents = documentRepository.findAllByReviewer(userId, pageable);
@@ -167,12 +167,12 @@ public class DocumentService {
 
         Pageable pageable = PaginationUtil.getPageable(request);
 
-        Page<Document> documents = documentRepository.findAllByOwner(userId, pageable);
+        Page<DocumentEntity> documents = documentRepository.findAllByOwner(userId, pageable);
 
         return getDocumentResponsePagingResult(request, documents);
     }
 
-    private PagingResult<DocumentResponse> getDocumentResponsePagingResult(PaginationRequest request, Page<Document> documents) {
+    private PagingResult<DocumentResponse> getDocumentResponsePagingResult(PaginationRequest request, Page<DocumentEntity> documents) {
         List<DocumentResponse> documentsList = documents
                 .stream()
                 .map(documentMapper::toDocumentResponse)
@@ -194,7 +194,7 @@ public class DocumentService {
 
     @Transactional
     public void deleteById(UUID id) {
-        Document document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
+        DocumentEntity document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
 
         try {
             ObjectIdentifier objectToDelete = ObjectIdentifier.builder().key(document.getStorageKey()).build();
@@ -214,7 +214,7 @@ public class DocumentService {
     }
 
     public String downloadDocumentById(UUID id) {
-        Document document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
+        DocumentEntity document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
 
         GetObjectRequest get = GetObjectRequest.builder()
                 .bucket(s3Bucket)

@@ -1,10 +1,10 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.api;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentStatsResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;

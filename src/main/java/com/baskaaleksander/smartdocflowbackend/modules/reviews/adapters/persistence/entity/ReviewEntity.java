@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity;
 
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -39,7 +39,7 @@ public class ReviewEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "document_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private Document document;
+    private DocumentEntity document;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)

@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.common.security.access;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,11 +13,11 @@ import java.util.UUID;
 @Component("docAccess")
 public class DocumentAccessEvaluation {
 
-    private final DocumentRepository documentRepository;
+    private final SpringDataDocumentRepository documentRepository;
 
     @Autowired
     public DocumentAccessEvaluation(
-            DocumentRepository documentRepository) {
+            SpringDataDocumentRepository documentRepository) {
         this.documentRepository = documentRepository;
     }
 

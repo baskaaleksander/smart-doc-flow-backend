@@ -1,9 +1,9 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.mapping;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentOwnerBasicInfo;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentReviewBasicInfo;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentOwnerBasicInfo;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentReviewBasicInfo;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import org.mapstruct.Mapper;
@@ -20,7 +20,7 @@ public interface DocumentMapper {
             @Mapping(target = "owner", source = "owner", qualifiedByName = "ownerToBasicInfo"),
             @Mapping(target = "review", source = "review", qualifiedByName = "reviewToBasicInfo"),
     })
-    DocumentResponse toDocumentResponse(Document document);
+    DocumentResponse toDocumentResponse(DocumentEntity document);
 
     @Named("reviewToBasicInfo")
     default DocumentReviewBasicInfo reviewToBasicInfo(ReviewEntity review) {

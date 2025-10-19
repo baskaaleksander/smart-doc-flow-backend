@@ -6,9 +6,9 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.application.emb
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.VectorStoreLoader;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.google.gson.JsonParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.*;
 public class EmbeddingServiceTest {
 
     @Mock
-    private DocumentOcrResultRepository documentOcrResultRepository;
+    private SpringDataDocumentOcrResultRepository documentOcrResultRepository;
     @Mock
     private S3Client s3Client;
     @Mock
@@ -47,19 +47,19 @@ public class EmbeddingServiceTest {
     @Mock
     private ChunkerService chunkerService;
     @Mock
-    private DocumentRepository documentRepository;
+    private SpringDataDocumentRepository documentRepository;
 
     @InjectMocks
     private EmbeddingTaskConsumerAdapter embeddingService;
 
-    private DocumentOcrResult ocrResult;
+    private DocumentOcrResultEntity ocrResult;
     private UUID docId;
 
 
     @BeforeEach
     void setUp() {
         docId = UUID.randomUUID();
-        ocrResult = new DocumentOcrResult();
+        ocrResult = new DocumentOcrResultEntity();
         ocrResult.setId(UUID.randomUUID());
         ocrResult.setStorageKey(docId + "_ocr");
         ReflectionTestUtils.setField(embeddingService, "s3Bucket", "bucket");

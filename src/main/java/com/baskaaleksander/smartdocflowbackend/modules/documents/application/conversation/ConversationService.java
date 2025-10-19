@@ -6,14 +6,14 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.ConversationMessageEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.ConversationMessageMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessage;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataConversationMessageRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -36,17 +36,17 @@ import java.util.UUID;
 public class ConversationService {
 
     private final VectorStore vectorStore;
-    private final DocumentRepository documentRepository;
+    private final SpringDataDocumentRepository documentRepository;
     private final ChatClient chatClient;
     private final ConversationEncryptionService conversationEncryptionService;
-    private final ConversationMessageRepository conversationMessageRepository;
+    private final SpringDataConversationMessageRepository conversationMessageRepository;
     private final JdbcChatMemoryRepository jdbcChatMemoryRepository;
     private final ConversationMessageMapper conversationMessageMapper;
 
     public ConversationService(
             VectorStore vectorStore,
-            DocumentRepository documentRepository,
-            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, ConversationMessageRepository conversationMessageRepository, JdbcChatMemoryRepository jdbcChatMemoryRepository, ConversationMessageMapper conversationMessageMapper) {
+            SpringDataDocumentRepository documentRepository,
+            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, SpringDataConversationMessageRepository conversationMessageRepository, JdbcChatMemoryRepository jdbcChatMemoryRepository, ConversationMessageMapper conversationMessageMapper) {
         this.vectorStore = vectorStore;
         this.documentRepository = documentRepository;
         this.chatClient = chatClient;
@@ -58,7 +58,7 @@ public class ConversationService {
 
     public String askQuestion(String question, UUID docId, UUID userId) {
 
-        Document doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        DocumentEntity doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         EnumSet<DocumentStatus> allowedStatuses = EnumSet.of(
                 DocumentStatus.PROCESSED,
@@ -126,7 +126,7 @@ public class ConversationService {
         String encryptedContent = conversationEncryptionService.encrypt(content);
         String fingerprint = conversationEncryptionService.fingerprint(content);
 
-        ConversationMessage message = new ConversationMessage();
+        ConversationMessageEntity message = new ConversationMessageEntity();
         message.setSide(type);
         message.setContent(encryptedContent);
         message.setFingerprint(fingerprint);
@@ -154,7 +154,7 @@ public class ConversationService {
     ) {
         Pageable pageable = PaginationUtil.getPageable(request);
 
-        Page<ConversationMessage> conversationMessages = conversationMessageRepository.findAllByDocumentIdAndUserId(pageable, userId, documentId);
+        Page<ConversationMessageEntity> conversationMessages = conversationMessageRepository.findAllByDocumentIdAndUserId(pageable, userId, documentId);
 
         List<ConversationMessageResponse> messageList = conversationMessages
                 .stream()

@@ -5,16 +5,16 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.ConversationMessageResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationEncryptionService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.ConversationMessageMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessage;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.ConversationMessageRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.ConversationMessageEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataConversationMessageRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,13 +45,13 @@ public class ConversationServiceTest {
     @Mock
     private VectorStore vectorStore;
     @Mock
-    private DocumentRepository documentRepository;
+    private SpringDataDocumentRepository documentRepository;
     @Mock(answer = org.mockito.Answers.RETURNS_DEEP_STUBS)
     private ChatClient chatClient;
     @Mock
     private ConversationEncryptionService conversationEncryptionService;
     @Mock
-    private ConversationMessageRepository conversationMessageRepository;
+    private SpringDataConversationMessageRepository conversationMessageRepository;
     @Mock
     private JdbcChatMemoryRepository jdbcChatMemoryRepository;
     @Mock
@@ -60,8 +60,8 @@ public class ConversationServiceTest {
     @InjectMocks
     private ConversationService realService;
 
-    private ConversationMessage conversationMessage;
-    private Document document;
+    private ConversationMessageEntity conversationMessage;
+    private DocumentEntity document;
     private UUID conversationId;
     private UUID documentId;
     private UUID ownerId;
@@ -75,7 +75,7 @@ public class ConversationServiceTest {
         documentId = UUID.randomUUID();
         ownerId = UUID.randomUUID();
         conversationId = UUID.fromString(MakeConversationId.makeConversationId(documentId.toString(), ownerId));
-        conversationMessage = new ConversationMessage();
+        conversationMessage = new ConversationMessageEntity();
         conversationMessage.setId(UUID.randomUUID());
         conversationMessage.setConversationId(conversationId);
         conversationMessage.setUserId(ownerId);
@@ -83,7 +83,7 @@ public class ConversationServiceTest {
         conversationMessage.setContent("example");
         conversationMessage.setSide(ConversationSide.USER);
         conversationMessage.setCreatedAt(Instant.now());
-        document = new Document();
+        document = new DocumentEntity();
         document.setId(documentId);
         document.setStatus(DocumentStatus.PROCESSED);
     }
@@ -136,9 +136,9 @@ public class ConversationServiceTest {
                 any(Pageable.class), any(UUID.class), any(UUID.class)))
                 .thenReturn(new PageImpl<>(List.of(conversationMessage), pageable, 1));
 
-        when(conversationMessageMapper.toMessageResponse(any(ConversationMessage.class)))
+        when(conversationMessageMapper.toMessageResponse(any(ConversationMessageEntity.class)))
                 .thenAnswer(inv -> {
-                    ConversationMessage msg = inv.getArgument(0);
+                    ConversationMessageEntity msg = inv.getArgument(0);
                     return new ConversationMessageResponse(msg.getId(), msg.getSide(), "content", msg.getCreatedAt());
                 });
 
@@ -156,6 +156,6 @@ public class ConversationServiceTest {
 
         verify(conversationMessageRepository).findAllByDocumentIdAndUserId(any(Pageable.class), eq(ownerId), eq(documentId));
         verify(conversationEncryptionService, atLeastOnce()).decrypt(any());
-        verify(conversationMessageMapper, atLeastOnce()).toMessageResponse(any(ConversationMessage.class));
+        verify(conversationMessageMapper, atLeastOnce()).toMessageResponse(any(ConversationMessageEntity.class));
     }
 }

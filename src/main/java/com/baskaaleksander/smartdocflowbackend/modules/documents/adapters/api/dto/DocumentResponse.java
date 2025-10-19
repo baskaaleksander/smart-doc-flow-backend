@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 
