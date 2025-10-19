@@ -9,12 +9,9 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflict
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Role;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Tokens;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRoleRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
-import com.baskaaleksander.smartdocflowbackend.common.security.JwtUtil;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -39,11 +36,10 @@ import java.util.stream.Collectors;
 public class AuthApplicationService {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtUtil jwtUtil;
+    private final TokenUtilPort tokenUtil;
     private final PasswordEncoder passwordEncoder;
     private final CookieUtil cookieUtil;
     private final AuthEventPublisherPort authEventPublisherPort;
-
     private final AuthUserCommandPort authUserCommandPort;
     private final AuthUserQueryPort authUserQueryPort;
     private final RoleQueryPort roleQueryPort;
@@ -52,7 +48,7 @@ public class AuthApplicationService {
     @Autowired
     public AuthApplicationService(
             AuthenticationManager authenticationManager,
-            JwtUtil jwtUtil,
+            TokenUtilPort tokenUtil,
             PasswordEncoder passwordEncoder,
             CookieUtil cookieUtil,
             AuthEventPublisherPort authEventPublisherPort,
@@ -62,10 +58,9 @@ public class AuthApplicationService {
             AuthUserApiMapper mapper
            ) {
         this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
+        this.tokenUtil = tokenUtil;
         this.passwordEncoder = passwordEncoder;
         this.cookieUtil = cookieUtil;
-
         this.authEventPublisherPort = authEventPublisherPort;
         this.authUserCommandPort = authUserCommandPort;
         this.authUserQueryPort = authUserQueryPort;
@@ -83,7 +78,9 @@ public class AuthApplicationService {
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        return jwtUtil.issueTokens(userDetails.getUsername());
+        Tokens tokens = tokenUtil.issueTokens(userDetails.getUsername());
+
+        return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
     @Transactional
@@ -125,13 +122,14 @@ public class AuthApplicationService {
     }
 
     public TokenResponse refreshAccessToken(String refreshToken) {
-        return jwtUtil.refreshAccessToken(refreshToken);
+        Tokens tokens = tokenUtil.refreshAccessToken(refreshToken);
+        return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
     public String logoutUser(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = cookieUtil.parseRefreshTokenCookie(request);
         cookieUtil.clearRefreshTokenCookie(response);
-        jwtUtil.invalidateRefreshToken(refreshToken);
+        tokenUtil.invalidateRefreshToken(refreshToken);
 
         return "Logout successful";
     }
