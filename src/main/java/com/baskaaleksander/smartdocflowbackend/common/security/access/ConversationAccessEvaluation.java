@@ -40,6 +40,6 @@ public class ConversationAccessEvaluation {
 
         UUID userId = userDetails.getId();
 
-        return (roles.contains("ROLE_REVIEW") && reviewerId.equals(userId));
+        return ((roles.contains("ROLE_REVIEW") || roles.contains("ROLE_ADMIN"))&& reviewerId.equals(userId));
     }
 }

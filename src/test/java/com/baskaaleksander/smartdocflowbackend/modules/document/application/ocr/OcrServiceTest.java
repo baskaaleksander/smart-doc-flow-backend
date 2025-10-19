@@ -4,8 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingExc
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskConsumerAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
@@ -56,7 +55,7 @@ public class OcrServiceTest {
     private EmbedTaskPublisher embedTaskPublisher;
 
     @InjectMocks
-    private OcrService ocrService;
+    private OcrTaskConsumerAdapter ocrService;
 
     private UUID docId;
     private Document doc;

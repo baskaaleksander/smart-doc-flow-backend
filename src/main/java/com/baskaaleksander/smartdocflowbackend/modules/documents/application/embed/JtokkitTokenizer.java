@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
 
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.Tokenizer;
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.Encoding;
 import com.knuddels.jtokkit.api.EncodingRegistry;

@@ -16,7 +16,7 @@ public class OcrRabbitPublisherAdapter implements OcrTaskPublisherPort {
     }
 
     @Override
-    public void handle(OcrTask task) {
+    public void publish(OcrTask task) {
         rabbitTemplate.convertAndSend(
                 QueueConfig.EXCHANGE,
                 QueueConfig.OCR_ROUTING_KEY,

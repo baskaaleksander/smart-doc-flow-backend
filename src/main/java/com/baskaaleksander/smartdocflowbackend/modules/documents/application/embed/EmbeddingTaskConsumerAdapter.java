@@ -1,10 +1,12 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.OcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.OcrResultPage;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskConsumerPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentRepository;
@@ -23,7 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class EmbeddingService {
+public class EmbeddingTaskConsumerAdapter implements EmbeddingTaskConsumerPort {
 
     private final DocumentOcrResultRepository documentOcrResultRepository;
     private final S3Client s3Client;
@@ -35,7 +37,7 @@ public class EmbeddingService {
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
 
-    public EmbeddingService(
+    public EmbeddingTaskConsumerAdapter(
             DocumentOcrResultRepository documentOcrResultRepository,
             S3Client s3Client,
             VectorStoreLoader vectorStoreLoader,
@@ -49,7 +51,11 @@ public class EmbeddingService {
     }
 
     @Transactional
-    public void ingestDocument(UUID docId) {
+    @Override
+    public void handle(EmbedTask task) {
+
+        UUID docId = task.documentId();
+
         DocumentOcrResult ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
 
         GetObjectRequest get = GetObjectRequest.builder()

@@ -1,27 +1,30 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.JobStatusService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
-
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskConsumerPort;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
-public class OcrTaskListener {
-    private final OcrService ocrService;
+@Component
+public class OcrRabbitListenerAdapter {
+
+    private final OcrTaskConsumerPort consumer;
     private final JobStatusService jobStatusService;
 
-    public OcrTaskListener(OcrService ocrService, JobStatusService jobStatusService) {
-        this.ocrService = ocrService;
+    private OcrRabbitListenerAdapter(
+            OcrTaskConsumerPort consumer,
+            JobStatusService jobStatusService
+            ) {
+        this.consumer = consumer;
         this.jobStatusService = jobStatusService;
     }
 
     @RabbitListener(queues = QueueConfig.OCR_QUEUE)
-    public void handle(OcrTask task) {
+    public void onTask(OcrTask task) {
         jobStatusService.markInProgressOcr(task.documentId());
-        ocrService.runOcr(task.documentId());
+        consumer.handle(task);
         jobStatusService.markTextReady(task.documentId());
     }
-
 }

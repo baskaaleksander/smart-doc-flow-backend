@@ -1,12 +1,15 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbedTaskPublisher;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerAdapter;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskPublisherPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskConsumerPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.persistence.DocumentOcrResultRepository;
@@ -46,10 +49,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class OcrService {
+public class OcrTaskConsumerAdapter implements OcrTaskConsumerPort {
 
     private final DocumentOcrResultRepository documentOcrResultRepository;
-    private final EmbedTaskPublisher embedTaskPublisher;
     @Value(value = "${minio.bucket.name}")
     private String bucket;
     @Value(value = "${spring.ai.openai.chat.options.model}")
@@ -58,25 +60,30 @@ public class OcrService {
     private final DocumentRepository documentRepository;
     private final OpenAiChatModel chatModel;
     private final ObjectMapper MAPPER = new ObjectMapper();
+    private final EmbeddingTaskPublisherPort taskPublisher;
 
 
     @Autowired
-    public OcrService(
+    public OcrTaskConsumerAdapter(
             S3Client s3Client,
             DocumentRepository documentRepository,
             OpenAiChatModel chatModel,
             DocumentOcrResultRepository documentOcrResultRepository,
-            EmbeddingService embeddingService, EmbedTaskPublisher embedTaskPublisher) {
+            EmbeddingTaskConsumerAdapter embeddingService,
+            EmbeddingTaskPublisherPort taskPublisher
+            ) {
         this.s3Client = s3Client;
         this.documentRepository = documentRepository;
         this.chatModel = chatModel;
         this.documentOcrResultRepository = documentOcrResultRepository;
-
-        this.embedTaskPublisher = embedTaskPublisher;
+        this.taskPublisher = taskPublisher;
     }
 
     @Transactional
-    public void runOcr(UUID documentId) {
+    @Override
+    public void handle(OcrTask task) {
+
+        UUID documentId = task.documentId();
 
         Document doc = documentRepository.getDocumentById(documentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
@@ -105,7 +112,7 @@ public class OcrService {
 
                 documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
-                embedTaskPublisher.enqueue(documentId);
+                taskPublisher.publish(new EmbedTask(documentId));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);

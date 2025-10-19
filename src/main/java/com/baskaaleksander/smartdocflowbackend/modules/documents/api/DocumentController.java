@@ -6,8 +6,6 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.Documen
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -17,7 +15,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.UUID;
 
 @RestController

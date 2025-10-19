@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.em
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.SentenceSpan;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.WordSpan;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.Tokenizer;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

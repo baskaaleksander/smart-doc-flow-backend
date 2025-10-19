@@ -56,7 +56,7 @@ public class ReviewApplicationService {
 
     @Transactional
     public ReviewResponse handleReviewStatusChange(UUID reviewId, String username, ReviewRequest body) {
-        if(body.comment().isBlank()) {
+        if(body.comment() == null) {
             return switch (body.status()) {
                 case IN_PROGRESS -> claimReview(reviewId, username);
                 case PENDING -> releaseReview(reviewId, username);

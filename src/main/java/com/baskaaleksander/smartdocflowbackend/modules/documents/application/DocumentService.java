@@ -4,8 +4,9 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.api.dto.DocumentStatsResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskPublisher;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskPublisherPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
@@ -50,7 +51,6 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final S3Client s3Client;
-    private final OcrTaskPublisher ocrTaskPublisher;
     private final SpringDataUserRepository userRepository;
     private final SpringDataReviewRepository reviewRepository;
     private final DocumentMapper documentMapper;
@@ -58,6 +58,8 @@ public class DocumentService {
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final ApplicationEventPublisher publisher;
+
+    private final OcrTaskPublisherPort taskPublisher;
 
 
     @Value(value = "${minio.bucket.name}")
@@ -70,8 +72,8 @@ public class DocumentService {
             SpringDataReviewRepository reviewRepository,
             DocumentMapper documentMapper,
             S3Presigner s3Presigner,
-            OcrTaskPublisher ocrTaskPublisher,
-            ApplicationEventPublisher publisher
+            ApplicationEventPublisher publisher,
+            OcrTaskPublisherPort taskPublisher
             ) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
@@ -79,8 +81,8 @@ public class DocumentService {
         this.reviewRepository = reviewRepository;
         this.documentMapper = documentMapper;
         this.s3Presigner = s3Presigner;
-        this.ocrTaskPublisher = ocrTaskPublisher;
         this.publisher = publisher;
+        this.taskPublisher = taskPublisher;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -122,7 +124,7 @@ public class DocumentService {
 
         publisher.publishEvent(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
 
-        ocrTaskPublisher.enqueue(docId);
+        taskPublisher.publish(new OcrTask(docId));
 
         return documentMapper.toDocumentResponse(document);
     }
