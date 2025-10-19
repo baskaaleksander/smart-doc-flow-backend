@@ -36,14 +36,18 @@ public interface SpringDataUserRepository extends JpaRepository<UserEntity, UUID
     Optional<Boolean> getUserStatusById(UUID userId);
 
     @Query("""
-    SELECT r.role AS role, COUNT(DISTINCT u) AS count
-    FROM Role r
-    LEFT JOIN r.users u
-    GROUP BY r.role
+        select r.role as role, count(u) as count
+        from UserEntity u
+        join u.roles r
+        group by r.role
     """)
     List<UserRoleCount> countUsersPerRole();
 
-    @Query("select u.active as active, count(u) as count from UserEntity u group by u.active")
+    @Query("""
+        select u.active as active, count(u) as count
+        from UserEntity u
+        group by u.active
+    """)
     List<UserStatusCount> countUsersPerStatus();
 
     Page<UserEntity> findAll(Pageable pageable);
