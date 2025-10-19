@@ -68,8 +68,8 @@ public class AuthApplicationService {
     public TokenResponse loginUser(UserLoginRequest user) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        user.getUsername(),
-                        user.getPassword()
+                        user.username(),
+                        user.password()
                 )
         );
 
@@ -81,30 +81,30 @@ public class AuthApplicationService {
     @Transactional
     public UserResponse registerUser(UserRegisterRequest user) {
 
-        Optional<UserEntity> existingUser = userRepository.findByUsername(user.getUsername());
+        Optional<UserEntity> existingUser = userRepository.findByUsername(user.username());
 
         if(existingUser.isPresent()) {
-            throw new ResourceConflictException("User with " + user.getUsername() + " username already exists");
+            throw new ResourceConflictException("User with " + user.username() + " username already exists");
         }
 
-        Optional<UserEntity> existingUser2 = userRepository.findByEmail(user.getEmail());
+        Optional<UserEntity> existingUser2 = userRepository.findByEmail(user.email());
 
         if(existingUser2.isPresent()) {
-            throw new ResourceConflictException("User with " + user.getEmail() + " email already exists");
+            throw new ResourceConflictException("User with " + user.email() + " email already exists");
         }
 
 
         String password = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(password);
-        Set<RoleEntity> roles = roleRepository.findAllByRoleIn(user.getRoles());
+        Set<RoleEntity> roles = roleRepository.findAllByRoleIn(user.roles());
 
-        if (roles.size() != user.getRoles().size()) {
+        if (roles.size() != user.roles().size()) {
             throw new ResourceNotFoundException("One or more roles not found");
         }
 
         UserEntity newUser = new UserEntity();
-        newUser.setUsername(user.getUsername());
-        newUser.setEmail(user.getEmail());
+        newUser.setUsername(user.username());
+        newUser.setEmail(user.username());
         newUser.setPassword(encodedPassword);
         newUser.setRoles(roles);
 

@@ -84,7 +84,7 @@ public class NotificationApplicationService implements NotificationEventIngressP
     @Transactional
     public Integer markAllAsRead(String username, ReadNotificationRequest body) {
 
-        if (body.getRead()) {
+        if (body.read()) {
             return notificationCommandPort.markAllRead(username);
         }
         return 0;
@@ -92,7 +92,7 @@ public class NotificationApplicationService implements NotificationEventIngressP
 
     @Transactional
     public Integer markOneAsRead(String username, UUID id, ReadNotificationRequest body) {
-        if (body.getRead()) {
+        if (body.read()) {
             return notificationCommandPort.markOneRead(username, id);
         }
         return 0;
