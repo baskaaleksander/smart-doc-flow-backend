@@ -3,7 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.em
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.SentenceSpan;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.WordSpan;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.Tokenizer;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.TokenizerPort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,9 +15,9 @@ import java.util.regex.Pattern;
 @Service
 public class ChunkerService {
 
-    private final Tokenizer tokenizer;
+    private final TokenizerPort tokenizer;
 
-    public ChunkerService(Tokenizer tokenizer) {
+    public ChunkerService(TokenizerPort tokenizer) {
         this.tokenizer = tokenizer;
     }
 

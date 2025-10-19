@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.embed;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.Tokenizer;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.TokenizerPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 public class ChunkerServiceTest {
 
-    static class FakeTokenizer implements Tokenizer{
+    static class FakeTokenizer implements TokenizerPort {
 
         @Override
         public int count(String rawText) {
