@@ -11,9 +11,6 @@ import java.util.Set;
 @Repository
 public interface SpringDataRoleRepository extends JpaRepository<RoleEntity, Long> {
 
-    @Query("select r from RoleEntity r where r.role = :role")
-    Optional<RoleEntity> findRoleByRole(String role);
-
     @Query("select r from RoleEntity r where r.role in :roles")
     Set<RoleEntity> findAllByRoleIn(Set<String> roles);
 }
