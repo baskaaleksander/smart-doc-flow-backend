@@ -96,7 +96,6 @@ public class OcrService {
 
                 List<Media> mediaList = convertImages(imageList);
 
-                //add here some recovery logic in case ocr via openai proceeds but rest fails
                 String rawText = performOcr(mediaList);
 
 
