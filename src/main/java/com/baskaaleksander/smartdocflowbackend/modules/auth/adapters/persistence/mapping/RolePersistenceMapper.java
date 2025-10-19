@@ -13,13 +13,11 @@ import java.util.stream.Collectors;
 public class RolePersistenceMapper {
 
     public Role toDomain(RoleEntity e) {
-        Set<UUID> userIds = e.getUsers() != null ? e.getUsers().stream().map(UserEntity::getId).collect(Collectors.toSet()) : null;
 
         return new Role(
                 e.getId(),
                 e.getDescription(),
-                e.getRole(),
-                userIds
+                e.getRole()
         );
     }
 }

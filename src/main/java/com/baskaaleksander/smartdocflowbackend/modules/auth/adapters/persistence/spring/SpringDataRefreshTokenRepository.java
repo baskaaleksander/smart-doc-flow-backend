@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface SpringDataRefreshTokenRepository extends JpaRepository<RefreshTokenEntity, UUID> {
 
     Optional<RefreshTokenEntity> findByJtiAndRevokedFalse(String jti);
+    Optional<RefreshTokenEntity> findByJti(String jti);
 }

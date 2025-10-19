@@ -22,7 +22,4 @@ public class RoleEntity {
     @Column(nullable = false)
     private String role;
 
-    @ManyToMany(mappedBy = "roles")
-    @JsonIgnore
-    private Set<UserEntity> users = new HashSet<>();
 }

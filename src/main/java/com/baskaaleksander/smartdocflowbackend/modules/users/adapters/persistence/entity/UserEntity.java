@@ -30,13 +30,12 @@ public class UserEntity {
     @Column(nullable = false)
     private String password;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
+            joinColumns = @JoinColumn(name = "user_id", columnDefinition = "UUID"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    @Column(nullable = false)
     private Set<RoleEntity> roles;
 
     @Column(nullable = false)
