@@ -2,7 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.document.application.emb
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerAdapter;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.VectorStoreLoader;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
@@ -50,7 +50,7 @@ public class EmbeddingServiceTest {
     private SpringDataDocumentRepository documentRepository;
 
     @InjectMocks
-    private EmbeddingTaskConsumerAdapter embeddingService;
+    private EmbeddingTaskConsumerService embeddingService;
 
     private DocumentOcrResultEntity ocrResult;
     private UUID docId;

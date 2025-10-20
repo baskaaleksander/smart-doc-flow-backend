@@ -62,8 +62,6 @@ public class DocumentServiceTest {
     @Mock
     private S3Client s3Client;
     @Mock
-    private OcrTaskPublisher ocrTaskPublisher;
-    @Mock
     private SpringDataUserRepository userRepository;
     @Mock
     private DocumentMapper documentMapper;
@@ -224,7 +222,6 @@ public class DocumentServiceTest {
 
 //        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
         ArgumentCaptor<UUID> enqueueCap = ArgumentCaptor.forClass(UUID.class);
-        verify(ocrTaskPublisher).enqueue(enqueueCap.capture());
 
         ArgumentCaptor<DocumentEntity> docCap = ArgumentCaptor.forClass(DocumentEntity.class);
         verify(documentRepository, atLeastOnce()).save(docCap.capture());
@@ -268,7 +265,7 @@ public class DocumentServiceTest {
 
         assertThatThrownBy(() -> documentService.createAndSave(file))
                 .isInstanceOf(ResourceNotFoundException.class);
-        verifyNoInteractions(s3Client, reviewRepository, ocrTaskPublisher, notificationService, documentMapper);
+        verifyNoInteractions(s3Client, reviewRepository, notificationService, documentMapper);
     }
 
     @Test
@@ -297,7 +294,6 @@ public class DocumentServiceTest {
 
         verify(documentRepository, never()).save(any());
         verify(reviewRepository, never()).save(any());
-        verify(ocrTaskPublisher, never()).enqueue(any());
 //        verify(notificationService, never()).sendNotification(any(), any(), any());
         verify(documentMapper, never()).toDocumentResponse(any());
     }
@@ -375,7 +371,6 @@ public class DocumentServiceTest {
 
 
 //        verify(notificationService).sendNotification(eq(username), eq("document_uploaded"), contains("successfully"));
-        verify(ocrTaskPublisher).enqueue(any(UUID.class));
     }
 
 

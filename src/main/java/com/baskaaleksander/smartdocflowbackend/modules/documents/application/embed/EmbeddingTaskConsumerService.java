@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class EmbeddingTaskConsumerAdapter implements EmbeddingTaskConsumerPort {
+public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
     private final SpringDataDocumentOcrResultRepository documentOcrResultRepository;
     private final S3Client s3Client;
@@ -37,7 +37,7 @@ public class EmbeddingTaskConsumerAdapter implements EmbeddingTaskConsumerPort {
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
 
-    public EmbeddingTaskConsumerAdapter(
+    public EmbeddingTaskConsumerService(
             SpringDataDocumentOcrResultRepository documentOcrResultRepository,
             S3Client s3Client,
             VectorStoreLoader vectorStoreLoader,

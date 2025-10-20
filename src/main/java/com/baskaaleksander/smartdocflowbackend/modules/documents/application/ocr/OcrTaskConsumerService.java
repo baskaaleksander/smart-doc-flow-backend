@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerAdapter;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class OcrTaskConsumerAdapter implements OcrTaskConsumerPort {
+public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
     private final SpringDataDocumentOcrResultRepository documentOcrResultRepository;
     @Value(value = "${minio.bucket.name}")
@@ -64,12 +64,12 @@ public class OcrTaskConsumerAdapter implements OcrTaskConsumerPort {
 
 
     @Autowired
-    public OcrTaskConsumerAdapter(
+    public OcrTaskConsumerService(
             S3Client s3Client,
             SpringDataDocumentRepository documentRepository,
             OpenAiChatModel chatModel,
             SpringDataDocumentOcrResultRepository documentOcrResultRepository,
-            EmbeddingTaskConsumerAdapter embeddingService,
+            EmbeddingTaskConsumerService embeddingService,
             EmbeddingTaskPublisherPort taskPublisher
             ) {
         this.s3Client = s3Client;
