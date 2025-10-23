@@ -1,5 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.jpa;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
@@ -9,9 +11,14 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persis
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentReviewBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentUserBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -29,28 +36,85 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
 
     private final SpringDataDocumentRepository documentRepo;
     private final DocumentPersistenceMapper mapper;
+    private final SpringDataUserRepository userRepo;
 
     public DocumentJpaAdapter(
             SpringDataDocumentRepository documentRepo,
-            DocumentPersistenceMapper mapper
+            DocumentPersistenceMapper mapper,
+            SpringDataUserRepository userRepo
     ) {
         this.documentRepo = documentRepo;
         this.mapper = mapper;
+        this.userRepo = userRepo;
     }
 
     @Override
+    @Transactional
     public Document save(Document document) {
-        return null;
+
+        if (document.getReview() == null) {
+            throw new ResourceConflictException("Review is required to create or update document");
+        }
+
+        DocumentEntity entity = (document.getId() != null)
+                ? documentRepo.findById(document.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + document.getId()))
+                : new DocumentEntity();
+
+        if (entity.getId() == null) {
+            entity.setId(UUID.randomUUID());
+        }
+
+        entity.setFilename(document.getFilename());
+        entity.setMime(document.getMime());
+        entity.setSize(document.getSize());
+        entity.setStorageKey(document.getStorageKey());
+        entity.setPageSize(document.getPageSize());
+        entity.setStatus(document.getStatus());
+
+        if (document.getOwner() == null || document.getOwner().id() == null) {
+            throw new IllegalArgumentException("Owner is required");
+        }
+
+        entity.setOwner(
+                userRepo.findById(document.getOwner().id())
+                        .orElseThrow(() -> new ResourceNotFoundException("Owner not found: " + document.getOwner().id()))
+        );
+
+        DocumentReviewBasic review = document.getReview();
+        ReviewEntity reviewEntity;
+
+        if (entity.getReview() == null || review.getId() == null) {
+            reviewEntity = new ReviewEntity();
+            reviewEntity.setStatus(
+                    review.getStatus() != null
+                            ? ReviewStatus.fromString(review.getStatus())
+                            : ReviewStatus.PENDING
+            );
+            reviewEntity.setReviewer(null);
+            reviewEntity.setComment(review.getComment());
+
+            reviewEntity.setDocument(entity);
+            entity.setReview(reviewEntity);
+        } else {
+            reviewEntity = entity.getReview();
+            reviewEntity.setStatus(
+                    review.getStatus() != null
+                            ? ReviewStatus.fromString(review.getStatus())
+                            : reviewEntity.getStatus()
+            );
+            reviewEntity.setComment(review.getComment());
+        }
+
+        DocumentEntity saved = documentRepo.saveAndFlush(entity);
+
+        return mapper.toDomain(saved);
     }
 
     @Override
-    public void attachReview(DocumentReviewBasic review) {
-
-    }
-
-    @Override
+    @Transactional
     public void updateStatus(UUID documentId, DocumentStatus status) {
-
+        documentRepo.updateStatus(documentId, status);
     }
 
     @Override

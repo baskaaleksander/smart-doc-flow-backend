@@ -8,7 +8,6 @@ import java.util.UUID;
 
 public interface DocumentCommandPort {
     Document save(Document document);
-    void attachReview(DocumentReviewBasic review);
     void updateStatus(UUID documentId, DocumentStatus status);
 
 }
