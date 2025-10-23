@@ -15,23 +15,15 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class DocumentService {
-
 
     private final DocumentDomainEventPublisherPort publisher;
     private final OcrTaskPublisherPort taskPublisher;
