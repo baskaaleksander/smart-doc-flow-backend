@@ -4,14 +4,14 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persis
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskPublisherPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskConsumerPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
@@ -52,27 +52,34 @@ import java.util.UUID;
 @Service
 public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
-    private final SpringDataDocumentOcrResultRepository documentOcrResultRepository;
+    private final OpenAiChatModel chatModel;
+
+    private final EmbeddingTaskPublisherPort taskPublisher;
     private final FileStoragePort fileStoragePort;
+    private final DocumentQueryPort documentQueryPort;
+    private final DocumentCommandPort documentCommandPort;
+    private final DocumentOcrResultCommandPort documentOcrResultCommandPort;
+
     @Value(value = "${spring.ai.openai.chat.options.model}")
     private String model;
-    private final SpringDataDocumentRepository documentRepository;
-    private final OpenAiChatModel chatModel;
-    private final EmbeddingTaskPublisherPort taskPublisher;
-
 
     @Autowired
     public OcrTaskConsumerService(
-            SpringDataDocumentRepository documentRepository,
             OpenAiChatModel chatModel,
-            SpringDataDocumentOcrResultRepository documentOcrResultRepository,
+
             EmbeddingTaskPublisherPort taskPublisher,
-            FileStoragePort fileStoragePort) {
-        this.documentRepository = documentRepository;
+            FileStoragePort fileStoragePort,
+            DocumentQueryPort documentQueryPort,
+            DocumentCommandPort documentCommandPort,
+            DocumentOcrResultCommandPort documentOcrResultCommandPort
+            ) {
         this.chatModel = chatModel;
-        this.documentOcrResultRepository = documentOcrResultRepository;
+
         this.taskPublisher = taskPublisher;
         this.fileStoragePort = fileStoragePort;
+        this.documentQueryPort = documentQueryPort;
+        this.documentCommandPort = documentCommandPort;
+        this.documentOcrResultCommandPort = documentOcrResultCommandPort;
     }
 
     @Transactional
@@ -81,7 +88,7 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
         UUID documentId = task.documentId();
 
-        DocumentEntity doc = documentRepository.getDocumentById(documentId)
+        Document doc = documentQueryPort.getDocumentById(documentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
 
 
@@ -106,11 +113,12 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
                 saveOcrResultToDb(docOcrKey, documentId);
 
-                documentRepository.updateStatus(documentId, DocumentStatus.TEXT_READY);
+                documentCommandPort.updateStatus(documentId, DocumentStatus.TEXT_READY);
 
                 taskPublisher.publish(new EmbedTask(documentId));
 
             } catch (Exception e) {
+                //TODO: change this
                 throw new RuntimeException(e);
             }
     }
@@ -210,12 +218,12 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
     private void saveOcrResultToDb(String documentKey, UUID documentId) {
 
-        DocumentEntity document = documentRepository.getDocumentById(documentId)
+        Document document = documentQueryPort.getDocumentById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
-        DocumentOcrResultEntity ocrResult = new DocumentOcrResultEntity();
-        ocrResult.setDocument(document);
+        DocumentOcrResult ocrResult = new DocumentOcrResult();
+        ocrResult.setDocumentId(document.getId());
         ocrResult.setStorageKey(documentKey);
 
-        documentOcrResultRepository.save(ocrResult);
+        documentOcrResultCommandPort.save(ocrResult);
     }
 }

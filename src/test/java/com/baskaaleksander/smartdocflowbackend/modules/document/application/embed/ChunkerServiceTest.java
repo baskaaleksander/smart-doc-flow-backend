@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.embed;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerServiceAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.TokenizerPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,11 +26,11 @@ public class ChunkerServiceTest {
     }
 
     private UUID docId;
-    private ChunkerService service;
+    private ChunkerServiceAdapter service;
 
     @BeforeEach
     void setUp() {
-        service = new ChunkerService(new FakeTokenizer());
+        service = new ChunkerServiceAdapter(new FakeTokenizer());
         docId = UUID.randomUUID();
     }
 

@@ -1,7 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.embed;
 
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerServiceAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.VectorStoreLoader;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
@@ -9,7 +8,6 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Do
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
-import com.google.gson.JsonParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +43,7 @@ public class EmbeddingServiceTest {
     @Mock
     private VectorStoreLoader vectorStoreLoader;
     @Mock
-    private ChunkerService chunkerService;
+    private ChunkerServiceAdapter chunkerService;
     @Mock
     private SpringDataDocumentRepository documentRepository;
 

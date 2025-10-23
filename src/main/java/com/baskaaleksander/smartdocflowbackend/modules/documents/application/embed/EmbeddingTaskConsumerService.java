@@ -4,7 +4,6 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParseException;
 import jakarta.transaction.Transactional;
@@ -21,8 +20,8 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final VectorStoreLoader vectorStoreLoader;
-    private final ChunkerService chunkerService;
 
+    private final ChunkerServicePort chunkerService;
     private final FileStoragePort fileStoragePort;
     private final DocumentOcrResultQueryPort documentOcrResultQueryPort;
     private final DocumentCommandPort documentCommandPort;
@@ -30,15 +29,15 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
     public EmbeddingTaskConsumerService(
             VectorStoreLoader vectorStoreLoader,
-            ChunkerService chunkerService,
 
+            ChunkerServicePort chunkerService,
             FileStoragePort fileStoragePort,
             DocumentOcrResultQueryPort documentOcrResultQueryPort,
             DocumentCommandPort documentCommandPort
             ) {
         this.vectorStoreLoader = vectorStoreLoader;
-        this.chunkerService = chunkerService;
 
+        this.chunkerService = chunkerService;
         this.fileStoragePort = fileStoragePort;
         this.documentOcrResultQueryPort = documentOcrResultQueryPort;
         this.documentCommandPort = documentCommandPort;
