@@ -48,6 +48,12 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
 
     @Transactional
     @Override
+    public void deleteById(UUID documentId) {
+        documentRepo.deleteById(documentId);
+    }
+
+    @Transactional
+    @Override
     public Document save(Document document) {
         if (document.getReview() == null) {
             throw new ResourceConflictException("Review is required to create or update document");
