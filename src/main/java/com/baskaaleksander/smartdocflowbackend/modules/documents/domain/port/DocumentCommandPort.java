@@ -10,4 +10,5 @@ public interface DocumentCommandPort {
     Document save(Document document);
     void updateStatus(UUID documentId, DocumentStatus status);
     void deleteById(UUID documentId);
+    void updatePageCount(UUID documentId, int count);
 }

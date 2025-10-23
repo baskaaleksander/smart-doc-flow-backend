@@ -52,6 +52,11 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
         documentRepo.deleteById(documentId);
     }
 
+    @Override
+    public void updatePageCount(UUID documentId, int count) {
+        documentRepo.updatePageCount(documentId, count);
+    }
+
     @Transactional
     @Override
     public Document save(Document document) {

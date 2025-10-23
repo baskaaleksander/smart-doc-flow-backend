@@ -3,10 +3,8 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.em
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.*;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentOcrResultQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskConsumerPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParseException;
 import jakarta.transaction.Transactional;
@@ -24,26 +22,26 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final VectorStoreLoader vectorStoreLoader;
     private final ChunkerService chunkerService;
-    private final SpringDataDocumentRepository documentRepository;
 
     private final FileStoragePort fileStoragePort;
     private final DocumentOcrResultQueryPort documentOcrResultQueryPort;
+    private final DocumentCommandPort documentCommandPort;
 
 
     public EmbeddingTaskConsumerService(
             VectorStoreLoader vectorStoreLoader,
             ChunkerService chunkerService,
-            SpringDataDocumentRepository documentRepository,
 
             FileStoragePort fileStoragePort,
-            DocumentOcrResultQueryPort documentOcrResultQueryPort
+            DocumentOcrResultQueryPort documentOcrResultQueryPort,
+            DocumentCommandPort documentCommandPort
             ) {
         this.vectorStoreLoader = vectorStoreLoader;
         this.chunkerService = chunkerService;
-        this.documentRepository = documentRepository;
 
         this.fileStoragePort = fileStoragePort;
         this.documentOcrResultQueryPort = documentOcrResultQueryPort;
+        this.documentCommandPort = documentCommandPort;
     }
 
     @Transactional
@@ -64,13 +62,16 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
         }
 
         List<Chunk> chunks = new ArrayList<>();
+        int pageCount = 0;
 
         for (OcrResultPage page : result.pages()) {
             chunks.addAll(chunkerService.chunkPage(page.text(),docId ,page.page()));
+            pageCount++;
         }
 
         vectorStoreLoader.loadChunks(chunks);
 
-        documentRepository.updateStatus(docId, DocumentStatus.PROCESSED);
+        documentCommandPort.updateStatus(docId, DocumentStatus.PROCESSED);
+        documentCommandPort.updatePageCount(docId, pageCount);
     }
 }
