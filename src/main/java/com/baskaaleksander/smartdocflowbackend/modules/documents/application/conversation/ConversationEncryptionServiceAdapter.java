@@ -1,23 +1,20 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation;
 
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationEncryptionServicePort;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 
 @Service
-public class ConversationEncryptionService {
+public class ConversationEncryptionServiceAdapter implements ConversationEncryptionServicePort {
 
     private static final String AES_ALGO = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH = 128;
@@ -27,7 +24,7 @@ public class ConversationEncryptionService {
     private final SecretKeySpec hmacKey;
     private final SecureRandom random = new SecureRandom();
 
-    public ConversationEncryptionService(
+    public ConversationEncryptionServiceAdapter(
             @Value("${crypto.conversation.secret}") String aesSecret, @Value("${crypto.conversation.fingerprint-secret}") String hmacSecret
     ) {
         byte[] aesKeyBytes = Base64.getDecoder().decode(aesSecret);

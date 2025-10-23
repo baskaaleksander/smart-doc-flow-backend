@@ -11,17 +11,14 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Co
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationEncryptionServicePort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.ConversationMessageMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataConversationMessageRepository;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
 import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
@@ -38,8 +35,8 @@ public class ConversationService {
 
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
-    private final ConversationEncryptionService conversationEncryptionService;
 
+    private final ConversationEncryptionServicePort conversationEncryptionServicePort;
     private final DocumentQueryPort documentQueryPort;
     private final ConversationMessageQueryPort conversationMessageQueryPort;
     private final ConversationMessageCommandPort conversationMessageCommandPort;
@@ -48,8 +45,8 @@ public class ConversationService {
     public ConversationService(
             VectorStore vectorStore,
             ChatClient chatClient,
-            ConversationEncryptionService conversationEncryptionService,
 
+            ConversationEncryptionServicePort conversationEncryptionServicePort,
             ConversationMessageQueryPort conversationMessageQueryPort,
             ConversationMessageCommandPort conversationMessageCommandPort,
             DocumentQueryPort documentQueryPort,
@@ -57,8 +54,8 @@ public class ConversationService {
             ) {
         this.vectorStore = vectorStore;
         this.chatClient = chatClient;
-        this.conversationEncryptionService = conversationEncryptionService;
 
+        this.conversationEncryptionServicePort = conversationEncryptionServicePort;
         this.conversationMessageQueryPort = conversationMessageQueryPort;
         this.conversationMessageCommandPort = conversationMessageCommandPort;
         this.documentQueryPort = documentQueryPort;
@@ -132,8 +129,8 @@ public class ConversationService {
     }
 
     private void saveMessage(String content, ConversationSide type, String convoId, UUID userId, UUID documentId) {
-        String encryptedContent = conversationEncryptionService.encrypt(content);
-        String fingerprint = conversationEncryptionService.fingerprint(content);
+        String encryptedContent = conversationEncryptionServicePort.encrypt(content);
+        String fingerprint = conversationEncryptionServicePort.fingerprint(content);
 
         ConversationMessage message = new ConversationMessage();
         message.setSide(type);
@@ -168,7 +165,7 @@ public class ConversationService {
                 .toList();
 
         messageList.forEach(m ->
-                m.setContent(conversationEncryptionService.decrypt(m.getContent()))
+                m.setContent(conversationEncryptionServicePort.decrypt(m.getContent()))
         );
 
         return new PagingResult<>(
