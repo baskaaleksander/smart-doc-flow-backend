@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,7 +65,14 @@ public class DocumentService {
         DocumentUserBasic user = documentUserQueryPort.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        fileStoragePort.upload(file, filename);
+        InputStream stream;
+        try {
+            stream = file.getInputStream();
+        } catch (Exception ex) {
+            throw new S3UploadException("Failed to upload file");
+        }
+
+        fileStoragePort.upload(stream, filename, contentType, file.getSize());
 
         Document document = new Document();
         document.setId(docId);

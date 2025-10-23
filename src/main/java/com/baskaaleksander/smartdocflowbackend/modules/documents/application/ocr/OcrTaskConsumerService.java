@@ -68,7 +68,6 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
             SpringDataDocumentRepository documentRepository,
             OpenAiChatModel chatModel,
             SpringDataDocumentOcrResultRepository documentOcrResultRepository,
-            EmbeddingTaskConsumerService embeddingService,
             EmbeddingTaskPublisherPort taskPublisher
             ) {
         this.s3Client = s3Client;
@@ -178,7 +177,7 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
         return mediaList;
     }
 
-    private String performOcr(List<Media> images) throws JsonProcessingException {
+    private String performOcr(List<Media> images) {
         var system = new SystemMessage("""
         You are an OCR engine. Extract plain text from each provided image.
         - Preserve original line breaks and spacing as much as possible.

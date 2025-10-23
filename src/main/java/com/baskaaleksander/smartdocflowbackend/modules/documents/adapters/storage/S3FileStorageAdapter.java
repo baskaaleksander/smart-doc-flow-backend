@@ -17,6 +17,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
@@ -39,15 +40,13 @@ public class S3FileStorageAdapter implements FileStoragePort {
         this.s3Presigner = s3Presigner;
     }
     @Override
-    public void upload(MultipartFile file, String filename) {
-
-        String contentType = Optional.ofNullable(file.getContentType()).orElse("");
+    public void upload(InputStream inputStream, String key, String contentType, long size) {
 
         PutObjectRequest req = PutObjectRequest.builder()
-                .bucket(s3Bucket).key(filename).contentType(contentType).build();
+                .bucket(s3Bucket).key(key).contentType(contentType).build();
 
-        try (var in = file.getInputStream()) {
-            s3Client.putObject(req, RequestBody.fromInputStream(in, file.getSize()));
+        try {
+            s3Client.putObject(req, RequestBody.fromInputStream(inputStream, size));
         } catch (Exception e) {
             throw new S3UploadException("Upload to object store failed");
         }
