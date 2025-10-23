@@ -15,18 +15,12 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import jakarta.transaction.Transactional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -38,9 +32,6 @@ import java.util.stream.Collectors;
 @Service
 public class DocumentService {
 
-    private final S3Client s3Client;
-    private final S3Presigner s3Presigner;
-    private final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     private final DocumentDomainEventPublisherPort publisher;
     private final OcrTaskPublisherPort taskPublisher;
@@ -48,30 +39,23 @@ public class DocumentService {
     private final DocumentQueryPort documentQueryPort;
     private final DocumentUserQueryPort documentUserQueryPort;
     private final DocumentApiMapper mapper;
-
-    @Value(value = "${minio.bucket.name}")
-    private String s3Bucket;
+    private final FileStoragePort fileStoragePort;
 
     public DocumentService(
-            S3Client s3Client,
-            S3Presigner s3Presigner,
-
             DocumentDomainEventPublisherPort publisher,
             OcrTaskPublisherPort taskPublisher,
             DocumentCommandPort documentCommandPort,
             DocumentQueryPort documentQueryPort,
             DocumentUserQueryPort documentUserQueryPort,
-            DocumentApiMapper mapper
-            ) {
-        this.s3Client = s3Client;
-        this.s3Presigner = s3Presigner;
+            DocumentApiMapper mapper,
+            FileStoragePort fileStoragePort) {
         this.publisher = publisher;
-
         this.taskPublisher = taskPublisher;
         this.documentCommandPort = documentCommandPort;
         this.documentQueryPort = documentQueryPort;
         this.documentUserQueryPort = documentUserQueryPort;
         this.mapper = mapper;
+        this.fileStoragePort = fileStoragePort;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
@@ -88,14 +72,7 @@ public class DocumentService {
         DocumentUserBasic user = documentUserQueryPort.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        PutObjectRequest req = PutObjectRequest.builder()
-                .bucket(s3Bucket).key(filename).contentType(contentType).build();
-
-        try (var in = file.getInputStream()) {
-            s3Client.putObject(req, RequestBody.fromInputStream(in, file.getSize()));
-        } catch (Exception e) {
-            throw new S3UploadException("Upload to object store failed");
-        }
+        fileStoragePort.upload(file, filename);
 
         Document document = new Document();
         document.setId(docId);
@@ -110,14 +87,12 @@ public class DocumentService {
         DocumentReviewBasic review = new DocumentReviewBasic();
         document.setReview(review);
 
-        Document saved;
+        Document saved = null;
         try {
             saved = documentCommandPort.save(document);
         } catch (RuntimeException ex) {
-            try {
-                s3Client.deleteObject(b -> b.bucket(s3Bucket).key(filename));
-            } catch (Exception ignore) {}
-            throw ex;
+            fileStoragePort.delete(filename);
+            //throw some error
         }
 
         publisher.publish(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
@@ -176,19 +151,7 @@ public class DocumentService {
     public void deleteById(UUID id) {
         Document document = documentQueryPort.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
 
-        try {
-            ObjectIdentifier objectToDelete = ObjectIdentifier.builder().key(document.getStorageKey()).build();
-            s3Client.deleteObjects(request ->
-                    request
-                            .bucket(s3Bucket)
-                            .delete(deleteRequest ->
-                                    deleteRequest.objects(
-                                            objectToDelete
-                                    )));
-        } catch (Exception ex) {
-            log.error("Failed to delete document {} from S3: {}", id, ex.getMessage(), ex);
-            throw new S3DeleteException("Couldn't delete document");
-        }
+        fileStoragePort.delete(document.getStorageKey());
 
         documentCommandPort.deleteById(id);
     }
@@ -196,19 +159,7 @@ public class DocumentService {
     public String downloadDocumentById(UUID id) {
         Document document = documentQueryPort.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
 
-        GetObjectRequest get = GetObjectRequest.builder()
-                .bucket(s3Bucket)
-                .key(document.getStorageKey())
-                .responseContentType(document.getMime())
-                .build();
-
-        var presignedReq = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(3))
-                .getObjectRequest(get)
-                .build();
-
-        PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignedReq);
-        return presigned.url().toString();
+        return fileStoragePort.getPresignedUrl(document.getStorageKey(), document.getMime(), 3L);
     }
 
     public DocumentStatsResponse getDocumentStats() {
