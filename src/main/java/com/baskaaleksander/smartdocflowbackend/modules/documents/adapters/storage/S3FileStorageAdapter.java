@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -24,7 +23,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Optional;
 
 @Component
 public class S3FileStorageAdapter implements FileStoragePort {
@@ -87,7 +85,7 @@ public class S3FileStorageAdapter implements FileStoragePort {
     public String getJsonFileValue(String storageKey) {
         GetObjectRequest get = GetObjectRequest.builder()
                 .bucket(s3Bucket)
-                .key(storageKey + ".json")
+                .key(storageKey)
                 .responseContentType("application/json")
                 .build();
 
