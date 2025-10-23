@@ -10,6 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.Emb
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParseException;
 import jakarta.transaction.Transactional;
@@ -28,26 +29,26 @@ import java.util.UUID;
 public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
     private final SpringDataDocumentOcrResultRepository documentOcrResultRepository;
-    private final S3Client s3Client;
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final VectorStoreLoader vectorStoreLoader;
     private final ChunkerService chunkerService;
     private final SpringDataDocumentRepository documentRepository;
 
-    @Value(value = "${minio.bucket.name}")
-    private String s3Bucket;
+    private final FileStoragePort fileStoragePort;
+
 
     public EmbeddingTaskConsumerService(
             SpringDataDocumentOcrResultRepository documentOcrResultRepository,
-            S3Client s3Client,
             VectorStoreLoader vectorStoreLoader,
             ChunkerService chunkerService,
-            SpringDataDocumentRepository documentRepository) {
+            SpringDataDocumentRepository documentRepository,
+            FileStoragePort fileStoragePort
+            ) {
         this.documentOcrResultRepository = documentOcrResultRepository;
-        this.s3Client = s3Client;
         this.vectorStoreLoader = vectorStoreLoader;
         this.chunkerService = chunkerService;
         this.documentRepository = documentRepository;
+        this.fileStoragePort = fileStoragePort;
     }
 
     @Transactional
@@ -58,18 +59,11 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
         DocumentOcrResultEntity ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
 
-        GetObjectRequest get = GetObjectRequest.builder()
-                .bucket(s3Bucket)
-                .key(ocrResult.getStorageKey() + ".json")
-                .responseContentType("application/json")
-                .build();
-
-        var response = s3Client.getObject(get);
+        String response = fileStoragePort.getJsonFileValue(ocrResult.getStorageKey());
         OcrResult result = null;
 
         try {
-            String json = new String(response.readAllBytes(), StandardCharsets.UTF_8);
-            result = MAPPER.readValue(json, OcrResult.class);
+            result = MAPPER.readValue(response, OcrResult.class);
         } catch (IOException e) {
             throw new JsonParseException("Failed to parse OCR result");
         }

@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.storage;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -76,5 +78,24 @@ public class S3FileStorageAdapter implements FileStoragePort {
 
         PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignedReq);
         return presigned.url().toString();
+    }
+
+    @Override
+    public String getJsonFileValue(String storageKey) {
+        GetObjectRequest get = GetObjectRequest.builder()
+                .bucket(s3Bucket)
+                .key(storageKey + ".json")
+                .responseContentType("application/json")
+                .build();
+
+        var response = s3Client.getObject(get);
+        String result;
+
+        try {
+            result = new String(response.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            throw new S3DownloadException("Failed to download file");
+        }
+        return result;
     }
 }
