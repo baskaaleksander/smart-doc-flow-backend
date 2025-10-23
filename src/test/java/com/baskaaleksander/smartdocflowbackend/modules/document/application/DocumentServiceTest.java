@@ -111,7 +111,7 @@ public class DocumentServiceTest {
                 review.getId(),
                 review.getReviewer().getUsername(),
                 review.getReviewer().getId(),
-                review.getStatus(),
+                review.getStatus().getValue(),
                 review.getUpdatedAt()
         );
 
@@ -186,7 +186,7 @@ public class DocumentServiceTest {
                                 d.getReview().getId(),
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getUsername() : null,
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getId() : null,
-                                d.getReview().getStatus(),
+                                d.getReview().getStatus().getValue(),
                                 d.getReview().getUpdatedAt()
                         );
                     }
@@ -240,7 +240,7 @@ public class DocumentServiceTest {
                         lastSaved.getReview().getId(),
                         lastSaved.getReview().getReviewer() != null ? lastSaved.getReview().getReviewer().getUsername() : null,
                         lastSaved.getReview().getReviewer() != null ? lastSaved.getReview().getReviewer().getId() : null,
-                        lastSaved.getReview().getStatus(),
+                        lastSaved.getReview().getStatus().getValue(),
                         lastSaved.getReview().getUpdatedAt()
                 );
 
@@ -340,7 +340,7 @@ public class DocumentServiceTest {
                                 d.getReview().getId(),
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getUsername() : null,
                                 d.getReview().getReviewer() != null ? d.getReview().getReviewer().getId() : null,
-                                d.getReview().getStatus(),
+                                d.getReview().getStatus().getValue(),
                                 d.getReview().getUpdatedAt()
                         );
                     }
@@ -433,7 +433,7 @@ public class DocumentServiceTest {
                         review.getId(),
                         review.getReviewer() != null ? review.getReviewer().getUsername() : null,
                         review.getReviewer() != null ? review.getReviewer().getId() : null,
-                        review.getStatus(),
+                        review.getStatus().getValue(),
                         review.getUpdatedAt()
                 ),
                 d2.getStatus(),

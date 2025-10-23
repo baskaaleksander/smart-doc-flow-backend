@@ -34,7 +34,7 @@ public interface DocumentMapper {
                 review.getId(),
                 reviewerUsername,
                 reviewerId,
-                review.getStatus(),
+                review.getStatus().getValue(),
                 review.getUpdatedAt()
         );
     }

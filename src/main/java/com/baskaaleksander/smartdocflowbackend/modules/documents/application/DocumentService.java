@@ -157,57 +157,54 @@ public class DocumentService {
     }
 
     public DocumentResponse getById(UUID id) {
-        DocumentEntity doc = documentRepository.findbyIdWithReview(id).orElseThrow(() -> new ResourceNotFoundException("Document with id " + id + " not found"));
+        Document doc = documentQueryPort.findByIdWithReview(id).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
-        return documentMapper.toDocumentResponse(doc);
+        return mapper.toResponse(doc);
     }
 
     public PagingResult<DocumentResponse> getAllDocuments(PaginationRequest request, Boolean assignedToMe, UUID userId) {
-
-        Pageable pageable = PaginationUtil.getPageable(request);
-        Page<DocumentEntity> documents;
+        PagingResult<Document> documents;
 
         if (assignedToMe) {
-            documents = documentRepository.findAllByReviewer(userId, pageable);
+            documents = documentQueryPort.findAllByReviewer(userId, request);
         } else {
-            documents = documentRepository.findAll(pageable);
+            documents = documentQueryPort.findAll(request);
         }
 
-        return getDocumentResponsePagingResult(request, documents);
+        List<DocumentResponse> content = documents.content().stream().map(mapper::toResponse).toList();
+
+        return new PagingResult<>(
+                content,
+                documents.totalPages(),
+                documents.totalElements(),
+                documents.size(),
+                documents.page(),
+                documents.last(),
+                documents.next()
+        );
     }
 
     public PagingResult<DocumentResponse> getUserDocuments(PaginationRequest request, UUID userId) {
 
-        Pageable pageable = PaginationUtil.getPageable(request);
+        PagingResult<Document> documents = documentQueryPort.findAllByOwner(userId, request);
 
-        Page<DocumentEntity> documents = documentRepository.findAllByOwner(userId, pageable);
-
-        return getDocumentResponsePagingResult(request, documents);
-    }
-
-    private PagingResult<DocumentResponse> getDocumentResponsePagingResult(PaginationRequest request, Page<DocumentEntity> documents) {
-        List<DocumentResponse> documentsList = documents
-                .stream()
-                .map(documentMapper::toDocumentResponse)
-                .toList();
-
-        Integer currentPage = request.getPage();
-        int totalPages = documents.getTotalPages();
+        List<DocumentResponse> content = documents.content().stream().map(mapper::toResponse).toList();
 
         return new PagingResult<>(
-                documentsList,
-                totalPages,
-                documents.getTotalElements(),
-                documents.getSize(),
-                documents.getNumber(),
-                currentPage + 1 == totalPages,
-                currentPage + 1 < totalPages
+                content,
+                documents.totalPages(),
+                documents.totalElements(),
+                documents.size(),
+                documents.page(),
+                documents.last(),
+                documents.next()
         );
     }
 
+
     @Transactional
     public void deleteById(UUID id) {
-        DocumentEntity document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
+        Document document = documentQueryPort.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
 
         try {
             ObjectIdentifier objectToDelete = ObjectIdentifier.builder().key(document.getStorageKey()).build();
@@ -223,11 +220,11 @@ public class DocumentService {
             throw new S3DeleteException("Couldn't delete document");
         }
 
-        documentRepository.deleteById(id);
+        documentCommandPort.deleteById(id);
     }
 
     public String downloadDocumentById(UUID id) {
-        DocumentEntity document = documentRepository.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
+        Document document = documentQueryPort.getDocumentById(id).orElseThrow(() -> new ResourceNotFoundException("Document does not exist"));
 
         GetObjectRequest get = GetObjectRequest.builder()
                 .bucket(s3Bucket)
@@ -245,7 +242,7 @@ public class DocumentService {
     }
 
     public DocumentStatsResponse getDocumentStats() {
-        List<DocumentStatusCount> counts = documentRepository.countDocumentsByStatus();
+        List<DocumentStatusCount> counts = documentQueryPort.countDocumentsByStatus();
 
         Map<DocumentStatus, Long> stats = counts.stream()
                 .collect(Collectors.toMap(DocumentStatusCount::getStatus, DocumentStatusCount::getCount));
