@@ -11,10 +11,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Do
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentReviewBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentUserBasic;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentCommandPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentUserQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskPublisherPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import jakarta.transaction.Transactional;
@@ -44,8 +41,8 @@ public class DocumentService {
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
-    private final ApplicationEventPublisher publisher;
 
+    private final DocumentDomainEventPublisherPort publisher;
     private final OcrTaskPublisherPort taskPublisher;
     private final DocumentCommandPort documentCommandPort;
     private final DocumentQueryPort documentQueryPort;
@@ -58,8 +55,8 @@ public class DocumentService {
     public DocumentService(
             S3Client s3Client,
             S3Presigner s3Presigner,
-            ApplicationEventPublisher publisher,
 
+            DocumentDomainEventPublisherPort publisher,
             OcrTaskPublisherPort taskPublisher,
             DocumentCommandPort documentCommandPort,
             DocumentQueryPort documentQueryPort,
@@ -123,7 +120,7 @@ public class DocumentService {
             throw ex;
         }
 
-        publisher.publishEvent(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
+        publisher.publish(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
         taskPublisher.publish(new OcrTask(saved.getId()));
 
         return mapper.toResponse(saved);
