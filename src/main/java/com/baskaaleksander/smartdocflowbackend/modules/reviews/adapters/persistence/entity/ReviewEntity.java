@@ -36,8 +36,8 @@ public class ReviewEntity {
     private UUID id;
 
     @ToString.Exclude
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "document_id", nullable = false)
+    @OneToOne
+    @JoinColumn(name = "document_id", nullable = false, unique = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private DocumentEntity document;
 

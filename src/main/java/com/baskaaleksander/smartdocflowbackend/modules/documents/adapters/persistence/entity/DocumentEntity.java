@@ -43,8 +43,7 @@ public class DocumentEntity {
     @JoinColumn(name = "owner_id")
     private UserEntity owner;
 
-    @OneToOne
-    @JoinColumn(nullable = true)
+    @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private ReviewEntity review;
 
 
