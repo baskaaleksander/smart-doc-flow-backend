@@ -10,6 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskPublisherPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskConsumerPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
@@ -52,11 +53,9 @@ import java.util.UUID;
 public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
     private final SpringDataDocumentOcrResultRepository documentOcrResultRepository;
-    @Value(value = "${minio.bucket.name}")
-    private String bucket;
+    private final FileStoragePort fileStoragePort;
     @Value(value = "${spring.ai.openai.chat.options.model}")
     private String model;
-    private final S3Client s3Client;
     private final SpringDataDocumentRepository documentRepository;
     private final OpenAiChatModel chatModel;
     private final EmbeddingTaskPublisherPort taskPublisher;
@@ -64,17 +63,16 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
     @Autowired
     public OcrTaskConsumerService(
-            S3Client s3Client,
             SpringDataDocumentRepository documentRepository,
             OpenAiChatModel chatModel,
             SpringDataDocumentOcrResultRepository documentOcrResultRepository,
-            EmbeddingTaskPublisherPort taskPublisher
-            ) {
-        this.s3Client = s3Client;
+            EmbeddingTaskPublisherPort taskPublisher,
+            FileStoragePort fileStoragePort) {
         this.documentRepository = documentRepository;
         this.chatModel = chatModel;
         this.documentOcrResultRepository = documentOcrResultRepository;
         this.taskPublisher = taskPublisher;
+        this.fileStoragePort = fileStoragePort;
     }
 
     @Transactional
@@ -118,22 +116,7 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
     }
 
     private File getPdfFromS3(String documentKey) {
-        try {
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(documentKey)
-                    .build();
-
-            File tempFile = File.createTempFile("s3-", "-" + documentKey.replace("/", "_"));
-            try (ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);) {
-                FileOutputStream fos = new FileOutputStream(tempFile);
-                s3Object.transferTo(fos);
-            }
-
-            return tempFile;
-        } catch (Exception e) {
-            throw new S3DownloadException("Failed to download document " + documentKey);
-        }
+        return fileStoragePort.getPdfFile(documentKey);
     }
 
     private List<BufferedImage> convertPdfToImages(File file) {
@@ -214,23 +197,13 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
 
     }
 
-    private String saveJsonToS3(String raw, UUID docId) throws IOException {
+    private String saveJsonToS3(String raw, UUID docId) {
 
         byte[] bytes = raw.getBytes(StandardCharsets.UTF_8);
-        String docKey = docId + "_ocr";
+        String docKey = docId + "_ocr.json";
+        InputStream is = new ByteArrayInputStream(bytes);
 
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(bucket)
-                .key(docKey + ".json")
-                .contentType("application/json")
-                .contentLength((long) bytes.length)
-                .build();
-
-        try {
-            s3Client.putObject(request, RequestBody.fromBytes(bytes));
-        } catch (Exception ex) {
-            throw new S3UploadException("Upload to object store failed");
-        }
+        fileStoragePort.upload(is, docKey, "application/json", bytes.length);
 
         return docKey;
     }

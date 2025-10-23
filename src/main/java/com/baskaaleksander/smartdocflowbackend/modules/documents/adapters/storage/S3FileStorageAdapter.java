@@ -9,14 +9,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -96,5 +100,25 @@ public class S3FileStorageAdapter implements FileStoragePort {
             throw new S3DownloadException("Failed to download file");
         }
         return result;
+    }
+
+    @Override
+    public File getPdfFile(String storageKey) {
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(s3Bucket)
+                    .key(storageKey)
+                    .build();
+
+            File tempFile = File.createTempFile("s3-", "-" + storageKey.replace("/", "_"));
+            try (ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(getObjectRequest);) {
+                FileOutputStream fos = new FileOutputStream(tempFile);
+                s3Object.transferTo(fos);
+            }
+
+            return tempFile;
+        } catch (Exception e) {
+            throw new S3DownloadException("Failed to download document " + storageKey);
+        }
     }
 }
