@@ -1,12 +1,14 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentReviewBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 
 import java.util.UUID;
 
 public interface DocumentCommandPort {
     Document save(Document document);
+    void attachReview(DocumentReviewBasic review);
     void updateStatus(UUID documentId, DocumentStatus status);
 
 }
