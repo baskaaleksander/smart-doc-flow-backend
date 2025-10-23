@@ -2,25 +2,18 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.em
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.OcrResult;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.OcrResultPage;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.*;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentOcrResultQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskConsumerPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParseException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,27 +21,29 @@ import java.util.UUID;
 @Service
 public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
-    private final SpringDataDocumentOcrResultRepository documentOcrResultRepository;
     private final ObjectMapper MAPPER = new ObjectMapper();
     private final VectorStoreLoader vectorStoreLoader;
     private final ChunkerService chunkerService;
     private final SpringDataDocumentRepository documentRepository;
 
     private final FileStoragePort fileStoragePort;
+    private final DocumentOcrResultQueryPort documentOcrResultQueryPort;
 
 
     public EmbeddingTaskConsumerService(
-            SpringDataDocumentOcrResultRepository documentOcrResultRepository,
             VectorStoreLoader vectorStoreLoader,
             ChunkerService chunkerService,
             SpringDataDocumentRepository documentRepository,
-            FileStoragePort fileStoragePort
+
+            FileStoragePort fileStoragePort,
+            DocumentOcrResultQueryPort documentOcrResultQueryPort
             ) {
-        this.documentOcrResultRepository = documentOcrResultRepository;
         this.vectorStoreLoader = vectorStoreLoader;
         this.chunkerService = chunkerService;
         this.documentRepository = documentRepository;
+
         this.fileStoragePort = fileStoragePort;
+        this.documentOcrResultQueryPort = documentOcrResultQueryPort;
     }
 
     @Transactional
@@ -57,7 +52,7 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
         UUID docId = task.documentId();
 
-        DocumentOcrResultEntity ocrResult = documentOcrResultRepository.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
+        DocumentOcrResult ocrResult = documentOcrResultQueryPort.getOcrByDocId(docId).orElseThrow(() -> new ResourceNotFoundException("Ocr result not found"));
 
         String response = fileStoragePort.getJsonFileValue(ocrResult.getStorageKey());
         OcrResult result = null;
