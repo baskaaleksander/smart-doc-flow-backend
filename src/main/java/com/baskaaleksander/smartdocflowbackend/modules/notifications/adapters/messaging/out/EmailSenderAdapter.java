@@ -22,6 +22,7 @@ public class EmailSenderAdapter implements EmailSenderPort {
             message.setText(body);
             mailSender.send(message);
         } catch (Exception e) {
+            //TODO: change this
             System.out.println(e.getMessage());
         }
     }

@@ -259,8 +259,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
 
-        System.out.println(ex.getClass());
-
         ErrorResponse errorResponse = new ErrorResponse(
                 500,
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
