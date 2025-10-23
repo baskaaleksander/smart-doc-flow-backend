@@ -57,14 +57,9 @@ import java.util.stream.Collectors;
 @Service
 public class DocumentService {
 
-    private final SpringDataDocumentRepository documentRepository;
     private final S3Client s3Client;
-    private final SpringDataUserRepository userRepository;
-    private final SpringDataReviewRepository reviewRepository;
-    private final DocumentMapper documentMapper;
     private final S3Presigner s3Presigner;
     private final Logger log = LoggerFactory.getLogger(DocumentService.class);
-    private final ObjectMapper MAPPER = new ObjectMapper();
     private final ApplicationEventPublisher publisher;
 
     private final OcrTaskPublisherPort taskPublisher;
@@ -77,26 +72,20 @@ public class DocumentService {
     private String s3Bucket;
 
     public DocumentService(
-            SpringDataDocumentRepository documentRepository,
             S3Client s3Client,
-            SpringDataUserRepository userRepository,
-            SpringDataReviewRepository reviewRepository,
-            DocumentMapper documentMapper,
             S3Presigner s3Presigner,
             ApplicationEventPublisher publisher,
+
             OcrTaskPublisherPort taskPublisher,
             DocumentCommandPort documentCommandPort,
             DocumentQueryPort documentQueryPort,
             DocumentUserQueryPort documentUserQueryPort,
             DocumentApiMapper mapper
             ) {
-        this.documentRepository = documentRepository;
         this.s3Client = s3Client;
-        this.userRepository = userRepository;
-        this.reviewRepository = reviewRepository;
-        this.documentMapper = documentMapper;
         this.s3Presigner = s3Presigner;
         this.publisher = publisher;
+
         this.taskPublisher = taskPublisher;
         this.documentCommandPort = documentCommandPort;
         this.documentQueryPort = documentQueryPort;

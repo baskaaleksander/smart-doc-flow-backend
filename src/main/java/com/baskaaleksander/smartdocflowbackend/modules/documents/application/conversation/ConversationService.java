@@ -6,11 +6,16 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.ConversationMessageApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.ConversationMessageEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageCommandPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentCommandPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.ConversationMessageMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataConversationMessageRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
@@ -43,10 +48,25 @@ public class ConversationService {
     private final JdbcChatMemoryRepository jdbcChatMemoryRepository;
     private final ConversationMessageMapper conversationMessageMapper;
 
+    private final DocumentQueryPort documentQueryPort;
+    private final ConversationMessageQueryPort conversationMessageQueryPort;
+    private final ConversationMessageCommandPort conversationMessageCommandPort;
+    private final ConversationMessageApiMapper mapper;
+
     public ConversationService(
             VectorStore vectorStore,
             SpringDataDocumentRepository documentRepository,
-            ChatClient chatClient, ConversationEncryptionService conversationEncryptionService, SpringDataConversationMessageRepository conversationMessageRepository, JdbcChatMemoryRepository jdbcChatMemoryRepository, ConversationMessageMapper conversationMessageMapper) {
+            ChatClient chatClient,
+            ConversationEncryptionService conversationEncryptionService,
+            SpringDataConversationMessageRepository conversationMessageRepository,
+            JdbcChatMemoryRepository jdbcChatMemoryRepository,
+            ConversationMessageMapper conversationMessageMapper,
+
+            ConversationMessageQueryPort conversationMessageQueryPort,
+            ConversationMessageCommandPort conversationMessageCommandPort,
+            DocumentQueryPort documentQueryPort,
+            ConversationMessageApiMapper mapper
+            ) {
         this.vectorStore = vectorStore;
         this.documentRepository = documentRepository;
         this.chatClient = chatClient;
@@ -54,6 +74,11 @@ public class ConversationService {
         this.conversationMessageRepository = conversationMessageRepository;
         this.jdbcChatMemoryRepository = jdbcChatMemoryRepository;
         this.conversationMessageMapper = conversationMessageMapper;
+
+        this.conversationMessageQueryPort = conversationMessageQueryPort;
+        this.conversationMessageCommandPort = conversationMessageCommandPort;
+        this.documentQueryPort = documentQueryPort;
+        this.mapper = mapper;
     }
 
     public String askQuestion(String question, UUID docId, UUID userId) {
