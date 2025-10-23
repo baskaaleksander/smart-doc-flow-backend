@@ -10,11 +10,11 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
-public class DocumentJpaAdapter implements DocumentCommandPort {
+public class ReviewDocumentJpaAdapter implements DocumentCommandPort {
 
     private final SpringDataDocumentRepository documentRepo;
 
-    public DocumentJpaAdapter(SpringDataDocumentRepository documentRepo) {
+    public ReviewDocumentJpaAdapter(SpringDataDocumentRepository documentRepo) {
         this.documentRepo = documentRepo;
     }
 

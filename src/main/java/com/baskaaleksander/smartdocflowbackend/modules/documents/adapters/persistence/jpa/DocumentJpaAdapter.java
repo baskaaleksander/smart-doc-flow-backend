@@ -11,12 +11,10 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persis
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentReviewBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentUserBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.springframework.data.domain.Page;
@@ -48,21 +46,20 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
         this.userRepo = userRepo;
     }
 
-    @Override
     @Transactional
+    @Override
     public Document save(Document document) {
-
         if (document.getReview() == null) {
             throw new ResourceConflictException("Review is required to create or update document");
         }
 
         DocumentEntity entity = (document.getId() != null)
                 ? documentRepo.findById(document.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + document.getId()))
+                .orElseGet(() -> { var e = new DocumentEntity(); e.setId(document.getId()); return e; })
                 : new DocumentEntity();
 
         if (entity.getId() == null) {
-            entity.setId(UUID.randomUUID());
+            entity.setId(document.getId() != null ? document.getId() : UUID.randomUUID());
         }
 
         entity.setFilename(document.getFilename());
@@ -75,42 +72,32 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
         if (document.getOwner() == null || document.getOwner().id() == null) {
             throw new IllegalArgumentException("Owner is required");
         }
-
-        entity.setOwner(
-                userRepo.findById(document.getOwner().id())
-                        .orElseThrow(() -> new ResourceNotFoundException("Owner not found: " + document.getOwner().id()))
-        );
+        entity.setOwner(userRepo.findById(document.getOwner().id())
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found: " + document.getOwner().id())));
 
         DocumentReviewBasic review = document.getReview();
         ReviewEntity reviewEntity;
 
-        if (entity.getReview() == null || review.getId() == null) {
+        if (entity.getReview() == null) {
             reviewEntity = new ReviewEntity();
             reviewEntity.setStatus(
-                    review.getStatus() != null
-                            ? ReviewStatus.fromString(review.getStatus())
-                            : ReviewStatus.PENDING
+                    review.getStatus() != null ? ReviewStatus.fromString(review.getStatus()) : ReviewStatus.PENDING
             );
             reviewEntity.setReviewer(null);
             reviewEntity.setComment(review.getComment());
-
             reviewEntity.setDocument(entity);
             entity.setReview(reviewEntity);
         } else {
             reviewEntity = entity.getReview();
             reviewEntity.setStatus(
-                    review.getStatus() != null
-                            ? ReviewStatus.fromString(review.getStatus())
-                            : reviewEntity.getStatus()
+                    review.getStatus() != null ? ReviewStatus.fromString(review.getStatus()) : reviewEntity.getStatus()
             );
             reviewEntity.setComment(review.getComment());
         }
 
         DocumentEntity saved = documentRepo.saveAndFlush(entity);
-
         return mapper.toDomain(saved);
     }
-
     @Override
     @Transactional
     public void updateStatus(UUID documentId, DocumentStatus status) {

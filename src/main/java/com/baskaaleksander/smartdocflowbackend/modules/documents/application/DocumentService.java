@@ -1,20 +1,25 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.*;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.DocumentApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentReviewBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentUserBasic;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentCommandPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentUserQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskPublisherPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
-import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteException;
-import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
@@ -23,6 +28,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistenc
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
+import org.apache.coyote.BadRequestException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +38,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -60,7 +68,10 @@ public class DocumentService {
     private final ApplicationEventPublisher publisher;
 
     private final OcrTaskPublisherPort taskPublisher;
-
+    private final DocumentCommandPort documentCommandPort;
+    private final DocumentQueryPort documentQueryPort;
+    private final DocumentUserQueryPort documentUserQueryPort;
+    private final DocumentApiMapper mapper;
 
     @Value(value = "${minio.bucket.name}")
     private String s3Bucket;
@@ -73,7 +84,11 @@ public class DocumentService {
             DocumentMapper documentMapper,
             S3Presigner s3Presigner,
             ApplicationEventPublisher publisher,
-            OcrTaskPublisherPort taskPublisher
+            OcrTaskPublisherPort taskPublisher,
+            DocumentCommandPort documentCommandPort,
+            DocumentQueryPort documentQueryPort,
+            DocumentUserQueryPort documentUserQueryPort,
+            DocumentApiMapper mapper
             ) {
         this.documentRepository = documentRepository;
         this.s3Client = s3Client;
@@ -83,64 +98,62 @@ public class DocumentService {
         this.s3Presigner = s3Presigner;
         this.publisher = publisher;
         this.taskPublisher = taskPublisher;
+        this.documentCommandPort = documentCommandPort;
+        this.documentQueryPort = documentQueryPort;
+        this.documentUserQueryPort = documentUserQueryPort;
+        this.mapper = mapper;
     }
 
     public DocumentResponse createAndSave(MultipartFile file) {
         UUID docId = UUID.randomUUID();
         String originalFilename = Objects.requireNonNull(file.getOriginalFilename()).replace(" ", "_");
         String filename = docId + "_" + originalFilename;
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-        UserEntity user = userRepository.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if (!"application/pdf".equalsIgnoreCase(String.valueOf(file.getContentType()))) {
-            System.out.println("Incorrect filetype");;
+        String contentType = Optional.ofNullable(file.getContentType()).orElse("");
+        if (!"application/pdf".equalsIgnoreCase(contentType)) {
+            throw new InvalidFileTypeException("Only application/pdf is allowed");
         }
 
-        PutObjectRequest request = PutObjectRequest.builder()
-                .bucket(s3Bucket)
-                .key(filename)
-                .contentType(file.getContentType())
-                .build();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        DocumentUserBasic user = documentUserQueryPort.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        PutObjectRequest req = PutObjectRequest.builder()
+                .bucket(s3Bucket).key(filename).contentType(contentType).build();
 
         try (var in = file.getInputStream()) {
-            s3Client.putObject(request, RequestBody.fromInputStream(in, file.getSize()));
+            s3Client.putObject(req, RequestBody.fromInputStream(in, file.getSize()));
         } catch (Exception e) {
             throw new S3UploadException("Upload to object store failed");
         }
 
-        DocumentEntity document = new DocumentEntity();
+        Document document = new Document();
         document.setId(docId);
         document.setFilename(originalFilename);
         document.setStorageKey(filename);
-        document.setMime("pdf");
+        document.setMime(contentType);
         document.setSize(file.getSize());
-        document.setPageSize(1);
+        document.setPageSize(0);
         document.setStatus(DocumentStatus.UPLOADED);
         document.setOwner(user);
 
-
-        saveDocToDb(document);
-
-        publisher.publishEvent(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
-
-        taskPublisher.publish(new OcrTask(docId));
-
-        return documentMapper.toDocumentResponse(document);
-    }
-
-    @Transactional
-    protected void saveDocToDb(DocumentEntity document) {
-        documentRepository.save(document);
-
-        ReviewEntity review = new ReviewEntity();
-        review.setStatus(ReviewStatus.PENDING);
-        review.setDocument(document);
-        review = reviewRepository.save(review);
-
+        DocumentReviewBasic review = new DocumentReviewBasic();
         document.setReview(review);
 
-        documentRepository.save(document);
+        Document saved;
+        try {
+            saved = documentCommandPort.save(document);
+        } catch (RuntimeException ex) {
+            try {
+                s3Client.deleteObject(b -> b.bucket(s3Bucket).key(filename));
+            } catch (Exception ignore) {}
+            throw ex;
+        }
+
+        publisher.publishEvent(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
+        taskPublisher.publish(new OcrTask(saved.getId()));
+
+        return mapper.toResponse(saved);
     }
 
     public DocumentResponse getById(UUID id) {
