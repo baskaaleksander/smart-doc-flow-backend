@@ -24,7 +24,7 @@ import java.util.UUID;
 public class ReviewApplicationService {
 
 
-    private final DomainEventPublisherPort publisher;
+    private final ReviewDomainEventPublisherPort publisher;
     private final ReviewCommandPort reviewCommandPort;
     private final ReviewQueryPort reviewQueryPort;
     private final ReviewEventCommandPort reviewEventCommandPort;
@@ -41,7 +41,7 @@ public class ReviewApplicationService {
             ExternalUserQueryPort externalUserQueryPort,
             ReviewApiMapper mapper,
             ReviewEventApiMapper eventMapper,
-            DomainEventPublisherPort publisher
+            ReviewDomainEventPublisherPort publisher
     ) {
 
         this.reviewCommandPort = reviewCommandPort;

@@ -3,18 +3,16 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.co
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.ConversationMessageApiMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.ConversationMessageEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationMessage;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.ConversationMessageMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataConversationMessageRepository;
@@ -29,8 +27,6 @@ import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
 import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
@@ -41,12 +37,8 @@ import java.util.UUID;
 public class ConversationService {
 
     private final VectorStore vectorStore;
-    private final SpringDataDocumentRepository documentRepository;
     private final ChatClient chatClient;
     private final ConversationEncryptionService conversationEncryptionService;
-    private final SpringDataConversationMessageRepository conversationMessageRepository;
-    private final JdbcChatMemoryRepository jdbcChatMemoryRepository;
-    private final ConversationMessageMapper conversationMessageMapper;
 
     private final DocumentQueryPort documentQueryPort;
     private final ConversationMessageQueryPort conversationMessageQueryPort;
@@ -55,12 +47,8 @@ public class ConversationService {
 
     public ConversationService(
             VectorStore vectorStore,
-            SpringDataDocumentRepository documentRepository,
             ChatClient chatClient,
             ConversationEncryptionService conversationEncryptionService,
-            SpringDataConversationMessageRepository conversationMessageRepository,
-            JdbcChatMemoryRepository jdbcChatMemoryRepository,
-            ConversationMessageMapper conversationMessageMapper,
 
             ConversationMessageQueryPort conversationMessageQueryPort,
             ConversationMessageCommandPort conversationMessageCommandPort,
@@ -68,12 +56,8 @@ public class ConversationService {
             ConversationMessageApiMapper mapper
             ) {
         this.vectorStore = vectorStore;
-        this.documentRepository = documentRepository;
         this.chatClient = chatClient;
         this.conversationEncryptionService = conversationEncryptionService;
-        this.conversationMessageRepository = conversationMessageRepository;
-        this.jdbcChatMemoryRepository = jdbcChatMemoryRepository;
-        this.conversationMessageMapper = conversationMessageMapper;
 
         this.conversationMessageQueryPort = conversationMessageQueryPort;
         this.conversationMessageCommandPort = conversationMessageCommandPort;
@@ -83,7 +67,7 @@ public class ConversationService {
 
     public String askQuestion(String question, UUID docId, UUID userId) {
 
-        DocumentEntity doc = documentRepository.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        Document doc = documentQueryPort.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
 
         EnumSet<DocumentStatus> allowedStatuses = EnumSet.of(
                 DocumentStatus.PROCESSED,
@@ -151,7 +135,7 @@ public class ConversationService {
         String encryptedContent = conversationEncryptionService.encrypt(content);
         String fingerprint = conversationEncryptionService.fingerprint(content);
 
-        ConversationMessageEntity message = new ConversationMessageEntity();
+        ConversationMessage message = new ConversationMessage();
         message.setSide(type);
         message.setContent(encryptedContent);
         message.setFingerprint(fingerprint);
@@ -159,17 +143,15 @@ public class ConversationService {
         message.setUserId(userId);
         message.setDocumentId(documentId);
 
-        conversationMessageRepository.save(message);
+        conversationMessageCommandPort.save(message);
 
     }
 
     public void deleteConversation(UUID documentId, UUID userId) {
-        UUID conversationId = conversationMessageRepository.getIdByUserIdAndDocId(documentId, userId)
+        UUID conversationId = conversationMessageQueryPort.getIdByUserIdAndDocId(documentId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
 
-        jdbcChatMemoryRepository.deleteByConversationId(conversationId.toString());
-
-        conversationMessageRepository.deleteAllByConversationId(conversationId);
+        conversationMessageCommandPort.deleteAllByConversationId(conversationId);
     }
 
     public PagingResult<ConversationMessageResponse> getAllConversationMessages(
@@ -177,30 +159,26 @@ public class ConversationService {
             UUID userId,
             PaginationRequest request
     ) {
-        Pageable pageable = PaginationUtil.getPageable(request);
-
-        Page<ConversationMessageEntity> conversationMessages = conversationMessageRepository.findAllByDocumentIdAndUserId(pageable, userId, documentId);
+        PagingResult<ConversationMessage> conversationMessages = conversationMessageQueryPort.findAllByDocumentIdAndUserId(request, userId, documentId);
 
         List<ConversationMessageResponse> messageList = conversationMessages
+                .content()
                 .stream()
-                .map(conversationMessageMapper::toMessageResponse)
+                .map(mapper::toResponse)
                 .toList();
 
         messageList.forEach(m ->
                 m.setContent(conversationEncryptionService.decrypt(m.getContent()))
         );
 
-        Integer currentPage = request.getPage();
-        int totalPages = conversationMessages.getTotalPages();
-
         return new PagingResult<>(
                 messageList,
-                totalPages,
-                conversationMessages.getTotalElements(),
-                conversationMessages.getSize(),
-                conversationMessages.getNumber(),
-                currentPage + 1 == totalPages,
-                currentPage + 1 < totalPages
+                conversationMessages.totalPages(),
+                conversationMessages.totalElements(),
+                conversationMessages.size(),
+                conversationMessages.page(),
+                conversationMessages.last(),
+                conversationMessages.next()
         );
     }
 }

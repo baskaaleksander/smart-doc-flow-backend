@@ -59,7 +59,6 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
     private final S3Client s3Client;
     private final SpringDataDocumentRepository documentRepository;
     private final OpenAiChatModel chatModel;
-    private final ObjectMapper MAPPER = new ObjectMapper();
     private final EmbeddingTaskPublisherPort taskPublisher;
 
 
@@ -211,8 +210,6 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
                 )
         );
 
-        //        OcrResult result = MAPPER.readValue(raw, OcrResult.class);
-        
 
         return response.getResult().getOutput().getText();
 
