@@ -38,6 +38,10 @@ public class SpringAiVectorQueryAdapter implements VectorQueryPort {
 
         List<Document> docs = retriever.retrieve(query);
 
+        for(var doc : docs) {
+            System.out.println(doc.getMetadata() + " " + doc.getText());
+        }
+
 
         return docs.stream()
                 .map(d -> new SearchHit(d.getText(), d.getScore(), d.getMetadata()))
