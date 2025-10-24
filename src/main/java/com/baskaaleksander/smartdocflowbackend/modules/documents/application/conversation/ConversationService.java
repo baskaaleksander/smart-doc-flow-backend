@@ -7,14 +7,8 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.ConversationMessageApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationMessage;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationEncryptionServicePort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageCommandPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.*;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
@@ -28,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -41,6 +36,8 @@ public class ConversationService {
     private final ConversationMessageQueryPort conversationMessageQueryPort;
     private final ConversationMessageCommandPort conversationMessageCommandPort;
     private final ConversationMessageApiMapper mapper;
+    private final VectorQueryPort vectorQueryPort;
+    private final ChatCompletionPort chatCompletionPort;
 
     public ConversationService(
             VectorStore vectorStore,
@@ -50,7 +47,9 @@ public class ConversationService {
             ConversationMessageQueryPort conversationMessageQueryPort,
             ConversationMessageCommandPort conversationMessageCommandPort,
             DocumentQueryPort documentQueryPort,
-            ConversationMessageApiMapper mapper
+            ConversationMessageApiMapper mapper,
+            VectorQueryPort vectorQueryPort,
+            ChatCompletionPort chatCompletionPort
             ) {
         this.vectorStore = vectorStore;
         this.chatClient = chatClient;
@@ -60,6 +59,8 @@ public class ConversationService {
         this.conversationMessageCommandPort = conversationMessageCommandPort;
         this.documentQueryPort = documentQueryPort;
         this.mapper = mapper;
+        this.vectorQueryPort = vectorQueryPort;
+        this.chatCompletionPort = chatCompletionPort;
     }
 
     public String askQuestion(String question, UUID docId, UUID userId) {
@@ -80,47 +81,75 @@ public class ConversationService {
 
         saveMessage(question, ConversationSide.USER, conversationId, userId, docId);
 
-        PromptTemplate customPromptTemplate = PromptTemplate.builder()
-                .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
-                .template("""
-        <query>
+//        PromptTemplate customPromptTemplate = PromptTemplate.builder()
+//                .renderer(StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build())
+//                .template("""
+//        <query>
+//
+//        Context information is below.
+//
+//        ---------------------
+//        <question_answer_context>
+//        ---------------------
+//
+//        Given the context information and no prior knowledge, answer the query.
+//
+//        Follow these rules:
+//        1. If the answer is not in the context, just say that you don't know.
+//        2. Avoid statements like "Based on the context..." or "The provided information...".
+//        """)
+//                .build();
+//
+//
+//        QuestionAnswerAdvisor qaAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
+//                .promptTemplate(customPromptTemplate)
+//                .build();
+//
+//        Advisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
+//                .documentRetriever(VectorStoreDocumentRetriever.builder()
+//                        .similarityThreshold(0.50)
+//                        .vectorStore(vectorStore)
+//                        .build())
+//                .build();
+//
+//
+//        String response = chatClient
+//                .prompt(question)
+//                .advisors(retrievalAugmentationAdvisor)
+//                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+//                .advisors(a -> a.param("query", question))
+//                .advisors(qaAdvisor)
+//                .advisors(a -> a.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "docId == '"+ docId +"'"))
+//                .call()
+//                .content();
 
-        Context information is below.
+        var filter = Map.<String, Object>of("docId", docId.toString());
+        double threshold = 0.50;
+        int topK = 8;
 
-        ---------------------
-        <question_answer_context>
-        ---------------------
+        var hits = vectorQueryPort.searchByQuery(question, threshold, topK, filter);
 
-        Given the context information and no prior knowledge, answer the query.
+        var context = hits.stream().map(SearchHit::text).toList();
 
-        Follow these rules:
-        1. If the answer is not in the context, just say that you don't know.
-        2. Avoid statements like "Based on the context..." or "The provided information...".
-        """)
-                .build();
+        var params = Map.<String, Object>of(
+                "temperature", 0.0,
+                "systemPrompt", """
+            You are a precise Q&A assistant.
 
+            Follow these rules:
+            1. If the answer is not in the provided context, reply: "I don't know."
+            2. Do not use phrases like "Based on the context" or "The provided information".
+            3. Use only the given context; do not rely on prior knowledge.
+            """
+        );
 
-        QuestionAnswerAdvisor qaAdvisor = QuestionAnswerAdvisor.builder(vectorStore)
-                .promptTemplate(customPromptTemplate)
-                .build();
-
-        Advisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
-                .documentRetriever(VectorStoreDocumentRetriever.builder()
-                        .similarityThreshold(0.50)
-                        .vectorStore(vectorStore)
-                        .build())
-                .build();
-
-
-        String response = chatClient
-                .prompt(question)
-                .advisors(retrievalAugmentationAdvisor)
-                .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
-                .advisors(a -> a.param("query", question))
-                .advisors(qaAdvisor)
-                .advisors(a -> a.param(VectorStoreDocumentRetriever.FILTER_EXPRESSION, "docId == '"+ docId +"'"))
-                .call()
-                .content();
+        var response = chatCompletionPort.askWithContext(
+                question,
+                conversationId,
+                docId,
+                context,
+                params
+        );
 
 
         saveMessage(response, ConversationSide.SYSTEM, conversationId, userId, docId);

@@ -7,13 +7,13 @@ import java.util.UUID;
 public interface ChatCompletionPort {
     String askQuestion(
             String question,
-            UUID conversationId,
+            String conversationId,
             UUID docId,
             Map<String, Object> params
     );
     String askWithContext(
             String question,
-            UUID conversationId,
+            String conversationId,
             UUID docId,
             List<String> context,
             Map<String, Object> params
