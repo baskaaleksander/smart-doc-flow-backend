@@ -24,6 +24,8 @@ public class VectorIndexAdapter implements VectorIndexPort {
                         .build()
         ).toList();
 
-        vectorStore.add(documents);
+        if (!documents.isEmpty()) {
+            vectorStore.add(documents);
+        }
     }
 }
