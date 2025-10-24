@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.common.config;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.JobStatusService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.job.JobStatusService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;

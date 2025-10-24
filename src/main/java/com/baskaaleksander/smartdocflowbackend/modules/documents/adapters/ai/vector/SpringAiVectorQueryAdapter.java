@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ai.vector;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.SearchHit;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.VectorQueryPort;
@@ -37,11 +37,6 @@ public class SpringAiVectorQueryAdapter implements VectorQueryPort {
                 .build();
 
         List<Document> docs = retriever.retrieve(query);
-
-        for(var doc : docs) {
-            System.out.println(doc.getMetadata() + " " + doc.getText());
-        }
-
 
         return docs.stream()
                 .map(d -> new SearchHit(d.getText(), d.getScore(), d.getMetadata()))

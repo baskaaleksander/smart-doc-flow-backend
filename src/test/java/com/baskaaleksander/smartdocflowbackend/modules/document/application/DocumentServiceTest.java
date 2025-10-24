@@ -9,7 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dt
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentReviewBasicResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.mapping.DocumentMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;

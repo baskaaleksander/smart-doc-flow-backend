@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.embed;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerServiceAdapter;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ai.chunking.ChunkerServiceAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.TokenizerPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,8 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.embed;
 
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.ChunkerServiceAdapter;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.EmbeddingTaskConsumerService;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed.VectorStoreLoader;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ai.chunking.ChunkerServiceAdapter;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer.EmbeddingTaskConsumerService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ai.vector.VectorStoreLoader;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;

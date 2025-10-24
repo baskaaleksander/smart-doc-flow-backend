@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application.document;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.*;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;

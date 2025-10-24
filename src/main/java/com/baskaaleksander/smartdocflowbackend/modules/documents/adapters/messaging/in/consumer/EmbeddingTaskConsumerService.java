@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;

@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Image;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrEnginePort;

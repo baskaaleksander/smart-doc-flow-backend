@@ -1,8 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in;
 
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.out.EmbeddingRabbitPublisherAdapter;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.JobStatusService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.job.JobStatusService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskConsumerPort;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

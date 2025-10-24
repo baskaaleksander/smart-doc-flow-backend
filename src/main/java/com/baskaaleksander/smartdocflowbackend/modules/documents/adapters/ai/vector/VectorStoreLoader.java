@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ai.vector;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import lombok.RequiredArgsConstructor;

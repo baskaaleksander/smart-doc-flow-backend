@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer;
 
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;

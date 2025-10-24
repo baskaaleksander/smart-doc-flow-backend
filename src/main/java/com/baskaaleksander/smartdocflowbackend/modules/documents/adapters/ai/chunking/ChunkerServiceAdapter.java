@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ai.chunking;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.SentenceSpan;

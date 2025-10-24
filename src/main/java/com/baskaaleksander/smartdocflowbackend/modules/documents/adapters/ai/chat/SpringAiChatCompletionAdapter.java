@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.embed;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ai.chat;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ChatCompletionPort;
 import lombok.RequiredArgsConstructor;

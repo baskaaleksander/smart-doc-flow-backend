@@ -5,7 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dt
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;

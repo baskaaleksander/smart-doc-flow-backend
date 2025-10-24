@@ -5,7 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;

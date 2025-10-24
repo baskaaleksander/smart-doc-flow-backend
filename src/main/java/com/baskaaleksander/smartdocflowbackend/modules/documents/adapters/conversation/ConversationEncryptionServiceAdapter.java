@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.conversation;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationEncryptionServicePort;
 import org.springframework.beans.factory.annotation.Value;

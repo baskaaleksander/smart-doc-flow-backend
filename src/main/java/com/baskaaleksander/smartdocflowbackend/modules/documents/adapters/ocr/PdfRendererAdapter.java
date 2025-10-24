@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.PdfProcessingException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Image;

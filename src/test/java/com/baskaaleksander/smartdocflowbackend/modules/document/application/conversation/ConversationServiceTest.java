@@ -6,7 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationEncryptionServiceAdapter;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.conversation.ConversationEncryptionServiceAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationSide;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;

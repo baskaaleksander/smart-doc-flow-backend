@@ -1,7 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.document.application.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.application.ocr.OcrTaskConsumerService;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer.OcrTaskConsumerService;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
