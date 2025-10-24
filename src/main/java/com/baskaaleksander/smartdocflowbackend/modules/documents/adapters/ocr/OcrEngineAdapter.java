@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.ocr;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Image;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrEnginePort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -17,31 +18,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class OcrEngineAdapter implements OcrEnginePort {
 
     private final OpenAiChatModel chatModel;
     @Value(value = "${spring.ai.openai.chat.options.model}")
     private String model;
 
-    public OcrEngineAdapter(OpenAiChatModel chatModel) {
-        this.chatModel = chatModel;
-    }
-
     @Override
     public String extractText(List<Image> images) {
 
         var system = new SystemMessage("""
-        You are an OCR engine. Extract plain text from each provided image.
-        - Preserve original line breaks and spacing as much as possible.
-        - Do not hallucinate missing text. If unreadable, return an empty string.
-        - Use UTF-8 with diacritics intact.
-        - Return ONLY valid JSON (no markdown). Schema:
-          {
-            "pages": [
-              { "page": <integer>, "text": "<string>" }
-            ]
-          }
-        """);
+                You are an OCR engine. Extract plain text from each provided image.
+                - Preserve original line breaks and spacing as much as possible.
+                - Do not hallucinate missing text. If unreadable, return an empty string.
+                - Use UTF-8 with diacritics intact.
+                - Return ONLY valid JSON (no markdown). Schema:
+                  {
+                    "pages": [
+                      { "page": <integer>, "text": "<string>" }
+                    ]
+                  }
+                """);
 
         List<Media> medias = new ArrayList<>();
         for (Image img : images) {
@@ -74,7 +72,7 @@ public class OcrEngineAdapter implements OcrEnginePort {
         return Media.builder()
                 .mimeType(MimeTypeUtils.IMAGE_PNG)
                 .data(bytes)
-                .name("page-" + pageNumber + ".png" )
+                .name("page-" + pageNumber + ".png")
                 .build();
     }
 }

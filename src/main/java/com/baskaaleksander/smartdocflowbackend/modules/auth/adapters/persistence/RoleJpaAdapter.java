@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.RoleCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.RoleQueryPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,18 +15,11 @@ import java.util.stream.Collectors;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class RoleJpaAdapter implements RoleQueryPort, RoleCommandPort {
 
     private final SpringDataRoleRepository roleRepo;
     private final RolePersistenceMapper mapper;
-
-    public RoleJpaAdapter(
-            SpringDataRoleRepository roleRepo,
-            RolePersistenceMapper mapper
-            ) {
-        this.roleRepo = roleRepo;
-        this.mapper = mapper;
-    }
 
     @Override
     @Transactional

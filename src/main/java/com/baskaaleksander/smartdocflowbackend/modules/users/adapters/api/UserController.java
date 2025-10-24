@@ -1,17 +1,17 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserApplicationService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,16 +23,11 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserApplicationService userService;
     private final DocumentService documentService;
-
-    @Autowired
-    public UserController(UserApplicationService userService, DocumentService documentService) {
-        this.userService = userService;
-        this.documentService = documentService;
-    }
 
     @GetMapping("/")
     @PreAuthorize("hasAnyRole('ADMIN')")
@@ -41,7 +36,7 @@ public class UserController {
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
-    ){
+    ) {
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
 
         return userService.getAllUsers(request);
@@ -61,7 +56,7 @@ public class UserController {
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
             @AuthenticationPrincipal CustomUserDetails user
-            ) {
+    ) {
 
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
         return new ResponseEntity<>(documentService.getUserDocuments(request, user.getId()), HttpStatus.OK);
@@ -100,7 +95,7 @@ public class UserController {
     public ResponseEntity<UserResponse> editUserAccount(
             @PathVariable("userId") UUID userId,
             @Valid @RequestBody EditUserAccountAdminRequest body
-            ) {
+    ) {
         return new ResponseEntity<>(userService.editUserAccount(userId, body), HttpStatus.OK);
     }
 

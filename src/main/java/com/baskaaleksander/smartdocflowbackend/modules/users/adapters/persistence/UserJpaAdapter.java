@@ -11,11 +11,12 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persis
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserRoleQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserRoleQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserRoleCount;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserStatusCount;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -29,24 +30,13 @@ import java.util.stream.Collectors;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class UserJpaAdapter implements UserQueryPort, UserCommandPort, UserRoleQueryPort {
 
     private final SpringDataUserRepository userRepo;
     private final SpringDataRoleRepository roleRepo;
     private final SpringDataDocumentRepository documentRepo;
     private final UserPersistenceMapper mapper;
-
-    public UserJpaAdapter(
-            SpringDataUserRepository userRepo,
-            SpringDataRoleRepository roleRepo,
-            SpringDataDocumentRepository documentRepo,
-            UserPersistenceMapper mapper
-    ) {
-        this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
-        this.documentRepo = documentRepo;
-        this.mapper = mapper;
-    }
 
     @Override
     public Set<String> findAllByRoleIn(Set<String> roles) {

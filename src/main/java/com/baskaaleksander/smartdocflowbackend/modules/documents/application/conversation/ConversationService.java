@@ -9,6 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.Co
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumSet;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ConversationService {
 
     private final ConversationEncryptionServicePort conversationEncryptionServicePort;
@@ -26,24 +28,6 @@ public class ConversationService {
     private final ConversationMessageApiMapper mapper;
     private final VectorQueryPort vectorQueryPort;
     private final ChatCompletionPort chatCompletionPort;
-
-    public ConversationService(
-            ConversationEncryptionServicePort conversationEncryptionServicePort,
-            ConversationMessageQueryPort conversationMessageQueryPort,
-            ConversationMessageCommandPort conversationMessageCommandPort,
-            DocumentQueryPort documentQueryPort,
-            ConversationMessageApiMapper mapper,
-            VectorQueryPort vectorQueryPort,
-            ChatCompletionPort chatCompletionPort
-            ) {
-        this.conversationEncryptionServicePort = conversationEncryptionServicePort;
-        this.conversationMessageQueryPort = conversationMessageQueryPort;
-        this.conversationMessageCommandPort = conversationMessageCommandPort;
-        this.documentQueryPort = documentQueryPort;
-        this.mapper = mapper;
-        this.vectorQueryPort = vectorQueryPort;
-        this.chatCompletionPort = chatCompletionPort;
-    }
 
     public String askQuestion(String question, UUID docId, UUID userId) {
 
@@ -74,13 +58,13 @@ public class ConversationService {
         var params = Map.<String, Object>of(
                 "temperature", 0.0,
                 "systemPrompt", """
-            You are a precise Q&A assistant.
-
-            Follow these rules:
-            1. If the answer is not in the provided context, reply: "I don't know."
-            2. Do not use phrases like "Based on the context" or "The provided information".
-            3. Use only the given context; do not rely on prior knowledge.
-            """
+                        You are a precise Q&A assistant.
+                        
+                        Follow these rules:
+                        1. If the answer is not in the provided context, reply: "I don't know."
+                        2. Do not use phrases like "Based on the context" or "The provided information".
+                        3. Use only the given context; do not rely on prior knowledge.
+                        """
         );
 
         var response = chatCompletionPort.askWithContext(

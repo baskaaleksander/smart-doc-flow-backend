@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.ConversationMessageResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.ConversationService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,13 +17,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/documents/{documentId}/conversations")
+@RequiredArgsConstructor
 public class ConversationController {
 
     private final ConversationService conversationService;
-
-    public ConversationController(ConversationService conversationService) {
-        this.conversationService = conversationService;
-    }
 
     @PreAuthorize("@convoAccess.canCreateConversation(#id, authentication)")
     @PostMapping()
@@ -30,7 +28,7 @@ public class ConversationController {
         return new ResponseEntity<>(conversationService.askQuestion(question, id, userDetails.getId()), HttpStatus.OK);
     }
 
-//    @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
+    //    @PreAuthorize("@convoAccess.canViewAndModifyConversations(#id, authentication)")
     @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
     @GetMapping()
     public ResponseEntity<PagingResult<ConversationMessageResponse>> getAllConversationMessages(

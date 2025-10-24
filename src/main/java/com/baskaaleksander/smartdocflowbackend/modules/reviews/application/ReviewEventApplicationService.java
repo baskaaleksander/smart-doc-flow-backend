@@ -8,24 +8,18 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapp
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewEventType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewEventQueryPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ReviewEventApplicationService {
 
     private final ReviewEventQueryPort reviewEventQueryPort;
     private final ReviewEventApiMapper mapper;
-
-    public ReviewEventApplicationService(
-            ReviewEventQueryPort reviewEventQueryPort,
-            ReviewEventApiMapper mapper
-            ) {
-        this.reviewEventQueryPort = reviewEventQueryPort;
-        this.mapper = mapper;
-    }
 
     public ReviewEventResponse getReviewEventById(UUID id) {
         return mapper.toEventResponse(

@@ -1,12 +1,12 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,14 +19,10 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/documents")
+@RequiredArgsConstructor
 public class DocumentController {
 
     private final DocumentService documentService;
-
-    @Autowired
-    public DocumentController(DocumentService documentService) {
-        this.documentService = documentService;
-    }
 
     @PostMapping("/upload")
     public ResponseEntity<DocumentResponse> uploadDocument(@RequestBody MultipartFile file) {

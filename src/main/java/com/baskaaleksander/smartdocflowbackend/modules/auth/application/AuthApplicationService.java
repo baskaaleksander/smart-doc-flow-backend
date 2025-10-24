@@ -1,23 +1,23 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserLoginRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserRegisterRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Tokens;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
-import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AuthApplicationService {
 
     private final AuthenticationManager authenticationManager;
@@ -44,29 +45,6 @@ public class AuthApplicationService {
     private final AuthUserQueryPort authUserQueryPort;
     private final RoleQueryPort roleQueryPort;
     private final AuthUserApiMapper mapper;
-
-    @Autowired
-    public AuthApplicationService(
-            AuthenticationManager authenticationManager,
-            TokenUtilPort tokenUtil,
-            PasswordEncoder passwordEncoder,
-            CookieUtil cookieUtil,
-            AuthEventPublisherPort authEventPublisherPort,
-            AuthUserCommandPort authUserCommandPort,
-            AuthUserQueryPort authUserQueryPort,
-            RoleQueryPort roleQueryPort,
-            AuthUserApiMapper mapper
-           ) {
-        this.authenticationManager = authenticationManager;
-        this.tokenUtil = tokenUtil;
-        this.passwordEncoder = passwordEncoder;
-        this.cookieUtil = cookieUtil;
-        this.authEventPublisherPort = authEventPublisherPort;
-        this.authUserCommandPort = authUserCommandPort;
-        this.authUserQueryPort = authUserQueryPort;
-        this.roleQueryPort = roleQueryPort;
-        this.mapper = mapper;
-    }
 
     public TokenResponse loginUser(UserLoginRequest user) {
         Authentication authentication = authenticationManager.authenticate(
@@ -88,13 +66,13 @@ public class AuthApplicationService {
 
         Optional<AuthUser> existingUser = authUserQueryPort.findUserByUsernameWithRoles(user.username());
 
-        if(existingUser.isPresent()) {
+        if (existingUser.isPresent()) {
             throw new ResourceConflictException("User with " + user.username() + " username already exists");
         }
 
         Optional<AuthUser> existingUser2 = authUserQueryPort.findByEmail(user.email());
 
-        if(existingUser2.isPresent()) {
+        if (existingUser2.isPresent()) {
             throw new ResourceConflictException("User with " + user.email() + " email already exists");
         }
 
@@ -116,7 +94,7 @@ public class AuthApplicationService {
 
         AuthUser userCreated = authUserCommandPort.save(newUser);
 
-        authEventPublisherPort.publish(new UserRegisteredEvent(userCreated.getEmail(),userCreated.getUsername(), password));
+        authEventPublisherPort.publish(new UserRegisteredEvent(userCreated.getEmail(), userCreated.getUsername(), password));
 
         return mapper.toResponse(userCreated);
     }
@@ -143,12 +121,12 @@ public class AuthApplicationService {
 
     private String generateRandomPassword() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!#$%&";
-        String password = RandomStringUtils.random( 14, characters );
+        String password = RandomStringUtils.random(14, characters);
 
 
         String regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@!#$%&])(?=\\S+$).{8,}$";
-        Pattern pattern = Pattern.compile( regex );
-        Matcher matcher = pattern.matcher( password );
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(password);
 
         if (matcher.matches()) {
             return password;

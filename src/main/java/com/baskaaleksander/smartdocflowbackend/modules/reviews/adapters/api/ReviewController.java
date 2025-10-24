@@ -1,14 +1,15 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api;
 
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.CommentRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.CommentRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewEventApplicationService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewApplicationService;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewEventApplicationService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,17 +24,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/reviews")
 @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
+@RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewApplicationService reviewService;
     private final ReviewEventApplicationService reviewEventService;
-
-    public ReviewController(
-            ReviewApplicationService reviewService,
-            ReviewEventApplicationService reviewEventService) {
-        this.reviewService = reviewService;
-        this.reviewEventService = reviewEventService;
-    }
 
     @GetMapping("")
     public ResponseEntity<PagingResult<ReviewResponse>> getAllReviews(
@@ -63,16 +58,16 @@ public class ReviewController {
             @RequestBody @Valid ReviewRequest body,
             @PathVariable("reviewId") UUID reviewId,
             @AuthenticationPrincipal UserDetails user
-            ) {
+    ) {
 
         return new ResponseEntity<>(reviewService.handleReviewStatusChange(reviewId, user.getUsername(), body), HttpStatus.OK);
     }
 
     @PostMapping("/{reviewId}/comment")
     public ResponseEntity<ReviewEventResponse> commentReview(
-        @AuthenticationPrincipal UserDetails user,
-        @RequestBody @Valid CommentRequest body,
-        @PathVariable("reviewId") UUID reviewId
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody @Valid CommentRequest body,
+            @PathVariable("reviewId") UUID reviewId
     ) {
         return new ResponseEntity<>(reviewService.commentReview(user.getUsername(), body.comment(), reviewId), HttpStatus.OK);
     }
@@ -85,7 +80,7 @@ public class ReviewController {
             @RequestParam(defaultValue = "id") String sortField,
             @RequestParam(defaultValue = "DESC") Sort.Direction direction,
             @RequestParam(defaultValue = "ALL") String eventType
-            ) {
+    ) {
 
         PaginationRequest request = new PaginationRequest(page, size, sortField, direction);
         return new ResponseEntity<>(reviewEventService.getReviewEvents(reviewId, request, eventType), HttpStatus.OK);

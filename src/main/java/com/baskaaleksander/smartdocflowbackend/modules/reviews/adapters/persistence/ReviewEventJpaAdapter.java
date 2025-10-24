@@ -1,6 +1,5 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence;
 
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
@@ -13,6 +12,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Revi
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewEventCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewEventQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -24,24 +24,13 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ReviewEventJpaAdapter implements ReviewEventQueryPort, ReviewEventCommandPort {
 
     private final SpringDataReviewEventRepository reviewEventRepo;
     private final SpringDataUserRepository userRepo;
     private final SpringDataReviewRepository reviewRepo;
     private final ReviewEventPersistenceMapper mapper;
-
-    public ReviewEventJpaAdapter(
-            SpringDataReviewEventRepository reviewEventRepo,
-            ReviewEventPersistenceMapper mapper,
-            SpringDataUserRepository userRepo,
-            SpringDataReviewRepository reviewRepo
-    ) {
-        this.reviewEventRepo = reviewEventRepo;
-        this.mapper = mapper;
-        this.userRepo = userRepo;
-        this.reviewRepo = reviewRepo;
-    }
 
     @Override
     public Optional<ReviewEvent> getReviewEventById(UUID id) {
@@ -90,7 +79,7 @@ public class ReviewEventJpaAdapter implements ReviewEventQueryPort, ReviewEventC
 
         entity.setEventType(reviewEvent.getEventType());
 
-        if(reviewEvent.getComment() != null && !reviewEvent.getComment().isBlank()){
+        if (reviewEvent.getComment() != null && !reviewEvent.getComment().isBlank()) {
             entity.setComment(reviewEvent.getComment());
         }
 

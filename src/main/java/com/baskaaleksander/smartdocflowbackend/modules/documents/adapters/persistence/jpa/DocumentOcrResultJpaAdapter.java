@@ -7,6 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persis
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentOcrResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentOcrResultCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentOcrResultQueryPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,21 +16,12 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class DocumentOcrResultJpaAdapter implements DocumentOcrResultQueryPort, DocumentOcrResultCommandPort {
 
     private final SpringDataDocumentOcrResultRepository ocrResultRepository;
     private final SpringDataDocumentRepository documentRepository;
     private final DocumentOcrResultPersistenceMapper mapper;
-
-    public DocumentOcrResultJpaAdapter(
-            SpringDataDocumentOcrResultRepository ocrResultRepository,
-            SpringDataDocumentRepository documentRepository,
-            DocumentOcrResultPersistenceMapper mapper
-    ) {
-        this.ocrResultRepository = ocrResultRepository;
-        this.documentRepository = documentRepository;
-        this.mapper = mapper;
-    }
 
     @Override
     @Transactional

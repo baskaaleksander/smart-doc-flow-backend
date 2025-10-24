@@ -1,18 +1,19 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.mapping.ReviewEventApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.*;
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.*;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +22,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ReviewApplicationService {
-
 
     private final ReviewDomainEventPublisherPort publisher;
     private final ReviewCommandPort reviewCommandPort;
@@ -33,37 +34,16 @@ public class ReviewApplicationService {
     private final ReviewApiMapper mapper;
     private final ReviewEventApiMapper eventMapper;
 
-    public ReviewApplicationService(
-            ReviewCommandPort reviewCommandPort,
-            ReviewQueryPort reviewQueryPort,
-            ReviewEventCommandPort reviewEventCommandPort,
-            DocumentCommandPort documentCommandPort,
-            ExternalUserQueryPort externalUserQueryPort,
-            ReviewApiMapper mapper,
-            ReviewEventApiMapper eventMapper,
-            ReviewDomainEventPublisherPort publisher
-    ) {
-
-        this.reviewCommandPort = reviewCommandPort;
-        this.reviewQueryPort = reviewQueryPort;
-        this.reviewEventCommandPort = reviewEventCommandPort;
-        this.documentCommandPort = documentCommandPort;
-        this.externalUserQueryPort = externalUserQueryPort;
-        this.mapper = mapper;
-        this.eventMapper = eventMapper;
-        this.publisher = publisher;
-    }
-
     @Transactional
     public ReviewResponse handleReviewStatusChange(UUID reviewId, String username, ReviewRequest body) {
-        if(body.comment() == null) {
+        if (body.comment() == null) {
             return switch (body.status()) {
                 case IN_PROGRESS -> claimReview(reviewId, username);
                 case PENDING -> releaseReview(reviewId, username);
                 default -> throw new IllegalArgumentException("No action like this possible");
             };
         } else {
-            return switch(body.status()) {
+            return switch (body.status()) {
                 case APPROVED -> approveDocument(reviewId, username, body.comment());
                 case REJECTED -> rejectDocument(reviewId, username, body.comment());
                 default -> throw new IllegalArgumentException("No action like this possible");
@@ -103,7 +83,7 @@ public class ReviewApplicationService {
         Review review = reviewQueryPort.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
-        if(review.getStatus() != ReviewStatus.PENDING) {
+        if (review.getStatus() != ReviewStatus.PENDING) {
             throw new ResourceConflictException("Review with ID " + reviewId + " is already claimed");
         }
 
@@ -116,7 +96,7 @@ public class ReviewApplicationService {
 
         review = reviewCommandPort.save(review);
 
-        logReviewEvent(reviewer, review.getId(),  ReviewEventType.ASSIGNED, null);
+        logReviewEvent(reviewer, review.getId(), ReviewEventType.ASSIGNED, null);
 
         publisher.publish(new NotificationEvent(username, "document_in_review", "Document " + review.getDocumentId() + " is in review process!"));
 
@@ -155,14 +135,14 @@ public class ReviewApplicationService {
         Review review = reviewQueryPort.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
-        if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
+        if (review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
 
         String reviewer = externalUserQueryPort.findById(review.getReviewerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Reviewer not found"));
 
-        if(!reviewer.equalsIgnoreCase(username)) {
+        if (!reviewer.equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to approve this document");
         }
 
@@ -173,7 +153,7 @@ public class ReviewApplicationService {
 
         review = reviewCommandPort.save(review);
 
-        logReviewEvent(review.getReviewerId(), review.getId(),  ReviewEventType.APPROVED, comment);
+        logReviewEvent(review.getReviewerId(), review.getId(), ReviewEventType.APPROVED, comment);
 
         publisher.publish(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " is approved."));
 
@@ -185,14 +165,14 @@ public class ReviewApplicationService {
         Review review = reviewQueryPort.getReviewById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with ID " + reviewId + " not found"));
 
-        if(review.getStatus() != ReviewStatus.IN_PROGRESS) {
+        if (review.getStatus() != ReviewStatus.IN_PROGRESS) {
             throw new ResourceConflictException("Review with ID " + reviewId + " cannot be approved, it needs to be IN_PROGRESS status");
         }
 
         String reviewer = externalUserQueryPort.findById(review.getReviewerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Reviewer not found"));
 
-        if(!reviewer.equalsIgnoreCase(username)) {
+        if (!reviewer.equalsIgnoreCase(username)) {
             throw new AccessDeniedException("You are not allowed to reject this document");
         }
 
@@ -203,7 +183,7 @@ public class ReviewApplicationService {
 
         review = reviewCommandPort.save(review);
 
-        logReviewEvent(review.getReviewerId(), reviewId,  ReviewEventType.REJECTED, comment);
+        logReviewEvent(review.getReviewerId(), reviewId, ReviewEventType.REJECTED, comment);
 
         publisher.publish(new NotificationEvent(username, "document_reviewed", "Document " + review.getDocumentId() + " got rejected."));
 

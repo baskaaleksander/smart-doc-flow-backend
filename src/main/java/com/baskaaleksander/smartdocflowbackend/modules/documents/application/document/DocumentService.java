@@ -1,10 +1,13 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.document;
 
-import com.baskaaleksander.smartdocflowbackend.common.exception.*;
+import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidFileTypeException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.DocumentApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
@@ -13,8 +16,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Do
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentUserBasic;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.DocumentStatusCount;
-import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class DocumentService {
 
     private final DocumentDomainEventPublisherPort publisher;
@@ -33,23 +37,6 @@ public class DocumentService {
     private final DocumentUserQueryPort documentUserQueryPort;
     private final DocumentApiMapper mapper;
     private final FileStoragePort fileStoragePort;
-
-    public DocumentService(
-            DocumentDomainEventPublisherPort publisher,
-            OcrTaskPublisherPort taskPublisher,
-            DocumentCommandPort documentCommandPort,
-            DocumentQueryPort documentQueryPort,
-            DocumentUserQueryPort documentUserQueryPort,
-            DocumentApiMapper mapper,
-            FileStoragePort fileStoragePort) {
-        this.publisher = publisher;
-        this.taskPublisher = taskPublisher;
-        this.documentCommandPort = documentCommandPort;
-        this.documentQueryPort = documentQueryPort;
-        this.documentUserQueryPort = documentUserQueryPort;
-        this.mapper = mapper;
-        this.fileStoragePort = fileStoragePort;
-    }
 
     public DocumentResponse createAndSave(MultipartFile file) {
         UUID docId = UUID.randomUUID();

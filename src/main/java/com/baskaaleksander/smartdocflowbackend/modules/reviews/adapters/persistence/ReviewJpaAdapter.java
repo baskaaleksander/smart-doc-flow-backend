@@ -14,6 +14,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Revi
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ReviewQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -25,24 +26,13 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ReviewJpaAdapter implements ReviewCommandPort, ReviewQueryPort {
 
     private final SpringDataReviewRepository reviewRepo;
     private final SpringDataUserRepository userRepo;
     private final SpringDataDocumentRepository documentRepo;
     private final ReviewPersistenceMapper mapper;
-
-    public ReviewJpaAdapter(
-            SpringDataReviewRepository reviewRepo,
-            SpringDataUserRepository userRepo,
-            SpringDataDocumentRepository documentRepo,
-            ReviewPersistenceMapper mapper
-    ) {
-        this.reviewRepo = reviewRepo;
-        this.userRepo = userRepo;
-        this.documentRepo = documentRepo;
-        this.mapper = mapper;
-    }
 
     @Override
     @Transactional
@@ -59,7 +49,7 @@ public class ReviewJpaAdapter implements ReviewCommandPort, ReviewQueryPort {
 
         entity.setStatus(review.getStatus());
 
-        if(review.getComment() != null && !review.getComment().isBlank()) {
+        if (review.getComment() != null && !review.getComment().isBlank()) {
             entity.setComment(review.getComment());
         }
 

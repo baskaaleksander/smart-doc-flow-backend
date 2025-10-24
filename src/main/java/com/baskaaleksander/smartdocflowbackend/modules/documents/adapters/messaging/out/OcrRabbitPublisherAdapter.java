@@ -3,17 +3,15 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messa
 import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskPublisherPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class OcrRabbitPublisherAdapter implements OcrTaskPublisherPort {
 
     private final RabbitTemplate rabbitTemplate;
-
-    public OcrRabbitPublisherAdapter(RabbitTemplate rabbitTemplate) {
-        this.rabbitTemplate = rabbitTemplate;
-    }
 
     @Override
     public void publish(OcrTask task) {

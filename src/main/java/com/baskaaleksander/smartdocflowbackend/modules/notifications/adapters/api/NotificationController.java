@@ -1,30 +1,27 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/notifications")
+@RequiredArgsConstructor
 public class NotificationController {
 
     private final NotificationApplicationService notificationService;
-
-    public NotificationController(NotificationApplicationService notificationService) {
-        this.notificationService = notificationService;
-    }
 
     @GetMapping("")
     public ResponseEntity<PagingResult<NotificationResponse>> getNotifications(
@@ -53,8 +50,6 @@ public class NotificationController {
     public ResponseEntity<Integer> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return new ResponseEntity<>(notificationService.markOneAsRead(userDetails.getUsername(), id, body), HttpStatus.OK);
     }
-
-
 
 
 }

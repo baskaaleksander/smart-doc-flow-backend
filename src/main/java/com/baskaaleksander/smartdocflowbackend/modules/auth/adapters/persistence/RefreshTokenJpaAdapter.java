@@ -7,6 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Refresh
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.RefreshTokenCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.RefreshTokenQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,21 +15,13 @@ import java.util.Optional;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class RefreshTokenJpaAdapter implements RefreshTokenCommandPort, RefreshTokenQueryPort {
 
     private final SpringDataRefreshTokenRepository tokenRepo;
     private final SpringDataUserRepository userRepo;
     private final RefreshTokenPersistenceMapper mapper;
 
-    public RefreshTokenJpaAdapter(
-            SpringDataRefreshTokenRepository tokenRepo,
-            SpringDataUserRepository userRepo,
-            RefreshTokenPersistenceMapper mapper
-    ) {
-        this.tokenRepo = tokenRepo;
-        this.userRepo = userRepo;
-        this.mapper = mapper;
-    }
     @Override
     @Transactional
     public RefreshToken save(RefreshToken token) {

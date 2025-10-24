@@ -9,6 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persis
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.ConversationMessage;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ConversationMessageQueryPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,21 +22,12 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ConversationMessageJpaAdapter implements ConversationMessageCommandPort, ConversationMessageQueryPort {
 
     private final SpringDataConversationMessageRepository conversationRepo;
     private final JdbcChatMemoryRepository jdbcChatMemoryRepository;
     private final ConversationMessagePersistenceMapper mapper;
-
-    public ConversationMessageJpaAdapter(
-            SpringDataConversationMessageRepository conversationRepo,
-            JdbcChatMemoryRepository jdbcChatMemoryRepository,
-            ConversationMessagePersistenceMapper mapper
-            ) {
-        this.conversationRepo = conversationRepo;
-        this.jdbcChatMemoryRepository = jdbcChatMemoryRepository;
-        this.mapper = mapper;
-    }
 
     @Override
     @Transactional

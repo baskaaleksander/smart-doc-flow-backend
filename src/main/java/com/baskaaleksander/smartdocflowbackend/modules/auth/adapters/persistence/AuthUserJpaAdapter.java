@@ -9,6 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthUser
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthUserQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,21 +19,13 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AuthUserJpaAdapter implements AuthUserQueryPort, AuthUserCommandPort {
 
     private final SpringDataUserRepository userRepo;
     private final SpringDataRoleRepository roleRepo;
     private final AuthUserPersistenceMapper mapper;
 
-    public AuthUserJpaAdapter(
-            SpringDataUserRepository userRepo,
-            SpringDataRoleRepository roleRepo,
-            AuthUserPersistenceMapper mapper
-    ) {
-        this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
-        this.mapper = mapper;
-    }
     @Override
     @Transactional
     public AuthUser save(AuthUser user) {

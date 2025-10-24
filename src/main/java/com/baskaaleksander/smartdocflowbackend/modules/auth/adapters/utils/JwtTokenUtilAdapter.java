@@ -1,7 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.utils;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidJwtTokenException;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.RefreshTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRefreshTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Tokens;
@@ -12,7 +11,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +25,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenUtilAdapter implements TokenUtilPort {
 
     private final UserDetailsService userDetailsService;
@@ -42,11 +42,6 @@ public class JwtTokenUtilAdapter implements TokenUtilPort {
     private SecretKey accessKey;
     private SecretKey refreshKey;
 
-    public JwtTokenUtilAdapter(UserDetailsService userDetailsService, SpringDataRefreshTokenRepository refreshTokenRepository, SpringDataUserRepository userRepository) {
-        this.userDetailsService = userDetailsService;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.userRepository = userRepository;
-    }
 
     @PostConstruct
     public void init() {
@@ -82,7 +77,6 @@ public class JwtTokenUtilAdapter implements TokenUtilPort {
         var exp = new Date(now.getTime() + jwtAccessExpiration);
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         var roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
-
 
 
         return Jwts.builder()
@@ -138,7 +132,8 @@ public class JwtTokenUtilAdapter implements TokenUtilPort {
                 .setSigningKey(refreshKey).build()
                 .parseClaimsJws(refreshToken)
                 .getBody()
-                .getSubject();    }
+                .getSubject();
+    }
 
     @Override
     public String getJtiFromRefreshToken(String refreshToken) {
@@ -146,7 +141,8 @@ public class JwtTokenUtilAdapter implements TokenUtilPort {
                 .setSigningKey(refreshKey).build()
                 .parseClaimsJws(refreshToken)
                 .getBody()
-                .getId();    }
+                .getId();
+    }
 
     @Override
     public Boolean validateAccessToken(String accessToken) {

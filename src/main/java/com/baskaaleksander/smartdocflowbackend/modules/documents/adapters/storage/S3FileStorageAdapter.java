@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.S3DeleteExceptio
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3DownloadException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 @Component
+@RequiredArgsConstructor
 public class S3FileStorageAdapter implements FileStoragePort {
 
     private final S3Client s3Client;
@@ -34,13 +36,6 @@ public class S3FileStorageAdapter implements FileStoragePort {
     private final Logger log = LoggerFactory.getLogger(S3FileStorageAdapter.class);
 
 
-    public S3FileStorageAdapter(
-            S3Client s3Client,
-            S3Presigner s3Presigner
-            ) {
-        this.s3Client = s3Client;
-        this.s3Presigner = s3Presigner;
-    }
     @Override
     public void upload(InputStream inputStream, String key, String contentType, long size) {
 

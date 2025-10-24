@@ -4,17 +4,15 @@ import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.port.AuthEventIngressPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class RabbitEventIngressAdapter {
 
     private final AuthEventIngressPort ingress;
-
-    public RabbitEventIngressAdapter(AuthEventIngressPort ingress) {
-        this.ingress = ingress;
-    }
 
     @RabbitListener(queues = QueueConfig.CREDENTIALS_EMAIL_QUEUE)
     public void handleRegistered(UserRegisteredEvent event) {

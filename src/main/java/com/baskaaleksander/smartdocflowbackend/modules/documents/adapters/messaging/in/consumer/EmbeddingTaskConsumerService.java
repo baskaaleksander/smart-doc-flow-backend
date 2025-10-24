@@ -7,8 +7,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParseException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
     private final ObjectMapper MAPPER = new ObjectMapper();
@@ -26,22 +27,6 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
     private final DocumentOcrResultQueryPort documentOcrResultQueryPort;
     private final DocumentCommandPort documentCommandPort;
     private final VectorIndexPort vectorIndexPort;
-
-
-    public EmbeddingTaskConsumerService(
-            ChunkerServicePort chunkerService,
-            FileStoragePort fileStoragePort,
-            DocumentOcrResultQueryPort documentOcrResultQueryPort,
-            DocumentCommandPort documentCommandPort,
-            VectorIndexPort vectorIndexPort
-            ) {
-
-        this.chunkerService = chunkerService;
-        this.fileStoragePort = fileStoragePort;
-        this.documentOcrResultQueryPort = documentOcrResultQueryPort;
-        this.documentCommandPort = documentCommandPort;
-        this.vectorIndexPort = vectorIndexPort;
-    }
 
     @Transactional
     @Override
@@ -64,7 +49,7 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
         int pageCount = 0;
 
         for (OcrResultPage page : result.pages()) {
-            chunks.addAll(chunkerService.chunkPage(page.text(),docId ,page.page()));
+            chunks.addAll(chunkerService.chunkPage(page.text(), docId, page.page()));
             pageCount++;
         }
 

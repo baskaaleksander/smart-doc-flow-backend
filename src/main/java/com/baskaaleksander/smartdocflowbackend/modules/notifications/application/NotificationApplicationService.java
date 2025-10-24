@@ -1,33 +1,26 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
+import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.NotificationApiMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PageMetadata;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PagedResponse;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.Notification;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.port.*;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.mapping.NotificationMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.entity.NotificationEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.spring.SpringDataNotificationRepository;
-import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationUtil;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationApplicationService implements NotificationEventIngressPort, AuthEventIngressPort {
 
     private final RealtimePushPort push;
@@ -39,20 +32,6 @@ public class NotificationApplicationService implements NotificationEventIngressP
 
     @Value(value = "${app.frontend-url}")
     private String frontendUrl;
-
-    public NotificationApplicationService(
-            RealtimePushPort push,
-            EmailSenderPort emailPort,
-            NotificationCommandPort notificationCommandPort,
-            NotificationQueryPort notificationQueryPort,
-            NotificationApiMapper mapper
-            ) {
-        this.push = push;
-        this.emailPort = emailPort;
-        this.notificationCommandPort = notificationCommandPort;
-        this.notificationQueryPort = notificationQueryPort;
-        this.mapper = mapper;
-    }
 
     public PagingResult<NotificationResponse> getNotifications(String username, PaginationRequest request, Boolean read) {
         PagingResult<Notification> pagingResult;

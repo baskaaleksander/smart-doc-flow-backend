@@ -7,6 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Passwor
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.PasswordResetTokenCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.PasswordResetTokenQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,21 +16,13 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class PasswordResetTokenJpaAdapter implements PasswordResetTokenCommandPort, PasswordResetTokenQueryPort {
 
     private final SpringDataPasswordResetTokenRepository tokenRepo;
     private final SpringDataUserRepository userRepo;
     private final PasswordResetTokenPersistenceMapper mapper;
 
-    public PasswordResetTokenJpaAdapter(
-            SpringDataPasswordResetTokenRepository tokenRepo,
-            SpringDataUserRepository userRepo,
-            PasswordResetTokenPersistenceMapper mapper
-    ) {
-        this.tokenRepo = tokenRepo;
-        this.userRepo = userRepo;
-        this.mapper = mapper;
-    }
     @Override
     @Transactional
     public PasswordResetToken save(PasswordResetToken token) {

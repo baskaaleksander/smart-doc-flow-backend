@@ -6,15 +6,12 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordExc
 import com.baskaaleksander.smartdocflowbackend.common.util.TokenGenerator;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.ResetPasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UpdatePasswordRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.PasswordResetToken;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.*;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,6 +26,7 @@ import java.util.UUID;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PasswordChangeApplicationService {
 
     private final PasswordEncoder passwordEncoder;
@@ -42,24 +40,6 @@ public class PasswordChangeApplicationService {
 
     @Value("${auth.reset-token.ttl-hours:24}")
     private long ttlHours;
-
-    public PasswordChangeApplicationService(
-            PasswordEncoder passwordEncoder,
-            AuthEventPublisherPort authEventPublisherPort,
-            Clock clock,
-            AuthUserQueryPort authUserQueryPort,
-            AuthUserCommandPort authUserCommandPort,
-            PasswordResetTokenCommandPort passwordResetTokenCommandPort,
-            PasswordResetTokenQueryPort passwordResetTokenQueryPort
-            ) {
-        this.passwordEncoder = passwordEncoder;
-        this.authEventPublisherPort = authEventPublisherPort;
-        this.clock = clock;
-        this.authUserQueryPort = authUserQueryPort;
-        this.authUserCommandPort = authUserCommandPort;
-        this.passwordResetTokenCommandPort = passwordResetTokenCommandPort;
-        this.passwordResetTokenQueryPort = passwordResetTokenQueryPort;
-    }
 
     private void updatePassword(AuthUser user, String newPassword) {
         String password = passwordEncoder.encode(newPassword);
@@ -89,9 +69,13 @@ public class PasswordChangeApplicationService {
         PasswordResetToken resetToken = passwordResetTokenQueryPort.findByToken(changePasswordRequest.token())
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 
-        if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
+        if (resetToken.isRevoked()) {
+            throw new InvalidResetTokenException("Token is revoked");
+        }
 
-        if (resetToken.getExpiresAt().isBefore(Instant.now(clock))) { throw new InvalidResetTokenException("Token is expired"); }
+        if (resetToken.getExpiresAt().isBefore(Instant.now(clock))) {
+            throw new InvalidResetTokenException("Token is expired");
+        }
 
         AuthUser user = authUserQueryPort.findById(resetToken.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -108,9 +92,13 @@ public class PasswordChangeApplicationService {
         PasswordResetToken resetToken = passwordResetTokenQueryPort.findByToken(token)
                 .orElseThrow(() -> new InvalidResetTokenException("Token not found"));
 
-        if (resetToken.isRevoked()) { throw new InvalidResetTokenException("Token is revoked"); }
+        if (resetToken.isRevoked()) {
+            throw new InvalidResetTokenException("Token is revoked");
+        }
 
-        if (resetToken.getExpiresAt().isBefore(Instant.now(clock))) { throw new InvalidResetTokenException("Token is expired"); }
+        if (resetToken.getExpiresAt().isBefore(Instant.now(clock))) {
+            throw new InvalidResetTokenException("Token is expired");
+        }
 
         return true;
     }
@@ -135,7 +123,8 @@ public class PasswordChangeApplicationService {
             passwordResetTokenCommandPort.save(passwordResetToken);
 
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void afterCommit() {
+                @Override
+                public void afterCommit() {
                     authEventPublisherPort.publish(new PasswordResetEvent(email, token));
                 }
             });

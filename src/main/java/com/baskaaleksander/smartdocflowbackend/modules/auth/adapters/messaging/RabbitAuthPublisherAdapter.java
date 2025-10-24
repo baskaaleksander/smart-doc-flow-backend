@@ -4,17 +4,15 @@ import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.AuthEventPublisherPort;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
+import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class RabbitAuthPublisherAdapter implements AuthEventPublisherPort {
 
     private final RabbitTemplate rabbitTemplate;
-
-    public RabbitAuthPublisherAdapter(RabbitTemplate rabbitTemplate) {
-        this.rabbitTemplate = rabbitTemplate;
-    }
 
     @Override
     public void publish(PasswordResetEvent event) {

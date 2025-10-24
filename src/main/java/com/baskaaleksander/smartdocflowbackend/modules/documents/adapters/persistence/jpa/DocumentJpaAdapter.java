@@ -17,6 +17,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.view.Doc
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -30,21 +31,12 @@ import java.util.stream.Collectors;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPort {
 
     private final SpringDataDocumentRepository documentRepo;
     private final DocumentPersistenceMapper mapper;
     private final SpringDataUserRepository userRepo;
-
-    public DocumentJpaAdapter(
-            SpringDataDocumentRepository documentRepo,
-            DocumentPersistenceMapper mapper,
-            SpringDataUserRepository userRepo
-    ) {
-        this.documentRepo = documentRepo;
-        this.mapper = mapper;
-        this.userRepo = userRepo;
-    }
 
     @Transactional
     @Override
@@ -66,7 +58,11 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
 
         DocumentEntity entity = (document.getId() != null)
                 ? documentRepo.findById(document.getId())
-                .orElseGet(() -> { var e = new DocumentEntity(); e.setId(document.getId()); return e; })
+                .orElseGet(() -> {
+                    var e = new DocumentEntity();
+                    e.setId(document.getId());
+                    return e;
+                })
                 : new DocumentEntity();
 
         if (entity.getId() == null) {
@@ -109,6 +105,7 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
         DocumentEntity saved = documentRepo.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
+
     @Override
     @Transactional
     public void updateStatus(UUID documentId, DocumentStatus status) {
@@ -133,7 +130,7 @@ public class DocumentJpaAdapter implements DocumentCommandPort, DocumentQueryPor
     @Override
     public PagingResult<Document> findAllByOwner(UUID ownerId, PaginationRequest request) {
         Pageable pageable = PaginationUtil.getPageable(request);
-        Page<DocumentEntity> entities = documentRepo.findAllByOwner(ownerId ,pageable);
+        Page<DocumentEntity> entities = documentRepo.findAllByOwner(ownerId, pageable);
         List<Document> content = entities.getContent().stream().map(mapper::toDomain).toList();
 
         return new PagingResult<>(

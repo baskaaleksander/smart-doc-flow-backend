@@ -1,21 +1,21 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
-import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
-import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserRoleQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserQueryPort;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserRoleQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserRoleCount;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserStatusCount;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,25 +24,13 @@ import java.util.stream.Collectors;
 
 
 @Service
+@RequiredArgsConstructor
 public class UserApplicationService {
 
     private final UserQueryPort userQueryPort;
     private final UserCommandPort userCommandPort;
     private final UserRoleQueryPort roleQueryPort;
     private final UserApiMapper mapper;
-
-    @Autowired
-    public UserApplicationService(UserQueryPort userQueryPort,
-                                  UserCommandPort userCommandPort,
-                                  UserRoleQueryPort roleQueryPort,
-                                  UserApiMapper mapper
-                                  ) {
-
-        this.userQueryPort = userQueryPort;
-        this.userCommandPort = userCommandPort;
-        this.roleQueryPort = roleQueryPort;
-        this.mapper = mapper;
-    }
 
     @Transactional(readOnly = true)
     public PagingResult<UserResponse> getAllUsers(PaginationRequest request) {
@@ -76,7 +64,7 @@ public class UserApplicationService {
         UUID userUUID = UUID.fromString(userId);
         boolean status = userQueryPort.getUserStatusById(userUUID).orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " not found"));
 
-        if(!status) {
+        if (!status) {
             throw new ResourceConflictException("User is already inactive");
         }
 
@@ -90,7 +78,7 @@ public class UserApplicationService {
         UUID userUUID = UUID.fromString(userId);
         boolean status = userQueryPort.getUserStatusById(userUUID).orElseThrow(() -> new ResourceNotFoundException("User with ID " + userId + " not found"));
 
-        if(status) {
+        if (status) {
             throw new ResourceConflictException("User is already active");
         }
 
@@ -108,7 +96,9 @@ public class UserApplicationService {
 
         userQueryPort.findByEmail(editRequest.email())
                 .filter(u -> !u.getId().equals(userId))
-                .ifPresent(u -> { throw new ResourceConflictException("User with that email is already registered"); });
+                .ifPresent(u -> {
+                    throw new ResourceConflictException("User with that email is already registered");
+                });
 
 
         Set<String> roles = roleQueryPort.findAllByRoleIn(editRequest.roles());
@@ -133,8 +123,10 @@ public class UserApplicationService {
 
         if (editRequest.email() != null) {
             userQueryPort.findByEmail(editRequest.email())
-                            .filter(u -> !u.getId().equals(userId))
-                            .ifPresent(u -> { throw new ResourceConflictException("User with that email is already registered"); });
+                    .filter(u -> !u.getId().equals(userId))
+                    .ifPresent(u -> {
+                        throw new ResourceConflictException("User with that email is already registered");
+                    });
 
             user.setEmail(editRequest.email());
         }

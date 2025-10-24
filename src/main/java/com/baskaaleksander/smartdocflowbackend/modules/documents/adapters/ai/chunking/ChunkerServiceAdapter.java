@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Se
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.WordSpan;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.ChunkerServicePort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.TokenizerPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,14 +15,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
 public class ChunkerServiceAdapter implements ChunkerServicePort {
 
     private final TokenizerPort tokenizer;
-
-    public ChunkerServiceAdapter(TokenizerPort tokenizer) {
-        this.tokenizer = tokenizer;
-    }
-
 
     public List<Chunk> chunkPage(String rawText, UUID documentId, int page) {
 
@@ -58,7 +55,7 @@ public class ChunkerServiceAdapter implements ChunkerServicePort {
             }
 
             if (currentTokens + sTokens <= maxTokens) {
-                if(current.isEmpty()) chunkStartChar = s.start();
+                if (current.isEmpty()) chunkStartChar = s.start();
                 current.add(s);
                 currentTokens += sTokens;
             } else {
@@ -108,12 +105,12 @@ public class ChunkerServiceAdapter implements ChunkerServicePort {
 
         List<SentenceSpan> spans = new ArrayList<>();
 
-        while(m.find()) {
+        while (m.find()) {
             int s = m.start();
             int e = m.end();
             String piece = rawText.substring(s, e).trim();
 
-            if(!piece.isEmpty()) {
+            if (!piece.isEmpty()) {
                 int leading = leadingWs(rawText, s, e);
                 int trailing = trailingWs(rawText, s, e);
                 int startAdj = s + leading;
@@ -197,12 +194,12 @@ public class ChunkerServiceAdapter implements ChunkerServicePort {
         if (n == 0) return out;
 
         int startIdx = 0;
-        while(startIdx < n) {
+        while (startIdx < n) {
             int endIdx = startIdx;
             while (endIdx < n) {
                 String segment = sliceWords(text, words, startIdx, endIdx);
                 int tokens = tokenizer.count(segment);
-                if(tokens > maxTokens) break;
+                if (tokens > maxTokens) break;
                 endIdx++;
             }
             if (endIdx == startIdx) {

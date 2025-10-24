@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.pe
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.Notification;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.port.NotificationCommandPort;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.port.NotificationQueryPort;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -18,17 +19,11 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class NotificationJpaAdapter implements NotificationCommandPort, NotificationQueryPort {
     private final SpringDataNotificationRepository notificationRepo;
     private final NotificationPersistenceMapper mapper;
 
-    public NotificationJpaAdapter(
-            SpringDataNotificationRepository notificationRepo,
-            NotificationPersistenceMapper mapper
-    ) {
-        this.notificationRepo = notificationRepo;
-        this.mapper = mapper;
-    }
     @Override
     @Transactional
     public Notification save(Notification notification) {

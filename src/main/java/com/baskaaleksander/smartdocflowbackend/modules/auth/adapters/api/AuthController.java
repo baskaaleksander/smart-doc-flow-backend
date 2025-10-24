@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.application.Password
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,25 +16,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
-@RestController()
+@RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthApplicationService authService;
     private final CookieUtil cookieUtil;
     private final PasswordChangeApplicationService passwordChangeService;
-
-    @Autowired
-    public AuthController(
-            AuthApplicationService authService,
-            CookieUtil cookieUtil,
-            PasswordChangeApplicationService passwordChangeService
-    ) {
-        this.authService = authService;
-        this.cookieUtil = cookieUtil;
-        this.passwordChangeService = passwordChangeService;
-    }
-
 
     @PostMapping("/login")
     public ResponseEntity<String> loginUser(@RequestBody @Valid UserLoginRequest user, HttpServletResponse response){

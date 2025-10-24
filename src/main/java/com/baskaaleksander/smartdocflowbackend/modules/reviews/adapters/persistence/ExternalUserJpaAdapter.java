@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.Revi
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.ExternalUserQueryPort;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,13 +13,10 @@ import java.util.UUID;
 
 @Repository
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ExternalUserJpaAdapter implements ExternalUserQueryPort {
 
     private final SpringDataUserRepository userRepo;
-
-    public ExternalUserJpaAdapter(SpringDataUserRepository userRepo) {
-        this.userRepo = userRepo;
-    }
 
     @Override
     public Optional<String> findByUsername(String username) {
