@@ -13,34 +13,34 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
 
     private final ObjectMapper MAPPER = new ObjectMapper();
-    private final VectorStoreLoader vectorStoreLoader;
 
     private final ChunkerServicePort chunkerService;
     private final FileStoragePort fileStoragePort;
     private final DocumentOcrResultQueryPort documentOcrResultQueryPort;
     private final DocumentCommandPort documentCommandPort;
+    private final VectorIndexPort vectorIndexPort;
 
 
     public EmbeddingTaskConsumerService(
-            VectorStoreLoader vectorStoreLoader,
-
             ChunkerServicePort chunkerService,
             FileStoragePort fileStoragePort,
             DocumentOcrResultQueryPort documentOcrResultQueryPort,
-            DocumentCommandPort documentCommandPort
+            DocumentCommandPort documentCommandPort,
+            VectorIndexPort vectorIndexPort
             ) {
-        this.vectorStoreLoader = vectorStoreLoader;
 
         this.chunkerService = chunkerService;
         this.fileStoragePort = fileStoragePort;
         this.documentOcrResultQueryPort = documentOcrResultQueryPort;
         this.documentCommandPort = documentCommandPort;
+        this.vectorIndexPort = vectorIndexPort;
     }
 
     @Transactional
@@ -68,9 +68,24 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
             pageCount++;
         }
 
-        vectorStoreLoader.loadChunks(chunks);
+        List<VectorDocument> docs = chunkToVectorDocument(chunks);
+
+        vectorIndexPort.addAll(docs);
 
         documentCommandPort.updateStatus(docId, DocumentStatus.PROCESSED);
         documentCommandPort.updatePageCount(docId, pageCount);
+    }
+
+    private List<VectorDocument> chunkToVectorDocument(List<Chunk> chunks) {
+        return chunks.stream().map(c ->
+                new VectorDocument(
+                        c.content(),
+                        Map.of(
+                                "docId", c.documentId().toString(),
+                                "page", c.page(),
+                                "startOffset", c.startOffset(),
+                                "endOffset", c.endOffset()
+                        ))
+        ).toList();
     }
 }
