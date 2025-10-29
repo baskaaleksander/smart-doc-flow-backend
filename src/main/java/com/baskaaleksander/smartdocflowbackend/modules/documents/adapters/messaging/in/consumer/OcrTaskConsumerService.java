@@ -1,7 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer;
 
-
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
+import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
@@ -31,68 +32,76 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
     private final DocumentOcrResultCommandPort documentOcrResultCommandPort;
     private final OcrEnginePort ocrEnginePort;
     private final PdfRendererPort pdfRendererPort;
+    private final LoggingPort logger;
 
     @Transactional
     @Override
     public void handle(OcrTask task) {
+        UUID docId = task.documentId();
+        long start = System.currentTimeMillis();
 
-        UUID documentId = task.documentId();
+        logger.info("OCR_TASK START docId=" + Slf4jLoggingAdapter.shortId(docId));
 
-        Document doc = documentQueryPort.getDocumentById(documentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Document with ID " + documentId + " not found"));
-
+        Document doc = documentQueryPort.getDocumentById(docId)
+                .orElseThrow(() -> {
+                    logger.warn("OCR_TASK FAILED reason=document_not_found docId=" + Slf4jLoggingAdapter.shortId(docId));
+                    return new ResourceNotFoundException("Document with ID " + docId + " not found");
+                });
 
         String documentKey = doc.getStorageKey();
-
         if (documentKey == null) {
-            throw new ResourceNotFoundException("Document " + documentId + " has no key");
+            logger.warn("OCR_TASK FAILED reason=no_storage_key docId=" + Slf4jLoggingAdapter.shortId(docId));
+            throw new ResourceNotFoundException("Document " + docId + " has no key");
         }
-        File file = null;
+
+        File file;
+        try {
+            file = fileStoragePort.getPdfFile(documentKey);
+            logger.info("OCR_TASK FETCH_SUCCESS docId=" + Slf4jLoggingAdapter.shortId(docId) + " key=" + documentKey);
+        } catch (Exception e) {
+            logger.error("OCR_TASK FAILED reason=fetch_pdf_error key=" + documentKey + " docId=" + Slf4jLoggingAdapter.shortId(docId), e);
+            throw e;
+        }
 
         try {
-            file = getPdfFromS3(documentKey);
-
             List<Image> images = pdfRendererPort.render(file, 300);
+            logger.info("OCR_TASK RENDER_SUCCESS docId=" + Slf4jLoggingAdapter.shortId(docId) + " pages=" + images.size());
 
             String rawText = ocrEnginePort.extractText(images);
+            logger.info("OCR_TASK OCR_SUCCESS docId=" + Slf4jLoggingAdapter.shortId(docId) + " textLength=" + rawText.length());
 
-            String docOcrKey = saveJsonToS3(rawText, documentId);
+            String docOcrKey = saveJsonToS3(rawText, docId);
+            logger.info("OCR_TASK UPLOAD_SUCCESS docId=" + Slf4jLoggingAdapter.shortId(docId) + " key=" + docOcrKey);
 
-            saveOcrResultToDb(docOcrKey, documentId);
+            saveOcrResultToDb(docOcrKey, docId);
+            documentCommandPort.updateStatus(docId, DocumentStatus.TEXT_READY);
 
-            documentCommandPort.updateStatus(documentId, DocumentStatus.TEXT_READY);
+            taskPublisher.publish(new EmbedTask(docId));
+            long took = System.currentTimeMillis() - start;
 
-            taskPublisher.publish(new EmbedTask(documentId));
+            logger.info("OCR_TASK SUCCESS docId=" + Slf4jLoggingAdapter.shortId(docId) + " took=" + took + "ms");
 
         } catch (Exception e) {
-            //TODO: change this
-            throw new RuntimeException(e);
+            logger.error("OCR_TASK FAILED docId=" + Slf4jLoggingAdapter.shortId(docId)
+                    + " reason=" + e.getMessage(), e);
+            documentCommandPort.updateStatus(docId, DocumentStatus.OCR_FAILED);
         }
-    }
-
-    private File getPdfFromS3(String documentKey) {
-        return fileStoragePort.getPdfFile(documentKey);
     }
 
     private String saveJsonToS3(String raw, UUID docId) {
-
         byte[] bytes = raw.getBytes(StandardCharsets.UTF_8);
         String docKey = docId + "_ocr.json";
         InputStream is = new ByteArrayInputStream(bytes);
-
         fileStoragePort.upload(is, docKey, "application/json", bytes.length);
-
         return docKey;
     }
 
     private void saveOcrResultToDb(String documentKey, UUID documentId) {
-
         Document document = documentQueryPort.getDocumentById(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found"));
         DocumentOcrResult ocrResult = new DocumentOcrResult();
         ocrResult.setDocumentId(document.getId());
         ocrResult.setStorageKey(documentKey);
-
         documentOcrResultCommandPort.save(ocrResult);
     }
 }
