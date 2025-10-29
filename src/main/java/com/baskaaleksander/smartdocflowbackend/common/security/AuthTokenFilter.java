@@ -5,9 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -18,14 +17,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private CustomUserDetailsService customUserDetailsService;
-
+    private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -33,40 +29,48 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        try {
-            String jwt = parseJwt(request);
-            if(jwt != null && jwtUtil.validateAccessToken(jwt)) {
-                UserDetails userDetails = customUserDetailsService
-                        .loadUserByUsername(
-                                jwtUtil.getUsernameFromAccessToken(jwt)
-                        );
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+        String jwt = parseJwt(request);
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authentication);
-            }
-        } catch (Exception ex) {
-            throw new AuthorizationDeniedException(ex.getMessage());
+        if (jwt == null || jwt.isBlank()) {
+            filterChain.doFilter(request, response);
+            return;
         }
-        filterChain.doFilter(request, response);
+
+        try {
+            if (jwtUtil.validateAccessToken(jwt)) {
+                String username = jwtUtil.getUsernameFromAccessToken(jwt);
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            unauthorized(response);
+
+        } catch (Exception ex) {
+            SecurityContextHolder.clearContext();
+            unauthorized(response);
+        }
+    }
+
+    private void unauthorized(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.getWriter().write("""
+                    {"status":401,"message":"Unauthorized","details":"Invalid or missing access token"}
+                """);
     }
 
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
-
-        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7);
-        }
-
-        return null;
+        return (headerAuth != null && headerAuth.startsWith("Bearer "))
+                ? headerAuth.substring(7)
+                : null;
     }
 }

@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.common.logging.MDCRequestFilter;
 import com.baskaaleksander.smartdocflowbackend.common.security.AuthEntryPoint;
 import com.baskaaleksander.smartdocflowbackend.common.security.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,19 +32,20 @@ public class SecurityConfig {
 
     private final AuthEntryPoint authEntryPoint;
     private final MDCRequestFilter mdcRequestFilter;
+    private final AuthTokenFilter authTokenFilter;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Autowired
     public SecurityConfig(
             AuthEntryPoint authTokenPoint,
-            MDCRequestFilter mdcRequestFilter
+            MDCRequestFilter mdcRequestFilter,
+            AuthTokenFilter authTokenFilter
     ) {
         this.authEntryPoint = authTokenPoint;
         this.mdcRequestFilter = mdcRequestFilter;
-    }
-
-    @Bean
-    public AuthTokenFilter getAuthTokenFilter() {
-        return new AuthTokenFilter();
+        this.authTokenFilter = authTokenFilter;
     }
 
     @Bean
@@ -60,7 +63,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
+        corsConfiguration.setAllowedOrigins(List.of(frontendUrl));
         corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
@@ -75,7 +78,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(authEntryPoint))
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -85,7 +88,7 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
                 );
 
-        http.addFilterBefore(getAuthTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(mdcRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
