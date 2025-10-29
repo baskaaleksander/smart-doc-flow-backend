@@ -2,6 +2,8 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.co
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
+import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
@@ -28,10 +30,20 @@ public class ConversationService {
     private final ConversationMessageApiMapper mapper;
     private final VectorQueryPort vectorQueryPort;
     private final ChatCompletionPort chatCompletionPort;
+    private final LoggingPort logger;
 
     public String askQuestion(String question, UUID docId, UUID userId) {
+        long start = System.currentTimeMillis();
+        logger.info("CONV_ASK START docId=" + Slf4jLoggingAdapter.shortId(docId)
+                + " userId=" + Slf4jLoggingAdapter.shortId(userId)
+                + " qLen=" + (question == null ? 0 : question.length()));
 
-        Document doc = documentQueryPort.getDocumentById(docId).orElseThrow(() -> new ResourceNotFoundException("Document not found"));
+        Document doc = documentQueryPort.getDocumentById(docId)
+                .orElseThrow(() -> {
+                    logger.warn("CONV_ASK FAILED reason=document_not_found docId=" + Slf4jLoggingAdapter.shortId(docId)
+                            + " userId=" + Slf4jLoggingAdapter.shortId(userId));
+                    return new ResourceNotFoundException("Document not found");
+                });
 
         EnumSet<DocumentStatus> allowedStatuses = EnumSet.of(
                 DocumentStatus.PROCESSED,
@@ -40,18 +52,28 @@ public class ConversationService {
         );
 
         if (!allowedStatuses.contains(doc.getStatus())) {
+            logger.warn("CONV_ASK FAILED reason=invalid_status status=" + doc.getStatus()
+                    + " docId=" + Slf4jLoggingAdapter.shortId(docId)
+                    + " userId=" + Slf4jLoggingAdapter.shortId(userId));
             throw new ResourceConflictException("Document is not processed yet");
         }
 
         String conversationId = MakeConversationId.makeConversationId(docId.toString(), userId);
+        logger.info("CONV_ASK CONTEXT_READY convoId=" + Slf4jLoggingAdapter.shortId(UUID.fromString(conversationId))
+                + " status=" + doc.getStatus());
 
         saveMessage(question, ConversationSide.USER, conversationId, userId, docId);
+        logger.info("CONV_ASK USER_MESSAGE_SAVED convoId=" + Slf4jLoggingAdapter.shortId(UUID.fromString(conversationId)));
 
         var filter = Map.<String, Object>of("docId", docId.toString());
         double threshold = 0.35;
         int topK = 12;
 
+        logger.info("VECTOR_QUERY START docId=" + Slf4jLoggingAdapter.shortId(docId)
+                + " topK=" + topK + " threshold=" + threshold);
         var hits = vectorQueryPort.searchByQuery(question, threshold, topK, filter);
+        logger.info("VECTOR_QUERY SUCCESS docId=" + Slf4jLoggingAdapter.shortId(docId)
+                + " hits=" + hits.size());
 
         var context = hits.stream().map(SearchHit::text).toList();
 
@@ -67,6 +89,8 @@ public class ConversationService {
                         """
         );
 
+        logger.info("AI_CHAT REQUEST convoId=" + Slf4jLoggingAdapter.shortId(UUID.fromString(conversationId))
+                + " ctxCount=" + context.size());
         var response = chatCompletionPort.askWithContext(
                 question,
                 conversationId,
@@ -75,8 +99,16 @@ public class ConversationService {
                 params
         );
 
+        logger.info("AI_CHAT SUCCESS convoId=" + Slf4jLoggingAdapter.shortId(UUID.fromString(conversationId))
+                + " respLen=" + (response == null ? 0 : response.length()));
 
         saveMessage(response, ConversationSide.SYSTEM, conversationId, userId, docId);
+        logger.info("CONV_ASK SYSTEM_MESSAGE_SAVED convoId=" + Slf4jLoggingAdapter.shortId(UUID.fromString(conversationId)));
+
+        long took = System.currentTimeMillis() - start;
+        logger.info("CONV_ASK SUCCESS docId=" + Slf4jLoggingAdapter.shortId(docId)
+                + " userId=" + Slf4jLoggingAdapter.shortId(userId)
+                + " took=" + took + "ms");
 
         return response;
     }
@@ -94,14 +126,23 @@ public class ConversationService {
         message.setDocumentId(documentId);
 
         conversationMessageCommandPort.save(message);
-
+        logger.info("CONV_MSG SAVE_SUCCESS convoId=" + Slf4jLoggingAdapter.shortId(UUID.fromString(convoId))
+                + " side=" + type + " fpr=" + fingerprint);
     }
 
     public void deleteConversation(UUID documentId, UUID userId) {
+        logger.info("CONV_DELETE START docId=" + Slf4jLoggingAdapter.shortId(documentId)
+                + " userId=" + Slf4jLoggingAdapter.shortId(userId));
+
         UUID conversationId = conversationMessageQueryPort.getIdByUserIdAndDocId(documentId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Conversation not found"));
+                .orElseThrow(() -> {
+                    logger.warn("CONV_DELETE FAILED reason=conversation_not_found docId=" + Slf4jLoggingAdapter.shortId(documentId)
+                            + " userId=" + Slf4jLoggingAdapter.shortId(userId));
+                    return new ResourceNotFoundException("Conversation not found");
+                });
 
         conversationMessageCommandPort.deleteAllByConversationId(conversationId);
+        logger.info("CONV_DELETE SUCCESS convoId=" + Slf4jLoggingAdapter.shortId(conversationId));
     }
 
     public PagingResult<ConversationMessageResponse> getAllConversationMessages(
@@ -109,7 +150,13 @@ public class ConversationService {
             UUID userId,
             PaginationRequest request
     ) {
-        PagingResult<ConversationMessage> conversationMessages = conversationMessageQueryPort.findAllByDocumentIdAndUserId(request, userId, documentId);
+        logger.info("CONV_LIST START docId=" + Slf4jLoggingAdapter.shortId(documentId)
+                + " userId=" + Slf4jLoggingAdapter.shortId(userId)
+                + " page=" + request.getPage()
+                + " size=" + request.getSize());
+
+        PagingResult<ConversationMessage> conversationMessages =
+                conversationMessageQueryPort.findAllByDocumentIdAndUserId(request, userId, documentId);
 
         List<ConversationMessageResponse> messageList = conversationMessages
                 .content()
@@ -120,6 +167,12 @@ public class ConversationService {
         messageList.forEach(m ->
                 m.setContent(conversationEncryptionServicePort.decrypt(m.getContent()))
         );
+
+        logger.info("CONV_LIST SUCCESS docId=" + Slf4jLoggingAdapter.shortId(documentId)
+                + " userId=" + Slf4jLoggingAdapter.shortId(userId)
+                + " count=" + messageList.size()
+                + " totalElements=" + conversationMessages.totalElements()
+                + " totalPages=" + conversationMessages.totalPages());
 
         return new PagingResult<>(
                 messageList,
