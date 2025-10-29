@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 public interface SpringDataPasswordResetTokenRepository extends JpaRepository<PasswordResetTokenEntity, UUID> {
 
-    @Query("select t from PasswordResetTokenEntity t left join fetch t.user")
+    @Query("select t from PasswordResetTokenEntity t left join fetch t.user where t.token = :token")
     Optional<PasswordResetTokenEntity> findByToken(String token);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

@@ -65,4 +65,11 @@ public class Slf4jLoggingAdapter implements LoggingPort {
 
         return Integer.toHexString(email.trim().toLowerCase().hashCode());
     }
+
+    public static String maskToken(String token) {
+        if (token == null || token.isBlank()) return "null";
+        String t = token.trim();
+        if (t.length() <= 10) return "***";
+        return t.substring(0, 6) + "..." + t.substring(t.length() - 4);
+    }
 }
