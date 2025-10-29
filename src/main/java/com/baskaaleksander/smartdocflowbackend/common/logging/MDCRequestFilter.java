@@ -4,7 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.jboss.logging.MDC;
+import org.slf4j.MDC;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -21,7 +21,8 @@ public class MDCRequestFilter extends OncePerRequestFilter {
             response.setHeader("X-Request-ID", requestId);
             filterChain.doFilter(request, response);
         } finally {
-            MDC.clear();
+            MDC.remove("requestId");
+            MDC.remove("clientIp");
         }
     }
 

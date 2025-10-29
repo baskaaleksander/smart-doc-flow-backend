@@ -61,8 +61,6 @@ public class RequestLoggingInterceptor implements HandlerInterceptor {
         }
 
         MDC.remove("user");
-        MDC.remove("requestId");
-        MDC.remove("clientIp");
     }
 
     private String authenticatedUsernameOrAnon() {
