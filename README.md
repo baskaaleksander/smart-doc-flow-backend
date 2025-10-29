@@ -41,24 +41,24 @@ Storage is handled by **S3/MinIO**, background processing via **RabbitMQ**, and 
 
 ```mermaid
 flowchart LR
-  User[User]
-  FE[Frontend (Next.js)]
-  BE[Smart Doc Flow Backend (Spring Boot)]
-  PG[(PostgreSQL)]
-  MQ[(RabbitMQ)]
-  S3[(MinIO / S3)]
-  VDB[(Qdrant Vector DB)]
-  OAI[(OpenAI via Spring AI)]
-  Obs[(Actuator / Prometheus)]
+    User[User]
+    FE["Frontend (Next.js)"]
+    BE["Smart Doc Flow Backend (Spring Boot)"]
+    PG[("PostgreSQL")]
+    MQ[("RabbitMQ")]
+    S3[("MinIO / S3")]
+    VDB[("Qdrant Vector DB")]
+    OAI[("OpenAI via Spring AI")]
+    Obs[("Actuator / Prometheus")]
 
-  User -->|HTTPS| FE
-  FE -->|REST / WebSocket| BE
-  BE --> PG
-  BE --> MQ
-  BE --> S3
-  BE --> VDB
-  BE --> OAI
-  BE --> Obs
+    User -->|HTTPS| FE
+    FE -->|"REST / WebSocket"| BE
+    BE --> PG
+    BE --> MQ
+    BE --> S3
+    BE --> VDB
+    BE --> OAI
+    BE --> Obs
 ```
 
 ```mermaid
