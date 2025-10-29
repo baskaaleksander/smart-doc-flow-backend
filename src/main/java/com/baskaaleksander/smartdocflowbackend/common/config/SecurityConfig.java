@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.common.config;
 
+import com.baskaaleksander.smartdocflowbackend.common.logging.MDCRequestFilter;
 import com.baskaaleksander.smartdocflowbackend.common.security.AuthEntryPoint;
 import com.baskaaleksander.smartdocflowbackend.common.security.AuthTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +29,15 @@ import java.util.List;
 public class SecurityConfig {
 
     private final AuthEntryPoint authEntryPoint;
+    private final MDCRequestFilter mdcRequestFilter;
 
     @Autowired
     public SecurityConfig(
-            AuthEntryPoint authTokenPoint
+            AuthEntryPoint authTokenPoint,
+            MDCRequestFilter mdcRequestFilter
     ) {
         this.authEntryPoint = authTokenPoint;
+        this.mdcRequestFilter = mdcRequestFilter;
     }
 
     @Bean
@@ -57,7 +61,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
-        corsConfiguration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setAllowCredentials(true);
 
@@ -82,6 +86,7 @@ public class SecurityConfig {
                 );
 
         http.addFilterBefore(getAuthTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(mdcRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
