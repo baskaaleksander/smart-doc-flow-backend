@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
+import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
@@ -61,7 +62,7 @@ public class AuthApplicationService {
 
         Tokens tokens = tokenUtil.issueTokens(userDetails.getUsername());
 
-        loggingPort.info("LOGIN SUCCESS userId=" + userDetails.getId().toString().substring(-10));
+        loggingPort.info("LOGIN SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userDetails.getId()));
 
         return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
@@ -72,13 +73,17 @@ public class AuthApplicationService {
         Optional<AuthUser> existingUser = authUserQueryPort.findUserByUsernameWithRoles(user.username());
 
         if (existingUser.isPresent()) {
-            throw new ResourceConflictException("User with " + user.username() + " username already exists");
+            String reason = "User with that username already exists";
+            loggingPort.error("Register FAILED reason=" + reason);
+            throw new ResourceConflictException(reason);
         }
 
         Optional<AuthUser> existingUser2 = authUserQueryPort.findByEmail(user.email());
 
         if (existingUser2.isPresent()) {
-            throw new ResourceConflictException("User with " + user.email() + " email already exists");
+            String reason = "User with that email already exists";
+            loggingPort.error("Register FAILED reason=" + reason);
+            throw new ResourceConflictException(reason);
         }
 
 
@@ -87,7 +92,9 @@ public class AuthApplicationService {
         Set<String> roles = roleQueryPort.findAllByRoleIn(user.roles()).stream().map(Role::getRole).collect(Collectors.toSet());
 
         if (roles.size() != user.roles().size()) {
-            throw new ResourceNotFoundException("One or more roles not found");
+            String reason = "One or more roles not found";
+            loggingPort.error("Register FAILED reason=" + reason);
+            throw new ResourceNotFoundException(reason);
         }
 
         AuthUser newUser = new AuthUser();
@@ -100,6 +107,8 @@ public class AuthApplicationService {
         AuthUser userCreated = authUserCommandPort.save(newUser);
 
         authEventPublisherPort.publish(new UserRegisteredEvent(userCreated.getEmail(), userCreated.getUsername(), password));
+
+        loggingPort.info("Register SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userCreated.getId()) + " email=" + Slf4jLoggingAdapter.hashEmail(userCreated.getEmail()));
 
         return mapper.toResponse(userCreated);
     }
