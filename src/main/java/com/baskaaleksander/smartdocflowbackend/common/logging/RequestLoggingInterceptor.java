@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
-public class LoggingInterceptor implements HandlerInterceptor {
+public class RequestLoggingInterceptor implements HandlerInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(LoggingInterceptor.class);
+    private static final Logger log = LoggerFactory.getLogger(RequestLoggingInterceptor.class);
     private static final String START_TIME_AFTER = "reqStartTime";
 
     @Override
@@ -34,7 +34,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
         log.info("[incoming] {} {}{} from ip={} user={}",
                 method, uri, query == null ? "" : "?" + query, clientIp, user
-                );
+        );
         return true;
 
     }
@@ -52,12 +52,12 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
         if (ex != null) {
             log.error("[completed] With EXCEPTION status={} took={}ms exType={} msg={}",
-                        status, tookMs, ex.getClass().getSimpleName(), ex.getMessage()
-                    );
+                    status, tookMs, ex.getClass().getSimpleName(), ex.getMessage()
+            );
         } else {
             log.info("[completed] status={} took={}ms",
                     status, tookMs
-                    );
+            );
         }
 
         MDC.remove("user");

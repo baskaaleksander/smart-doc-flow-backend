@@ -1,6 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.common.config;
 
-import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingInterceptor;
+import com.baskaaleksander.smartdocflowbackend.common.logging.RequestLoggingInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -8,9 +8,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final LoggingInterceptor loggingInterceptor;
+    private final RequestLoggingInterceptor loggingInterceptor;
 
-    public WebMvcConfig(LoggingInterceptor loggingInterceptor) {
+    public WebMvcConfig(RequestLoggingInterceptor loggingInterceptor) {
         this.loggingInterceptor = loggingInterceptor;
     }
 
