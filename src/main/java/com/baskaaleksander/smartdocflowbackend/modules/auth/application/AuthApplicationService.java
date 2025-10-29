@@ -24,7 +24,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,53 +47,50 @@ public class AuthApplicationService {
     private final AuthUserQueryPort authUserQueryPort;
     private final RoleQueryPort roleQueryPort;
     private final AuthUserApiMapper mapper;
-    private final LoggingPort loggingPort;
+    private final LoggingPort logger;
 
     public TokenResponse loginUser(UserLoginRequest user) {
+        logger.info("LOGIN START username=" + user.username());
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        user.username(),
-                        user.password()
-                )
+                new UsernamePasswordAuthenticationToken(user.username(), user.password())
         );
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-
         Tokens tokens = tokenUtil.issueTokens(userDetails.getUsername());
 
-        loggingPort.info("LOGIN SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userDetails.getId()));
-
+        logger.info("LOGIN SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userDetails.getId())
+                + " username=" + userDetails.getUsername());
         return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
     @Transactional
     public UserResponse registerUser(UserRegisterRequest user) {
+        String emailHash = Slf4jLoggingAdapter.hashEmail(user.email());
+        logger.info("REGISTER START username=" + user.username()
+                + " emailHash=" + emailHash
+                + " rolesRequested=" + (user.roles() == null ? 0 : user.roles().size()));
 
-        Optional<AuthUser> existingUser = authUserQueryPort.findUserByUsernameWithRoles(user.username());
-
-        if (existingUser.isPresent()) {
-            String reason = "User with that username already exists";
-            loggingPort.error("Register FAILED reason=" + reason);
-            throw new ResourceConflictException(reason);
+        Optional<AuthUser> existingByUsername = authUserQueryPort.findUserByUsernameWithRoles(user.username());
+        if (existingByUsername.isPresent()) {
+            logger.warn("REGISTER FAILED reason=username_conflict username=" + user.username());
+            throw new ResourceConflictException("User with that username already exists");
         }
 
-        Optional<AuthUser> existingUser2 = authUserQueryPort.findByEmail(user.email());
-
-        if (existingUser2.isPresent()) {
-            String reason = "User with that email already exists";
-            loggingPort.error("Register FAILED reason=" + reason);
-            throw new ResourceConflictException(reason);
+        Optional<AuthUser> existingByEmail = authUserQueryPort.findByEmail(user.email());
+        if (existingByEmail.isPresent()) {
+            logger.warn("REGISTER FAILED reason=email_conflict emailHash=" + emailHash);
+            throw new ResourceConflictException("User with that email already exists");
         }
-
 
         String password = generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(password);
-        Set<String> roles = roleQueryPort.findAllByRoleIn(user.roles()).stream().map(Role::getRole).collect(Collectors.toSet());
 
+        Set<String> roles = roleQueryPort.findAllByRoleIn(user.roles()).stream()
+                .map(Role::getRole)
+                .collect(Collectors.toSet());
         if (roles.size() != user.roles().size()) {
-            String reason = "One or more roles not found";
-            loggingPort.error("Register FAILED reason=" + reason);
-            throw new ResourceNotFoundException(reason);
+            logger.warn("REGISTER FAILED reason=role_not_found requested=" + user.roles().size() + " found=" + roles.size());
+            throw new ResourceNotFoundException("One or more roles not found");
         }
 
         AuthUser newUser = new AuthUser();
@@ -104,49 +100,53 @@ public class AuthApplicationService {
         newUser.setRoles(roles);
         newUser.setActive(true);
 
-        AuthUser userCreated = authUserCommandPort.save(newUser);
+        AuthUser created = authUserCommandPort.save(newUser);
+        logger.info("REGISTER DB_SAVE_SUCCESS userId=" + Slf4jLoggingAdapter.shortId(created.getId())
+                + " roles=" + roles.size());
 
-        authEventPublisherPort.publish(new UserRegisteredEvent(userCreated.getEmail(), userCreated.getUsername(), password));
+        authEventPublisherPort.publish(new UserRegisteredEvent(created.getEmail(), created.getUsername(), password));
+        logger.info("REGISTER EVENT_PUBLISHED userId=" + Slf4jLoggingAdapter.shortId(created.getId())
+                + " emailHash=" + emailHash);
 
-        loggingPort.info("Register SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userCreated.getId()) + " email=" + Slf4jLoggingAdapter.hashEmail(userCreated.getEmail()));
-
-        return mapper.toResponse(userCreated);
+        logger.info("REGISTER SUCCESS userId=" + Slf4jLoggingAdapter.shortId(created.getId()));
+        return mapper.toResponse(created);
     }
 
     public TokenResponse refreshAccessToken(String refreshToken) {
+        logger.info("TOKEN_REFRESH START");
         Tokens tokens = tokenUtil.refreshAccessToken(refreshToken);
+        logger.info("TOKEN_REFRESH SUCCESS");
         return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
     public String logoutUser(HttpServletRequest request, HttpServletResponse response) {
+        logger.info("LOGOUT START");
         String refreshToken = cookieUtil.parseRefreshTokenCookie(request);
         cookieUtil.clearRefreshTokenCookie(response);
         tokenUtil.invalidateRefreshToken(refreshToken);
-
+        logger.info("LOGOUT SUCCESS");
         return "Logout successful";
     }
 
     public UserResponse getMe(UUID userId) {
-        return mapper.toResponse(
-                authUserQueryPort.findByIdWithRoles(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"))
+        logger.info("ME_GET START userId=" + Slf4jLoggingAdapter.shortId(userId));
+        UserResponse resp = mapper.toResponse(
+                authUserQueryPort.findByIdWithRoles(userId)
+                        .orElseThrow(() -> {
+                            logger.warn("ME_GET FAILED reason=not_found userId=" + Slf4jLoggingAdapter.shortId(userId));
+                            return new ResourceNotFoundException("User not found");
+                        })
         );
+        logger.info("ME_GET SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userId));
+        return resp;
     }
-
 
     private String generateRandomPassword() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@!#$%&";
         String password = RandomStringUtils.random(14, characters);
-
-
         String regex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@!#$%&])(?=\\S+$).{8,}$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(password);
-
-        if (matcher.matches()) {
-            return password;
-        } else {
-            return generateRandomPassword();
-        }
+        return matcher.matches() ? password : generateRandomPassword();
     }
-
 }
