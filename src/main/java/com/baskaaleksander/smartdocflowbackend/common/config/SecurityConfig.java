@@ -84,7 +84,8 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/auth/**", "/ws-sockjs/**", "/ws/**", "/actuator/**", "/auth/request-password-reset", "/auth/reset-password", "/auth/check-token").permitAll()
+                                .requestMatchers("/auth/**", "/ws-sockjs/**", "/ws/**", "/actuator/health", "/actuator/info", "/auth/request-password-reset", "/auth/reset-password", "/auth/check-token").permitAll()
+                                .requestMatchers("/actuator/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 );
 
