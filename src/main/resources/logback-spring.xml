@@ -1,0 +1,16 @@
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss.SSS} [%thread] %-5level %X{requestId:-no-req} %X{user:-anon} %X{clientIp:-no-ip} %logger{36}
+                - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.baskaaleksander.smartdocflowbackend" level="INFO"/>
+
+    <root level="WARN">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

@@ -2,6 +2,8 @@ package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
+import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
@@ -45,6 +47,7 @@ public class AuthApplicationService {
     private final AuthUserQueryPort authUserQueryPort;
     private final RoleQueryPort roleQueryPort;
     private final AuthUserApiMapper mapper;
+    private final LoggingPort loggingPort;
 
     public TokenResponse loginUser(UserLoginRequest user) {
         Authentication authentication = authenticationManager.authenticate(
@@ -54,9 +57,11 @@ public class AuthApplicationService {
                 )
         );
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         Tokens tokens = tokenUtil.issueTokens(userDetails.getUsername());
+
+        loggingPort.info("User with ID " + userDetails.getId() + " logged in");
 
         return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
