@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class Slf4jLoggingAdapter implements LoggingPort {
 
@@ -49,5 +51,18 @@ public class Slf4jLoggingAdapter implements LoggingPort {
         if (clientIp != null) prefix.append("[ip=").append(clientIp).append("] ");
 
         return prefix + message;
+    }
+
+    public static String shortId(UUID id) {
+        if (id == null) return "null";
+        String str = id.toString();
+
+        return str.substring(0, 8) + "..." + str.substring(str.length() - 4);
+    }
+
+    public static String hashEmail(String email) {
+        if (email == null || email.isBlank()) return null;
+
+        return Integer.toHexString(email.trim().toLowerCase().hashCode());
     }
 }

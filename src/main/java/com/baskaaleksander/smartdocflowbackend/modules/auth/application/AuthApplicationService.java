@@ -61,7 +61,7 @@ public class AuthApplicationService {
 
         Tokens tokens = tokenUtil.issueTokens(userDetails.getUsername());
 
-        loggingPort.info("User with ID " + userDetails.getId() + " logged in");
+        loggingPort.info("LOGIN SUCCESS userId=" + userDetails.getId().toString().substring(-10));
 
         return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
