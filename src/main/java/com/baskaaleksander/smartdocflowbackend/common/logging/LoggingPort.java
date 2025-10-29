@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.common.logging.port;
+package com.baskaaleksander.smartdocflowbackend.common.logging;
 
 public interface LoggingPort {
     void info(String message);
@@ -6,4 +6,8 @@ public interface LoggingPort {
     void warn(String message);
 
     void error(String message, Throwable t);
+
+    void error(String message);
+
+    void debug(String message);
 }
