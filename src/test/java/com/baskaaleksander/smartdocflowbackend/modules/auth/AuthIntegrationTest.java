@@ -289,25 +289,50 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("Update password updates password with valid credentials")
     void updatePasswordUpdatesPassword() throws Exception {
-        String token = loginAndGetAccessToken("reviewer", "Reviewer#12345");
-        String newPassword = "NewPassword#12345";
+        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
+        String token = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String newPassword = "ChangedPass#" + uniqueId();
 
-        String updatePasswordBody = """
+        String requestBody = """
                 {
-                    "oldPassword": "Reviewer#12345",
+                    "oldPassword": "%s",
                     "newPassword": "%s"
                 }
-                """.formatted(newPassword);
+                """.formatted(testUser.rawPassword, newPassword);
 
         mockMvc.perform(put("/auth/update-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(updatePasswordBody)
-                .header("Authorization", "Bearer " + token)
-        ).andExpect(status().isOk());
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk());
 
-        UserEntity user = userRepository.findByEmail("reviewer@smartdocflow.local").orElseThrow();
+        UserEntity reloaded = userRepository.findByEmail(testUser.email).orElseThrow();
+        assertThat(passwordEncoder.matches(newPassword, reloaded.getPassword())).isTrue();
+    }
 
-        assertThat(passwordEncoder.matches(newPassword, user.getPassword())).isTrue();
+    @Test
+    @DisplayName("PUT /auth/update-password with wrong oldPassword returns 401 and does not change password")
+    void updatePasswordRejectsWrongOldPassword() throws Exception {
+        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
+        String token = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String attemptedNewPassword = "ShouldNotApply#" + uniqueId();
+
+        String requestBody = """
+                {
+                    "oldPassword": "TotallyWrong#999",
+                    "newPassword": "%s"
+                }
+                """.formatted(attemptedNewPassword);
+
+        mockMvc.perform(put("/auth/update-password")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized());
+
+        UserEntity reloaded = userRepository.findByEmail(testUser.email).orElseThrow();
+        assertThat(passwordEncoder.matches(testUser.rawPassword, reloaded.getPassword())).isTrue();
+        assertThat(passwordEncoder.matches(attemptedNewPassword, reloaded.getPassword())).isFalse();
     }
 
     private String uniqueId() {

@@ -94,6 +94,7 @@ public class SecurityConfig {
                                         "/auth/request-password-reset",
                                         "/auth/reset-password",
                                         "/auth/check-token",
+                                        "/auth/refresh",
                                         "/ws-sockjs/**",
                                         "/ws/**",
                                         "/actuator/health",
