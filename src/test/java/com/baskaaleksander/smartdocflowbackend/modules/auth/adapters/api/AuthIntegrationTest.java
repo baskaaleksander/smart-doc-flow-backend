@@ -41,7 +41,7 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     void adminCanRegisterUser() throws Exception {
 
         String adminAccessToken = loginAndGetAccessToken(
-                "admin@smartdocflow.local",
+                "admin",
                 "Admin#12345"
         );
 
@@ -53,7 +53,7 @@ public class AuthIntegrationTest extends IntegrationTestBase {
                 }
                 """;
 
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + adminAccessToken)
                         .content(newUserBody))
@@ -65,15 +65,15 @@ public class AuthIntegrationTest extends IntegrationTestBase {
         assertThat(saved.getUsername()).isEqualTo("newuser");
     }
 
-    private String loginAndGetAccessToken(String email, String password) throws Exception {
+    private String loginAndGetAccessToken(String username, String password) throws Exception {
         String requestBody = """
                 {
-                    "email": "%s",
+                    "username": "%s",
                     "password": "%s"
                 }
-                """.formatted(email, password);
+                """.formatted(username, password);
 
-        MvcResult result = mockMvc.perform(post("/api/auth/login")
+        MvcResult result = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
