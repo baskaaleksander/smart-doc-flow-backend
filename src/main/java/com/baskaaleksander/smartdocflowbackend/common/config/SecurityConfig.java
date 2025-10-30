@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.common.config;
 import com.baskaaleksander.smartdocflowbackend.common.logging.MDCRequestFilter;
 import com.baskaaleksander.smartdocflowbackend.common.security.AuthEntryPoint;
 import com.baskaaleksander.smartdocflowbackend.common.security.AuthTokenFilter;
+import com.baskaaleksander.smartdocflowbackend.common.security.ratelimit.RateLimitingFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +34,7 @@ public class SecurityConfig {
     private final AuthEntryPoint authEntryPoint;
     private final MDCRequestFilter mdcRequestFilter;
     private final AuthTokenFilter authTokenFilter;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -41,11 +43,13 @@ public class SecurityConfig {
     public SecurityConfig(
             AuthEntryPoint authTokenPoint,
             MDCRequestFilter mdcRequestFilter,
-            AuthTokenFilter authTokenFilter
+            AuthTokenFilter authTokenFilter,
+            RateLimitingFilter rateLimitingFilter
     ) {
         this.authEntryPoint = authTokenPoint;
         this.mdcRequestFilter = mdcRequestFilter;
         this.authTokenFilter = authTokenFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
     }
 
     @Bean
@@ -79,6 +83,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(authEntryPoint))
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
