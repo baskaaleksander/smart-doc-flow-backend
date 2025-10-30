@@ -25,8 +25,8 @@ public class RateLimiterService {
                     .refillIntervally(100, Duration.ofMinutes(1))
                     .build();
             case WRITE -> Bandwidth.builder()
-                    .capacity(20)
-                    .refillIntervally(20, Duration.ofMinutes(1))
+                    .capacity(30)
+                    .refillIntervally(30, Duration.ofMinutes(1))
                     .build();
             case STRICT -> Bandwidth.builder()
                     .capacity(5)

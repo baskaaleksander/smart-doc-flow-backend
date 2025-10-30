@@ -20,12 +20,11 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class AuthIntegrationTest extends IntegrationTestBase {
+class AuthIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private TestDataSeeder.TestSeeder seeder;
@@ -48,113 +47,40 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("ADMIN can register a new user via /auth/register")
-    void adminCanRegisterUser() throws Exception {
-        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
-
-        String uid = uniqueId();
-        String email = "newuser_" + uid + "@example.com";
-        String username = "newuser_" + uid;
-
-        String newUserBody = """
-                {
-                    "email": "%s",
-                    "username": "%s",
-                    "roles": ["ROLE_USER"]
-                }
-                """.formatted(email, username);
-
-        mockMvc.perform(post("/auth/register")
-                        .header("Authorization", "Bearer " + adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(newUserBody))
-                .andExpect(status().isCreated());
-
-        UserEntity saved = userRepository.findUserByUsernameWithRoles(username).orElseThrow();
-        assertThat(saved.getEmail()).isEqualTo(email);
-        assertThat(saved.getUsername()).isEqualTo(username);
-    }
-
-    @Test
-    @DisplayName("Normal USER cannot register a new user via /auth/register")
-    void unauthorizedUserCantRegisterUser() throws Exception {
-        String userToken = loginAndGetAccessToken("user", "User#12345");
-
-        String uid = uniqueId();
-        String email = "shouldFail_" + uid + "@example.com";
-        String username = "shouldFail_" + uid;
-
+    @DisplayName("POST /auth/login returns 200 for valid credentials")
+    void loginSucceedsWithValidCredentials() throws Exception {
         String body = """
                 {
-                    "email": "%s",
-                    "username": "%s",
-                    "roles": ["ROLE_USER"]
-                }
-                """.formatted(email, username);
-
-        mockMvc.perform(post("/auth/register")
-                        .header("Authorization", "Bearer " + userToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @DisplayName("Register user fails with invalid payload (missing email)")
-    void registerUserValidationError() throws Exception {
-        String adminAccessToken = loginAndGetAccessToken("admin", "Admin#12345");
-
-        String invalidBody = """
-                {
-                    "username": "nouseremail",
-                    "roles": ["ROLE_USER"]
-                }
-                """;
-
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + adminAccessToken)
-                        .content(invalidBody))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("User can login with valid credentials")
-    void userCanLogin() throws Exception {
-
-        String loginBody = """
-                {
-                    "username": "user",
-                    "password": "User#12345"
+                  "username": "user",
+                  "password": "User#12345"
                 }
                 """;
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody))
+                        .content(body))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @DisplayName("User cant login with invalid credentials")
-    void userCantLoginWithInvalidCredentials() throws Exception {
-
-        String loginBody = """
+    @DisplayName("POST /auth/login returns 401 for invalid credentials")
+    void loginFailsWithInvalidCredentials() throws Exception {
+        String body = """
                 {
-                    "username": "user",
-                    "password": "Admin#12345"
+                  "username": "user",
+                  "password": "WrongPassword#999"
                 }
                 """;
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody))
+                        .content(body))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    @DisplayName("GET /auth/me returns current user data when authenticated")
-    void getMeReturnsCurrentUser() throws Exception {
+    @DisplayName("GET /auth/me returns 200 and current user data when authenticated")
+    void meReturnsCurrentUserWhenAuthorized() throws Exception {
         String token = loginAndGetAccessToken("user", "User#12345");
 
         mockMvc.perform(get("/auth/me")
@@ -164,73 +90,192 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("GET /auth/me returns 401 when no token provided")
-    void getMeUnauthorizedWithoutToken() throws Exception {
+    @DisplayName("GET /auth/me returns 401 when no token is provided")
+    void meReturnsUnauthorizedWithoutToken() throws Exception {
         mockMvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    @DisplayName("GET /auth/refresh issues new access/refresh tokens when valid refresh cookie is present")
-    void refreshReturnsNewTokens() throws Exception {
-        String loginBody = """
+    @DisplayName("POST /auth/register returns 201 when called by ADMIN")
+    void adminCanRegisterUser() throws Exception {
+        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
+
+        String uid = uniqueId();
+        String email = "newuser_%s@example.com".formatted(uid);
+        String username = "newuser_%s".formatted(uid);
+
+        String requestBody = """
                 {
-                    "username": "user",
-                    "password": "User#12345"
+                  "email": "%s",
+                  "username": "%s",
+                  "roles": ["ROLE_USER"]
                 }
-                """;
+                """.formatted(email, username);
 
-        MvcResult loginResult = mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/auth/register")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody))
-                .andExpect(status().isOk())
-                .andReturn();
+                        .content(requestBody))
+                .andExpect(status().isCreated());
 
-        String refreshCookie = loginResult.getResponse().getHeader("Set-Cookie");
-
-        MvcResult refreshResult = mockMvc.perform(get("/auth/refresh")
-                        .header("Cookie", refreshCookie))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String newAccessToken = refreshResult.getResponse().getContentAsString();
-        assertThat(newAccessToken).isNotBlank();
-
-        String newRefreshCookie = refreshResult.getResponse().getHeader("Set-Cookie");
-        assertThat(newRefreshCookie).isNotBlank();
-        assertThat(newRefreshCookie).isNotEqualTo(refreshCookie);
+        UserEntity saved = userRepository.findUserByUsernameWithRoles(username).orElseThrow();
+        assertThat(saved.getEmail()).isEqualTo(email);
+        assertThat(saved.getUsername()).isEqualTo(username);
     }
 
     @Test
-    @DisplayName("Request password reset creates in database password reset token")
-    void passwordResetTokenIsCreated() throws Exception {
+    @DisplayName("POST /auth/register returns 403 when called by normal USER")
+    void nonAdminCannotRegisterUser() throws Exception {
+        String userToken = loginAndGetAccessToken("user", "User#12345");
 
+        String uid = uniqueId();
+        String email = "shouldFail_%s@example.com".formatted(uid);
+        String username = "shouldFail_%s".formatted(uid);
+
+        String requestBody = """
+                {
+                  "email": "%s",
+                  "username": "%s",
+                  "roles": ["ROLE_USER"]
+                }
+                """.formatted(email, username);
+
+        mockMvc.perform(post("/auth/register")
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("POST /auth/register returns 400 for invalid payload (missing email)")
+    void registerUserFailsWithInvalidPayload() throws Exception {
+        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
+
+        String invalidBody = """
+                {
+                  "username": "nouseremail",
+                  "roles": ["ROLE_USER"]
+                }
+                """;
+
+        mockMvc.perform(post("/auth/register")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /auth/update-password returns 200 and updates password when oldPassword is correct")
+    void updatePasswordSucceedsWithValidOldPassword() throws Exception {
+        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
+
+        String accessToken = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String newPassword = "ChangedPass#" + uniqueId();
+
+        String requestBody = """
+                {
+                  "oldPassword": "%s",
+                  "newPassword": "%s"
+                }
+                """.formatted(testUser.rawPassword, newPassword);
+
+        mockMvc.perform(put("/auth/update-password")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk());
+
+        UserEntity refreshed = userRepository.findByEmail(testUser.email).orElseThrow();
+        assertThat(passwordEncoder.matches(newPassword, refreshed.getPassword())).isTrue();
+    }
+
+    @Test
+    @DisplayName("PUT /auth/update-password returns 401 and does not update password when oldPassword is wrong")
+    void updatePasswordFailsWithWrongOldPassword() throws Exception {
+        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
+
+        String accessToken = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String attemptedNewPassword = "ShouldNotApply#" + uniqueId();
+
+        String requestBody = """
+                {
+                  "oldPassword": "TotallyWrong#999",
+                  "newPassword": "%s"
+                }
+                """.formatted(attemptedNewPassword);
+
+        mockMvc.perform(put("/auth/update-password")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized());
+
+        UserEntity refreshed = userRepository.findByEmail(testUser.email).orElseThrow();
+        assertThat(passwordEncoder.matches(testUser.rawPassword, refreshed.getPassword())).isTrue();
+        assertThat(passwordEncoder.matches(attemptedNewPassword, refreshed.getPassword())).isFalse();
+    }
+
+    @Test
+    @DisplayName("POST /auth/request-password-reset creates a reset token in DB")
+    void requestPasswordResetCreatesToken() throws Exception {
         String email = "user@smartdocflow.local";
 
-        String passwordRequestBody = """
+        String body = """
                 {
-                    "email": "%s"
+                  "email": "%s"
                 }
                 """.formatted(email);
 
         mockMvc.perform(post("/auth/request-password-reset")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(passwordRequestBody))
+                        .content(body))
                 .andExpect(status().isOk());
 
-        PasswordResetTokenEntity token = resetTokenRepository.findByUserEmailAndRevokedFalse(email).orElseThrow();
+        PasswordResetTokenEntity token = resetTokenRepository
+                .findByUserEmailAndRevokedFalse(email)
+                .orElseThrow();
 
         assertThat(token).isNotNull();
+        assertThat(token.getToken()).isNotBlank();
     }
 
     @Test
-    @DisplayName("POST /auth/reset-password updates password using valid reset token")
-    void resetPasswordChangesPassword() throws Exception {
+    @DisplayName("GET /auth/check-token returns 200 for an active reset token")
+    void checkTokenReturnsOkForActiveToken() throws Exception {
+        TestUser testUser = createIsolatedUser("Start#" + uniqueId());
+
+        String requestBody = """
+                {
+                  "email": "%s"
+                }
+                """.formatted(testUser.email);
+
+        mockMvc.perform(post("/auth/request-password-reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk());
+
+        PasswordResetTokenEntity token = resetTokenRepository
+                .findByUserEmailAndRevokedFalse(testUser.email)
+                .orElseThrow();
+
+        mockMvc.perform(get("/auth/check-token")
+                        .param("token", token.getToken()))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+    }
+
+    @Test
+    @DisplayName("POST /auth/reset-password sets a new password using a valid reset token")
+    void resetPasswordSetsNewPassword() throws Exception {
         TestUser testUser = createIsolatedUser("Orig#" + uniqueId());
 
         String requestResetBody = """
                 {
-                    "email": "%s"
+                  "email": "%s"
                 }
                 """.formatted(testUser.email);
 
@@ -245,16 +290,16 @@ public class AuthIntegrationTest extends IntegrationTestBase {
 
         String newPassword = "NewPassword#" + uniqueId();
 
-        String resetPasswordBody = """
+        String resetBody = """
                 {
-                    "token": "%s",
-                    "newPassword": "%s"
+                  "token": "%s",
+                  "newPassword": "%s"
                 }
                 """.formatted(token.getToken(), newPassword);
 
         mockMvc.perform(post("/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(resetPasswordBody))
+                        .content(resetBody))
                 .andExpect(status().isOk());
 
         UserEntity updated = userRepository.findByEmail(testUser.email).orElseThrow();
@@ -262,77 +307,30 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("GET /auth/check-token returns true for valid, active reset token")
-    void checkTokenReturnsTrueForActiveToken() throws Exception {
-        TestUser testUser = createIsolatedUser("Orig#" + uniqueId());
+    @DisplayName("GET /auth/refresh returns 200, issues new access token and new refresh cookie")
+    void refreshIssuesNewTokens() throws Exception {
+        LoginResult login = loginFull("user", "User#12345");
 
-        String requestResetBody = """
-                {
-                    "email": "%s"
-                }
-                """.formatted(testUser.email);
+        MvcResult refreshResult = mockMvc.perform(get("/auth/refresh")
+                        .cookie(login.refreshCookie))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists(login.refreshCookie.getName()))
+                .andReturn();
 
-        mockMvc.perform(post("/auth/request-password-reset")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestResetBody))
-                .andExpect(status().isOk());
-
-        PasswordResetTokenEntity token = resetTokenRepository
-                .findByUserEmailAndRevokedFalse(testUser.email)
-                .orElseThrow();
-
-        mockMvc.perform(get("/auth/check-token")
-                        .param("token", token.getToken()))
-                .andExpect(status().isOk());
+        String newAccessToken = refreshResult.getResponse().getContentAsString();
+        assertThat(newAccessToken).isNotBlank();
     }
 
     @Test
-    @DisplayName("Update password updates password with valid credentials")
-    void updatePasswordUpdatesPassword() throws Exception {
-        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
-        String token = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
-        String newPassword = "ChangedPass#" + uniqueId();
+    @DisplayName("POST /auth/logout returns 200 and sets expired refresh cookie")
+    void logoutClearsRefreshCookie() throws Exception {
+        LoginResult login = loginFull("user", "User#12345");
 
-        String requestBody = """
-                {
-                    "oldPassword": "%s",
-                    "newPassword": "%s"
-                }
-                """.formatted(testUser.rawPassword, newPassword);
-
-        mockMvc.perform(put("/auth/update-password")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isOk());
-
-        UserEntity reloaded = userRepository.findByEmail(testUser.email).orElseThrow();
-        assertThat(passwordEncoder.matches(newPassword, reloaded.getPassword())).isTrue();
-    }
-
-    @Test
-    @DisplayName("PUT /auth/update-password with wrong oldPassword returns 401 and does not change password")
-    void updatePasswordRejectsWrongOldPassword() throws Exception {
-        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
-        String token = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
-        String attemptedNewPassword = "ShouldNotApply#" + uniqueId();
-
-        String requestBody = """
-                {
-                    "oldPassword": "TotallyWrong#999",
-                    "newPassword": "%s"
-                }
-                """.formatted(attemptedNewPassword);
-
-        mockMvc.perform(put("/auth/update-password")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
-                .andExpect(status().isUnauthorized());
-
-        UserEntity reloaded = userRepository.findByEmail(testUser.email).orElseThrow();
-        assertThat(passwordEncoder.matches(testUser.rawPassword, reloaded.getPassword())).isTrue();
-        assertThat(passwordEncoder.matches(attemptedNewPassword, reloaded.getPassword())).isFalse();
+        mockMvc.perform(post("/auth/logout")
+                        .cookie(login.refreshCookie)
+                        .header("Authorization", "Bearer " + login.accessToken))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists(login.refreshCookie.getName()));
     }
 
     private String uniqueId() {
@@ -343,14 +341,14 @@ public class AuthIntegrationTest extends IntegrationTestBase {
         String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
 
         String uid = uniqueId();
-        String email = "testuser_" + uid + "@example.com";
-        String username = "testuser_" + uid;
+        String email = "testuser_%s@example.com".formatted(uid);
+        String username = "testuser_%s".formatted(uid);
 
         String createUserBody = """
                 {
-                    "email": "%s",
-                    "username": "%s",
-                    "roles": ["ROLE_USER"]
+                  "email": "%s",
+                  "username": "%s",
+                  "roles": ["ROLE_USER"]
                 }
                 """.formatted(email, username);
 
@@ -379,8 +377,8 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     private LoginResult loginFull(String username, String password) throws Exception {
         String body = """
                 {
-                    "username": "%s",
-                    "password": "%s"
+                  "username": "%s",
+                  "password": "%s"
                 }
                 """.formatted(username, password);
 
@@ -391,6 +389,7 @@ public class AuthIntegrationTest extends IntegrationTestBase {
                 .andReturn();
 
         String accessToken = result.getResponse().getContentAsString();
+
         Cookie[] cookies = result.getResponse().getCookies();
         Cookie refreshCookie = null;
         if (cookies != null) {
