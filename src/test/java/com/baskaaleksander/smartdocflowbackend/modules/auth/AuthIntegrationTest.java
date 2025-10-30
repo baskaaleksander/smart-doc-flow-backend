@@ -48,54 +48,54 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("ADMIN can create a new user via /api/auth/register")
+    @DisplayName("ADMIN can register a new user via /auth/register")
     void adminCanRegisterUser() throws Exception {
+        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
 
-        String adminAccessToken = loginAndGetAccessToken(
-                "admin",
-                "Admin#12345"
-        );
+        String uid = uniqueId();
+        String email = "newuser_" + uid + "@example.com";
+        String username = "newuser_" + uid;
 
         String newUserBody = """
                 {
-                    "email": "newuser@example.com",
-                    "username": "newuser",
+                    "email": "%s",
+                    "username": "%s",
                     "roles": ["ROLE_USER"]
                 }
-                """;
+                """.formatted(email, username);
 
         mockMvc.perform(post("/auth/register")
+                        .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + adminAccessToken)
                         .content(newUserBody))
                 .andExpect(status().isCreated());
 
-        UserEntity saved = userRepository.findUserByUsernameWithRoles("newuser").orElseThrow();
-
-        assertThat(saved.getEmail()).isEqualTo("newuser@example.com");
-        assertThat(saved.getUsername()).isEqualTo("newuser");
+        UserEntity saved = userRepository.findUserByUsernameWithRoles(username).orElseThrow();
+        assertThat(saved.getEmail()).isEqualTo(email);
+        assertThat(saved.getUsername()).isEqualTo(username);
     }
 
     @Test
-    @DisplayName("USER can't create a new user via /api/auth/register")
+    @DisplayName("Normal USER cannot register a new user via /auth/register")
     void unauthorizedUserCantRegisterUser() throws Exception {
-        String accessToken = loginAndGetAccessToken(
-                "user",
-                "User#12345"
-        );
+        String userToken = loginAndGetAccessToken("user", "User#12345");
 
-        String newUserBody = """
+        String uid = uniqueId();
+        String email = "shouldFail_" + uid + "@example.com";
+        String username = "shouldFail_" + uid;
+
+        String body = """
                 {
-                    "email": "newuser2@example.com",
-                    "username": "newuser2",
+                    "email": "%s",
+                    "username": "%s",
                     "roles": ["ROLE_USER"]
                 }
-                """;
+                """.formatted(email, username);
 
         mockMvc.perform(post("/auth/register")
+                        .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + accessToken)
-                        .content(newUserBody))
+                        .content(body))
                 .andExpect(status().isForbidden());
     }
 
