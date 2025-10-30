@@ -85,6 +85,40 @@ public class AuthIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + accessToken)
                         .content(newUserBody))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("User can login with valid credentials")
+    void userCanLogin() throws Exception {
+
+        String loginBody = """
+                {
+                    "username": "user",
+                    "password": "User#12345"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("User cant login with invalid credentials")
+    void userCantLoginWithInvalidCredentials() throws Exception {
+
+        String loginBody = """
+                {
+                    "username": "user",
+                    "password": "Admin#12345"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
                 .andExpect(status().isUnauthorized());
     }
 
