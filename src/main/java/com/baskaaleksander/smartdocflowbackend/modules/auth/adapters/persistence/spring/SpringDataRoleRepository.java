@@ -13,4 +13,6 @@ public interface SpringDataRoleRepository extends JpaRepository<RoleEntity, Long
 
     @Query("select r from RoleEntity r where r.role in :roles")
     Set<RoleEntity> findAllByRoleIn(Set<String> roles);
+
+    Optional<RoleEntity> findByRole(String role);
 }
