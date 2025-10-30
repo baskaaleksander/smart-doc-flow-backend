@@ -65,6 +65,30 @@ public class AuthIntegrationTest extends IntegrationTestBase {
         assertThat(saved.getUsername()).isEqualTo("newuser");
     }
 
+    @Test
+    @DisplayName("USER can't create a new user via /api/auth/register")
+    void unauthorizedUserCantRegisterUser() throws Exception {
+        String accessToken = loginAndGetAccessToken(
+                "user",
+                "User#12345"
+        );
+
+        String newUserBody = """
+                {
+                    "email": "newuser2@example.com",
+                    "username": "newuser2",
+                    "roles": ["ROLE_USER"]
+                }
+                """;
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .content(newUserBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+
     private String loginAndGetAccessToken(String username, String password) throws Exception {
         String requestBody = """
                 {

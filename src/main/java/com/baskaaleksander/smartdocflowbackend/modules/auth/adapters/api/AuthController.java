@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +27,7 @@ public class AuthController {
     private final PasswordChangeApplicationService passwordChangeService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody @Valid UserLoginRequest user, HttpServletResponse response){
+    public ResponseEntity<String> loginUser(@RequestBody @Valid UserLoginRequest user, HttpServletResponse response) {
         TokenResponse res = authService.loginUser(user);
 
         cookieUtil.sendRefreshTokenCookie(res.refreshToken(), response);
@@ -35,6 +36,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<UserResponse> registerUser(@RequestBody @Valid UserRegisterRequest user) {
         return new ResponseEntity<>(authService.registerUser(user), HttpStatus.CREATED);
     }
@@ -66,7 +68,7 @@ public class AuthController {
     public ResponseEntity<String> updatePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest
-            ) {
+    ) {
         return new ResponseEntity<>(passwordChangeService.updatePassword(userDetails.getId(), updatePasswordRequest), HttpStatus.OK);
     }
 
