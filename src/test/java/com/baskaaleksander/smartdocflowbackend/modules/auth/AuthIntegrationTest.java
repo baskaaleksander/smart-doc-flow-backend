@@ -224,29 +224,66 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("Reset password changes password according to user's preference")
+    @DisplayName("POST /auth/reset-password updates password using valid reset token")
     void resetPasswordChangesPassword() throws Exception {
+        TestUser testUser = createIsolatedUser("Orig#" + uniqueId());
 
-        String email = "user@smartdocflow.local";
-        String password = "Password@12345";
+        String requestResetBody = """
+                {
+                    "email": "%s"
+                }
+                """.formatted(testUser.email);
 
-        PasswordResetTokenEntity token = resetTokenRepository.findByUserEmailAndRevokedFalse(email).orElseThrow();
+        mockMvc.perform(post("/auth/request-password-reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestResetBody))
+                .andExpect(status().isOk());
+
+        PasswordResetTokenEntity token = resetTokenRepository
+                .findByUserEmailAndRevokedFalse(testUser.email)
+                .orElseThrow();
+
+        String newPassword = "NewPassword#" + uniqueId();
 
         String resetPasswordBody = """
                 {
                     "token": "%s",
                     "newPassword": "%s"
                 }
-                """.formatted(token.getToken(), password);
+                """.formatted(token.getToken(), newPassword);
 
         mockMvc.perform(post("/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(resetPasswordBody))
                 .andExpect(status().isOk());
 
-        UserEntity user = userRepository.findByEmail(email).orElseThrow();
+        UserEntity updated = userRepository.findByEmail(testUser.email).orElseThrow();
+        assertThat(passwordEncoder.matches(newPassword, updated.getPassword())).isTrue();
+    }
 
-        assertThat(passwordEncoder.matches(password, user.getPassword())).isTrue();
+    @Test
+    @DisplayName("GET /auth/check-token returns true for valid, active reset token")
+    void checkTokenReturnsTrueForActiveToken() throws Exception {
+        TestUser testUser = createIsolatedUser("Orig#" + uniqueId());
+
+        String requestResetBody = """
+                {
+                    "email": "%s"
+                }
+                """.formatted(testUser.email);
+
+        mockMvc.perform(post("/auth/request-password-reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestResetBody))
+                .andExpect(status().isOk());
+
+        PasswordResetTokenEntity token = resetTokenRepository
+                .findByUserEmailAndRevokedFalse(testUser.email)
+                .orElseThrow();
+
+        mockMvc.perform(get("/auth/check-token")
+                        .param("token", token.getToken()))
+                .andExpect(status().isOk());
     }
 
     @Test
