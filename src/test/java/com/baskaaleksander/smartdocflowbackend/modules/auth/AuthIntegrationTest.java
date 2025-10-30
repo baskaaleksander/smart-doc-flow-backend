@@ -2,15 +2,13 @@ package com.baskaaleksander.smartdocflowbackend.modules.auth;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRefreshTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import jakarta.servlet.http.Cookie;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -41,9 +39,19 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Autowired
     private SpringDataPasswordResetTokenRepository resetTokenRepository;
 
+    @Autowired
+    private SpringDataRefreshTokenRepository refreshTokenRepository;
+
     @BeforeAll
     void seed() {
         seeder.seedAccountsIfNotExists();
+    }
+
+    @AfterAll
+    void cleanDatabase() {
+        resetTokenRepository.deleteAll();
+        refreshTokenRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     @Test
