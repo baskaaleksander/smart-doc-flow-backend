@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api;
+package com.baskaaleksander.smartdocflowbackend.modules.auth;
 
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
@@ -18,8 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -99,6 +99,25 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Register user fails with invalid payload (missing email)")
+    void registerUserValidationError() throws Exception {
+        String adminAccessToken = loginAndGetAccessToken("admin", "Admin#12345");
+
+        String invalidBody = """
+                {
+                    "username": "nouseremail",
+                    "roles": ["ROLE_USER"]
+                }
+                """;
+
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + adminAccessToken)
+                        .content(invalidBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("User can login with valid credentials")
     void userCanLogin() throws Exception {
 
@@ -129,6 +148,24 @@ public class AuthIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("GET /auth/me returns current user data when authenticated")
+    void getMeReturnsCurrentUser() throws Exception {
+        String token = loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/auth/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("user@smartdocflow.local"));
+    }
+
+    @Test
+    @DisplayName("GET /auth/me returns 401 when no token provided")
+    void getMeUnauthorizedWithoutToken() throws Exception {
+        mockMvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
 

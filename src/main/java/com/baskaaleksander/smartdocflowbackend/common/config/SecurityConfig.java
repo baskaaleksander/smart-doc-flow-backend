@@ -89,7 +89,16 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/auth/**", "/ws-sockjs/**", "/ws/**", "/actuator/health", "/actuator/info").permitAll()
+                                .requestMatchers(
+                                        "/auth/login",
+                                        "/auth/request-password-reset",
+                                        "/auth/reset-password",
+                                        "/auth/check-token",
+                                        "/ws-sockjs/**",
+                                        "/ws/**",
+                                        "/actuator/health",
+                                        "/actuator/info"
+                                ).permitAll()
                                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 );
