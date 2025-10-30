@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTe
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -170,6 +171,37 @@ public class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("GET /auth/refresh issues new access/refresh tokens when valid refresh cookie is present")
+    void refreshReturnsNewTokens() throws Exception {
+        String loginBody = """
+                {
+                    "username": "user",
+                    "password": "User#12345"
+                }
+                """;
+
+        MvcResult loginResult = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginBody))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String refreshCookie = loginResult.getResponse().getHeader("Set-Cookie");
+
+        MvcResult refreshResult = mockMvc.perform(get("/auth/refresh")
+                        .header("Cookie", refreshCookie))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String newAccessToken = refreshResult.getResponse().getContentAsString();
+        assertThat(newAccessToken).isNotBlank();
+
+        String newRefreshCookie = refreshResult.getResponse().getHeader("Set-Cookie");
+        assertThat(newRefreshCookie).isNotBlank();
+        assertThat(newRefreshCookie).isNotEqualTo(refreshCookie);
+    }
+
+    @Test
     @DisplayName("Request password reset creates in database password reset token")
     void passwordResetTokenIsCreated() throws Exception {
 
@@ -241,9 +273,49 @@ public class AuthIntegrationTest extends IntegrationTestBase {
         assertThat(passwordEncoder.matches(newPassword, user.getPassword())).isTrue();
     }
 
+    private String uniqueId() {
+        return String.valueOf(System.nanoTime());
+    }
+
+    private TestUser createIsolatedUser(String rawPassword) throws Exception {
+        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
+
+        String uid = uniqueId();
+        String email = "testuser_" + uid + "@example.com";
+        String username = "testuser_" + uid;
+
+        String createUserBody = """
+                {
+                    "email": "%s",
+                    "username": "%s",
+                    "roles": ["ROLE_USER"]
+                }
+                """.formatted(email, username);
+
+        mockMvc.perform(post("/auth/register")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createUserBody))
+                .andExpect(status().isCreated());
+
+        UserEntity entity = userRepository.findByEmail(email).orElseThrow();
+        entity.setPassword(passwordEncoder.encode(rawPassword));
+        userRepository.save(entity);
+
+        TestUser tu = new TestUser();
+        tu.email = email;
+        tu.username = username;
+        tu.rawPassword = rawPassword;
+        return tu;
+    }
 
     private String loginAndGetAccessToken(String username, String password) throws Exception {
-        String requestBody = """
+        LoginResult login = loginFull(username, password);
+        return login.accessToken;
+    }
+
+    private LoginResult loginFull(String username, String password) throws Exception {
+        String body = """
                 {
                     "username": "%s",
                     "password": "%s"
@@ -252,12 +324,35 @@ public class AuthIntegrationTest extends IntegrationTestBase {
 
         MvcResult result = mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestBody))
+                        .content(body))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String accessToken = result.getResponse().getContentAsString();
+        Cookie[] cookies = result.getResponse().getCookies();
+        Cookie refreshCookie = null;
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if (refreshCookie == null) {
+                    refreshCookie = c;
+                }
+            }
+        }
 
-        return accessToken;
+        LoginResult lr = new LoginResult();
+        lr.accessToken = accessToken;
+        lr.refreshCookie = refreshCookie;
+        return lr;
+    }
+
+    private static class TestUser {
+        String email;
+        String username;
+        String rawPassword;
+    }
+
+    private static class LoginResult {
+        String accessToken;
+        Cookie refreshCookie;
     }
 }
