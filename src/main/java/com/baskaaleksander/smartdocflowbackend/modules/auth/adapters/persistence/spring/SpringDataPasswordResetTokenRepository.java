@@ -15,6 +15,9 @@ public interface SpringDataPasswordResetTokenRepository extends JpaRepository<Pa
     @Query("select t from PasswordResetTokenEntity t left join fetch t.user where t.token = :token")
     Optional<PasswordResetTokenEntity> findByToken(String token);
 
+    @Query("select t from PasswordResetTokenEntity t left join fetch t.user where t.user.email = :email and t.revoked = false")
+    Optional<PasswordResetTokenEntity> findByUserEmailAndRevokedFalse(String email);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update PasswordResetTokenEntity t set t.revoked = true where t.user.id = :userId")
     Integer invalidateAllTokens(UUID userId);

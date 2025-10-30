@@ -1,5 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api;
 
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
@@ -11,11 +13,13 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -30,6 +34,12 @@ public class AuthIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private SpringDataUserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private SpringDataPasswordResetTokenRepository resetTokenRepository;
 
     @BeforeAll
     void seed() {
@@ -120,6 +130,78 @@ public class AuthIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Request password reset creates in database password reset token")
+    void passwordResetTokenIsCreated() throws Exception {
+
+        String email = "user@smartdocflow.local";
+
+        String passwordRequestBody = """
+                {
+                    "email": "%s"
+                }
+                """.formatted(email);
+
+        mockMvc.perform(post("/auth/request-password-reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(passwordRequestBody))
+                .andExpect(status().isOk());
+
+        PasswordResetTokenEntity token = resetTokenRepository.findByUserEmailAndRevokedFalse(email).orElseThrow();
+
+        assertThat(token).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Reset password changes password according to user's preference")
+    void resetPasswordChangesPassword() throws Exception {
+
+        String email = "user@smartdocflow.local";
+        String password = "Password@12345";
+
+        PasswordResetTokenEntity token = resetTokenRepository.findByUserEmailAndRevokedFalse(email).orElseThrow();
+
+        String resetPasswordBody = """
+                {
+                    "token": "%s",
+                    "newPassword": "%s"
+                }
+                """.formatted(token.getToken(), password);
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(resetPasswordBody))
+                .andExpect(status().isOk());
+
+        UserEntity user = userRepository.findByEmail(email).orElseThrow();
+
+        assertThat(passwordEncoder.matches(password, user.getPassword())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Update password updates password with valid credentials")
+    void updatePasswordUpdatesPassword() throws Exception {
+        String token = loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        String newPassword = "NewPassword#12345";
+
+        String updatePasswordBody = """
+                {
+                    "oldPassword": "Reviewer#12345",
+                    "newPassword": "%s"
+                }
+                """.formatted(newPassword);
+
+        mockMvc.perform(put("/auth/update-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(updatePasswordBody)
+                .header("Authorization", "Bearer " + token)
+        ).andExpect(status().isOk());
+
+        UserEntity user = userRepository.findByEmail("reviewer@smartdocflow.local").orElseThrow();
+
+        assertThat(passwordEncoder.matches(newPassword, user.getPassword())).isTrue();
     }
 
 
