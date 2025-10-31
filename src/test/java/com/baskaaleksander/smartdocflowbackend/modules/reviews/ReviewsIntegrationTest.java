@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataUtils;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private TestDataUtils dataUtils;
+
+    @Autowired
+    private SpringDataUserRepository userRepository;
 
     @BeforeAll
     void seed() {
@@ -196,5 +200,53 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(reviewId.toString()))
                 .andExpect(jsonPath("$.status").value(ReviewStatus.IN_PROGRESS.name()));
+    }
+
+    @Test
+    @DisplayName("REVIEWER who owns an IN_PROGRESS review can release it back to PENDING")
+    void reviewerCanReleaseOwnInProgressReview() throws Exception {
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        UUID reviewerId = userRepository.findByUsername("reviewer").orElseThrow().getId();
+
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+        dataUtils.forceAssignReviewToReviewer(reviewId, reviewerId);
+
+        String body = """
+                {
+                    "status": "PENDING",
+                    "comment": null
+                }
+                """;
+
+        mockMvc.perform(patch("/reviews/{reviewId}", reviewId)
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ReviewStatus.PENDING.name()));
+    }
+
+    @Test
+    @DisplayName("Different reviewer cannot release review they do not own")
+    void otherReviewerCannotReleaseForeignReview() throws Exception {
+        UUID reviewerId = userRepository.findByUsername("reviewer").orElseThrow().getId();
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+        dataUtils.forceAssignReviewToReviewer(reviewId, reviewerId);
+
+        String otherReviewerToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
+
+        String body = """
+                {
+                    "status": "PENDING",
+                    "comment": null
+                }
+                """;
+
+        mockMvc.perform(patch("/reviews/{reviewId}", reviewId)
+                        .header("Authorization", "Bearer " + otherReviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
     }
 }

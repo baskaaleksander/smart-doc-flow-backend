@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.UnauthorizedAccessException;
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
@@ -188,7 +189,7 @@ public class ReviewApplicationService {
         if (!reviewerUsername.equalsIgnoreCase(username)) {
             logger.warn("REVIEW_RELEASE FAILED reason=forbidden reviewId=" + Slf4jLoggingAdapter.shortId(reviewId)
                     + " owner=" + reviewerUsername + " username=" + username);
-            throw new AccessDeniedException("You are not allowed to release this review");
+            throw new UnauthorizedAccessException("You are not allowed to release this review");
         }
 
         review.setReviewerId(null);
@@ -230,7 +231,7 @@ public class ReviewApplicationService {
         if (!reviewer.equalsIgnoreCase(username)) {
             logger.warn("REVIEW_APPROVE FAILED reason=forbidden reviewId=" + Slf4jLoggingAdapter.shortId(reviewId)
                     + " owner=" + reviewer + " username=" + username);
-            throw new AccessDeniedException("You are not allowed to approve this document");
+            throw new UnauthorizedAccessException("You are not allowed to approve this document");
         }
 
         review.setComment(comment);
@@ -273,7 +274,7 @@ public class ReviewApplicationService {
         if (!reviewer.equalsIgnoreCase(username)) {
             logger.warn("REVIEW_REJECT FAILED reason=forbidden reviewId=" + Slf4jLoggingAdapter.shortId(reviewId)
                     + " owner=" + reviewer + " username=" + username);
-            throw new AccessDeniedException("You are not allowed to reject this document");
+            throw new UnauthorizedAccessException("You are not allowed to reject this document");
         }
 
         review.setStatus(ReviewStatus.REJECTED);
