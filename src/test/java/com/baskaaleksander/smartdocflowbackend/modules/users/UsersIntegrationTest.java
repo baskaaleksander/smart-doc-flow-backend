@@ -157,4 +157,30 @@ public class UsersIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("GET /users/{userId} returns own profile if user is requesting self (userAccess.canManage)")
+    void userCanGetOwnProfile() throws Exception {
+        UserEntity user = userRepository.findByUsername("user").orElseThrow();
+        String token = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/users/{userId}", user.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("user@smartdocflow.local"))
+                .andExpect(jsonPath("$.username").value("user"));
+    }
+
+    @Test
+    @DisplayName("Normal USER cannot get someone else's profile via /users/{userId}")
+    void userCannotGetOtherProfile() throws Exception {
+        UserEntity admin = userRepository.findByUsername("admin").orElseThrow();
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/users/{userId}", admin.getId())
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
 }
