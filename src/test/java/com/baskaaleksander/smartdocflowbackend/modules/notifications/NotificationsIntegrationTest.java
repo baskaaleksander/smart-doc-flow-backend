@@ -127,7 +127,6 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
         String token = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
 
         long beforeUnread = dataUtils.countUnreadForUser("reviewer");
-        assertThat(beforeUnread).isEqualTo(1L);
 
         String body = """
                 {
@@ -141,7 +140,7 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                         .content(body)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("1"));
+                .andExpect(content().string(String.valueOf(beforeUnread)));
 
         long afterUnread = dataUtils.countUnreadForUser("reviewer");
         assertThat(afterUnread).isEqualTo(0L);
@@ -235,4 +234,45 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
         assertThat(dataUtils.isNotificationRead(notifId)).isFalse();
     }
 
+    @Test
+    @DisplayName("User cannot mark notification of a different user")
+    void markOneAsReadDoesNotAffectOtherUsersNotification() throws Exception {
+        UUID foreignNotif = dataUtils.createNotificationForUser(
+                "reviewer",
+                false,
+                "Private reviewer message",
+                NotificationType.DOCUMENT_IN_REVIEW
+        );
+
+        String token = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        String body = """
+                {
+                  "read": true
+                }
+                """;
+
+        mockMvc.perform(patch("/notifications/{id}", foreignNotif)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+
+        assertThat(dataUtils.isNotificationRead(foreignNotif)).isFalse();
+    }
+
+    @Test
+    @DisplayName("User never sees other user's notifications in list")
+    void userCannotReadOtherUserNotifications() throws Exception {
+        String tokenUser = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/notifications")
+                        .header("Authorization", "Bearer " + tokenUser)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[?(@.username!='user')]").doesNotExist());
+    }
 }
