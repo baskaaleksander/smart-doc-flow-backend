@@ -50,6 +50,11 @@ public class TestDataUtils {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    private String uniqueId() {
+        return String.valueOf(System.nanoTime());
+    }
+
+    @Transactional
     public TestUser createIsolatedUser(String rawPassword) throws Exception {
         String adminToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
 
@@ -84,13 +89,9 @@ public class TestDataUtils {
 
     @Transactional
     public UUID uploadDocForUser(UUID userId) {
+        UserEntity owner = userRepository.findById(userId).orElseThrow();
+
         DocumentEntity doc = new DocumentEntity();
-        ReviewEntity review = new ReviewEntity();
-
-        review.setStatus(ReviewStatus.PENDING);
-        review.setDocument(doc);
-
-        doc.setReview(review);
         doc.setId(UUID.randomUUID());
         doc.setFilename("testfile");
         doc.setMime("application/pdf");
@@ -98,11 +99,21 @@ public class TestDataUtils {
         doc.setStorageKey("test-key");
         doc.setPageSize(0);
         doc.setStatus(DocumentStatus.PROCESSED);
-        doc.setOwner(userRepository.getReferenceById(userId));
+        doc.setOwner(owner);
+        documentRepository.save(doc);
 
-        DocumentEntity saved = documentRepository.save(doc);
+        DocumentEntity managedDoc = documentRepository.findById(doc.getId())
+                .orElseThrow(() -> new IllegalStateException("Document not persisted"));
 
-        return saved.getId();
+        ReviewEntity review = new ReviewEntity();
+        review.setStatus(ReviewStatus.PENDING);
+        review.setDocument(managedDoc);
+        reviewRepository.save(review);
+
+        managedDoc.setReview(review);
+        documentRepository.save(managedDoc);
+
+        return managedDoc.getId();
     }
 
     @Transactional
@@ -112,25 +123,52 @@ public class TestDataUtils {
         }
     }
 
+    @Transactional
     public UUID createPendingReviewForDocumentOwnedByUser() {
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
 
-        UUID userId = userRepository.findByUsername("user").orElseThrow().getId();
-        UUID docId = uploadDocForUser(userId);
+        DocumentEntity doc = new DocumentEntity();
+        doc.setId(UUID.randomUUID());
+        doc.setFilename("pending_doc.pdf");
+        doc.setMime("application/pdf");
+        doc.setSize(1.0);
+        doc.setStorageKey("pending-key");
+        doc.setPageSize(0);
+        doc.setStatus(DocumentStatus.PROCESSED);
+        doc.setOwner(owner);
+        documentRepository.save(doc);
 
-        DocumentEntity doc = documentRepository.findbyIdWithReview(docId).orElseThrow();
+        DocumentEntity managedDoc = documentRepository.findById(doc.getId())
+                .orElseThrow(() -> new IllegalStateException("Document not persisted"));
 
-        return doc.getReview().getId();
+        ReviewEntity review = new ReviewEntity();
+        review.setStatus(ReviewStatus.PENDING);
+        review.setDocument(managedDoc);
+        reviewRepository.save(review);
+
+        managedDoc.setReview(review);
+        documentRepository.save(managedDoc);
+
+        return review.getId();
     }
-
 
     @Transactional
     public UUID forceAssignReviewToReviewer(UUID reviewId, UUID reviewerId) {
-        ReviewEntity review = reviewRepository.findById(reviewId).orElseThrow();
+        ReviewEntity review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalStateException("Review not found: " + reviewId));
+        UserEntity reviewer = userRepository.findById(reviewerId)
+                .orElseThrow(() -> new IllegalStateException("Reviewer not found: " + reviewerId));
 
-        review.setReviewer(userRepository.getReferenceById(reviewerId));
+        review.setReviewer(reviewer);
         review.setStatus(ReviewStatus.IN_PROGRESS);
-
         reviewRepository.save(review);
+
+        DocumentEntity doc = review.getDocument();
+        if (doc != null) {
+            doc.setStatus(DocumentStatus.IN_REVIEW);
+            documentRepository.save(doc);
+        }
 
         return review.getId();
     }
@@ -139,26 +177,31 @@ public class TestDataUtils {
     public UUID createInProgressReviewForReviewerUser() {
         UserEntity owner = userRepository.findByUsername("user")
                 .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
-
         UserEntity reviewer = userRepository.findByUsername("reviewer")
                 .orElseThrow(() -> new IllegalStateException("Seed user 'reviewer' not found"));
 
         DocumentEntity doc = new DocumentEntity();
-        ReviewEntity review = new ReviewEntity();
-
-        review.setStatus(ReviewStatus.IN_PROGRESS);
-        review.setDocument(doc);
-        review.setReviewer(reviewer);
-
-        doc.setReview(review);
         doc.setId(UUID.randomUUID());
-        doc.setFilename("testfile");
+        doc.setFilename("in_progress_doc.pdf");
         doc.setMime("application/pdf");
         doc.setSize(1.0);
-        doc.setStorageKey("test-key");
+        doc.setStorageKey("in-progress-key");
         doc.setPageSize(0);
         doc.setStatus(DocumentStatus.IN_REVIEW);
         doc.setOwner(owner);
+        documentRepository.save(doc);
+
+        DocumentEntity managedDoc = documentRepository.findById(doc.getId())
+                .orElseThrow(() -> new IllegalStateException("Document not persisted"));
+
+        ReviewEntity review = new ReviewEntity();
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setDocument(managedDoc);
+        review.setReviewer(reviewer);
+        reviewRepository.save(review);
+
+        managedDoc.setReview(review);
+        documentRepository.save(managedDoc);
 
         ReviewEventEntity assigned = new ReviewEventEntity();
         assigned.setReview(review);
@@ -169,30 +212,36 @@ public class TestDataUtils {
 
         return review.getId();
     }
-
+    
     @Transactional
     public ReviewWithEvents createReviewWithSomeEvents() {
         UserEntity owner = userRepository.findByUsername("user")
                 .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
-
         UserEntity reviewer = userRepository.findByUsername("reviewer")
                 .orElseThrow(() -> new IllegalStateException("Seed user 'reviewer' not found"));
 
         DocumentEntity doc = new DocumentEntity();
-        ReviewEntity review = new ReviewEntity();
-
-        review.setStatus(ReviewStatus.PENDING);
-        review.setDocument(doc);
-
-        doc.setReview(review);
         doc.setId(UUID.randomUUID());
-        doc.setFilename("testfile");
+        doc.setFilename("seeded_doc.pdf");
         doc.setMime("application/pdf");
         doc.setSize(1.0);
-        doc.setStorageKey("test-key");
+        doc.setStorageKey("seed-key");
         doc.setPageSize(0);
         doc.setStatus(DocumentStatus.IN_REVIEW);
         doc.setOwner(owner);
+        documentRepository.save(doc);
+
+        DocumentEntity managedDoc = documentRepository.findById(doc.getId())
+                .orElseThrow(() -> new IllegalStateException("Document not persisted"));
+
+        ReviewEntity review = new ReviewEntity();
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setDocument(managedDoc);
+        review.setReviewer(reviewer);
+        reviewRepository.save(review);
+
+        managedDoc.setReview(review);
+        documentRepository.save(managedDoc);
 
         ReviewEventEntity assigned = new ReviewEventEntity();
         assigned.setReview(review);
@@ -223,10 +272,5 @@ public class TestDataUtils {
         return anyEvent
                 .map(ReviewEventEntity::getId)
                 .orElseThrow(() -> new IllegalStateException("No review event in DB. Call seedBaseDataForReviews() first."));
-    }
-
-
-    private String uniqueId() {
-        return String.valueOf(System.nanoTime());
     }
 }
