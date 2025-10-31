@@ -13,6 +13,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.UUID;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -64,5 +66,34 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray());
+    }
+
+
+    @Test
+    @DisplayName("Normal USER cannot list reviews")
+    void normalUserCannotListReviews() throws Exception {
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/reviews")
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("REVIEWER can get single review by id")
+    void reviewerCanGetReviewById() throws Exception {
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        UUID reviewId = dataUtils.getAnyExistingReviewId();
+
+        mockMvc.perform(get("/reviews/{reviewId}", reviewId)
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(reviewId.toString()))
+                .andExpect(jsonPath("$.status").exists());
     }
 }
