@@ -221,4 +221,59 @@ public class UsersIntegrationTest extends IntegrationTestBase {
                         .content(patchBody))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("PUT /users/{userId} lets ADMIN edit another user's account (email/roles/active)")
+    void adminCanEditOtherUserAccount() throws Exception {
+        TestUser tu = dataUtils.createIsolatedUser("Edit#12345");
+
+        String adminToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
+
+        UserEntity target = userRepository.findByUsername(tu.getUsername()).orElseThrow();
+
+        String newEmail = "updated_" + System.nanoTime() + "@example.com";
+
+        String putBody = """
+                {
+                    "email": "%s",
+                    "roles": ["ROLE_USER"],
+                    "active": true
+                }
+                """.formatted(newEmail);
+
+        mockMvc.perform(put("/users/{userId}", target.getId())
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(putBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value(newEmail))
+                .andExpect(jsonPath("$.active").value(true))
+                .andExpect(jsonPath("$.roles").isArray());
+
+        UserEntity updated = userRepository.findById(target.getId()).orElseThrow();
+        assertThat(updated.getEmail()).isEqualTo(newEmail);
+        assertThat(updated.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Normal USER cannot PUT /users/{userId} for another account")
+    void normalUserCannotEditOtherUserAccount() throws Exception {
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+        UserEntity admin = userRepository.findByUsername("admin").orElseThrow();
+
+        String body = """
+                {
+                    "email": "hack@example.com",
+                    "roles": ["ROLE_ADMIN"],
+                    "active": true
+                }
+                """;
+
+        mockMvc.perform(put("/users/{userId}", admin.getId())
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+    }
+
 }
