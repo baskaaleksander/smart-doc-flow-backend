@@ -14,6 +14,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -170,4 +172,67 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
         long afterUnread = dataUtils.countUnreadForUser("user");
         assertThat(afterUnread).isEqualTo(1L);
     }
+
+    @Test
+    @DisplayName("PATCH /notifications/{id} with read=true marks only that notification for that user")
+    void markOneAsReadUpdatesSingleNotification() throws Exception {
+        String username = "user";
+
+        UUID notifId = dataUtils.createNotificationForUser(
+                username,
+                false,
+                "Fresh unread for markOne test",
+                NotificationType.DOCUMENT_IN_REVIEW
+        );
+
+        String token = authUtils.loginAndGetAccessToken(username, "User#12345");
+
+        String body = """
+                {
+                  "read": true
+                }
+                """;
+
+        mockMvc.perform(patch("/notifications/{id}", notifId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().string("1"));
+
+        assertThat(dataUtils.isNotificationRead(notifId)).isTrue();
+    }
+
+    @Test
+    @DisplayName("PATCH /notifications/{id} with read=false returns 0 and leaves notification unread")
+    void markOneAsReadReturnsZeroWhenFalse() throws Exception {
+        String username = "user";
+
+        UUID notifId = dataUtils.createNotificationForUser(
+                username,
+                false,
+                "Should stay unread",
+                NotificationType.DOCUMENT_IN_REVIEW
+        );
+
+        String token = authUtils.loginAndGetAccessToken(username, "User#12345");
+
+        String body = """
+                {
+                  "read": false
+                }
+                """;
+
+        mockMvc.perform(patch("/notifications/{id}", notifId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+
+        assertThat(dataUtils.isNotificationRead(notifId)).isFalse();
+    }
+
 }
