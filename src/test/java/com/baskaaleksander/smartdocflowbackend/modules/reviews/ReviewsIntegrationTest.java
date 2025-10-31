@@ -249,4 +249,53 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
                         .content(body))
                 .andExpect(status().isForbidden());
     }
+
+
+    @Test
+    @DisplayName("Reviewer can approve own IN_PROGRESS review (-> APPROVED) when sending comment")
+    void reviewerCanApproveOwnReview() throws Exception {
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        UUID reviewerId = userRepository.findByUsername("reviewer").orElseThrow().getId();
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+        dataUtils.forceAssignReviewToReviewer(reviewId, reviewerId);
+
+        String body = """
+                {
+                    "status": "APPROVED",
+                    "comment": "Looks good"
+                }
+                """;
+
+        mockMvc.perform(patch("/reviews/{reviewId}", reviewId)
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ReviewStatus.APPROVED.name()))
+                .andExpect(jsonPath("$.comment").value("Looks good"));
+    }
+
+    @Test
+    @DisplayName("Reviewer can reject own IN_PROGRESS review (-> REJECTED) with comment")
+    void reviewerCanRejectOwnReview() throws Exception {
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        UUID reviewerId = userRepository.findByUsername("reviewer").orElseThrow().getId();
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+        dataUtils.forceAssignReviewToReviewer(reviewId, reviewerId);
+
+        String body = """
+                {
+                    "status": "REJECTED",
+                    "comment": "This is not acceptable"
+                }
+                """;
+
+        mockMvc.perform(patch("/reviews/{reviewId}", reviewId)
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ReviewStatus.REJECTED.name()))
+                .andExpect(jsonPath("$.comment").value("This is not acceptable"));
+    }
 }
