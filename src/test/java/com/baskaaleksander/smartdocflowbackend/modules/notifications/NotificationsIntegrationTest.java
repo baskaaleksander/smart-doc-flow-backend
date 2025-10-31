@@ -95,4 +95,25 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.content[0].username").value("user"))
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
+
+    @Test
+    @DisplayName("GET /notifications without token returns 401")
+    void getNotificationsUnauthorizedWithoutToken() throws Exception {
+        mockMvc.perform(get("/notifications")
+                .contentType(MediaType.APPLICATION_JSON)
+        ).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("GET /notifications/unread-count returns only unread count for this user")
+    void getUnreadNotificationsCountReturnsOnlyUnread() throws Exception {
+        String token = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/notifications/unread-count")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().string("1"));
+    }
 }
