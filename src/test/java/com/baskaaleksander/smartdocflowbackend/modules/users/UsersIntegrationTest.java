@@ -4,6 +4,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataUtils;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -102,5 +103,31 @@ public class UsersIntegrationTest extends IntegrationTestBase {
                 .header("Authorization", "Bearer " + accessToken)
         ).andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("USER can get their own documents via /users/me/documents")
+    void userCanGetOwnDocuments() throws Exception {
+        String accessToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+        UserEntity user = userRepository.findByUsername("user").orElseThrow();
+
+        dataUtils.uploadDocForUser(user.getId());
+
+        mockMvc.perform(get("/users/me/documents")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + accessToken)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("Request without token returns 401 on /users/me/documents")
+    void unauthenticatedUserCannotGetOwnDocuments() throws Exception {
+        mockMvc.perform(get("/users/me/documents")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isUnauthorized());
+    }
+
 
 }
