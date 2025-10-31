@@ -128,4 +128,35 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(10));
     }
+
+
+    @Test
+    @DisplayName("Normal USER cannot get review events list")
+    void normalUserCannotGetReviewEvents() throws Exception {
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+        UUID reviewId = dataUtils.getAnyExistingReviewId();
+
+        mockMvc.perform(get("/reviews/{reviewId}/events", reviewId)
+                        .header("Authorization", "Bearer " + userToken)
+                        .param("eventType", "ALL")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("REVIEWER can get single review event by id")
+    void reviewerCanGetSingleReviewEvent() throws Exception {
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        UUID eventId = dataUtils.getAnyExistingReviewEventId();
+
+        mockMvc.perform(get("/reviews/event/{eventId}", eventId)
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(eventId.toString()))
+                .andExpect(jsonPath("$.eventType").exists());
+    }
 }
