@@ -3,8 +3,10 @@ package com.baskaaleksander.smartdocflowbackend.modules.auth;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRefreshTokenRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
+import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.LoginResult;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import jakarta.servlet.http.Cookie;
@@ -41,6 +43,9 @@ class AuthIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private SpringDataRefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private AuthTestUtils authUtils;
 
     @BeforeAll
     void seed() {
@@ -89,7 +94,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("GET /auth/me returns 200 and current user data when authenticated")
     void meReturnsCurrentUserWhenAuthorized() throws Exception {
-        String token = loginAndGetAccessToken("user", "User#12345");
+        String token = authUtils.loginAndGetAccessToken("user", "User#12345");
 
         mockMvc.perform(get("/auth/me")
                         .header("Authorization", "Bearer " + token))
@@ -107,7 +112,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("POST /auth/register returns 201 when called by ADMIN")
     void adminCanRegisterUser() throws Exception {
-        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
+        String adminToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
 
         String uid = uniqueId();
         String email = "newuser_%s@example.com".formatted(uid);
@@ -135,7 +140,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("POST /auth/register returns 403 when called by normal USER")
     void nonAdminCannotRegisterUser() throws Exception {
-        String userToken = loginAndGetAccessToken("user", "User#12345");
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
 
         String uid = uniqueId();
         String email = "shouldFail_%s@example.com".formatted(uid);
@@ -159,7 +164,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("POST /auth/register returns 400 for invalid payload (missing email)")
     void registerUserFailsWithInvalidPayload() throws Exception {
-        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
+        String adminToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
 
         String invalidBody = """
                 {
@@ -180,7 +185,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
     void updatePasswordSucceedsWithValidOldPassword() throws Exception {
         TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
 
-        String accessToken = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String accessToken = authUtils.loginAndGetAccessToken(testUser.username, testUser.rawPassword);
         String newPassword = "ChangedPass#" + uniqueId();
 
         String requestBody = """
@@ -205,7 +210,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
     void updatePasswordFailsWithWrongOldPassword() throws Exception {
         TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
 
-        String accessToken = loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String accessToken = authUtils.loginAndGetAccessToken(testUser.username, testUser.rawPassword);
         String attemptedNewPassword = "ShouldNotApply#" + uniqueId();
 
         String requestBody = """
@@ -317,12 +322,12 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("GET /auth/refresh returns 200, issues new access token and new refresh cookie")
     void refreshIssuesNewTokens() throws Exception {
-        LoginResult login = loginFull("user", "User#12345");
+        LoginResult login = authUtils.loginFull("user", "User#12345");
 
         MvcResult refreshResult = mockMvc.perform(get("/auth/refresh")
-                        .cookie(login.refreshCookie))
+                        .cookie(login.getRefreshCookie()))
                 .andExpect(status().isOk())
-                .andExpect(cookie().exists(login.refreshCookie.getName()))
+                .andExpect(cookie().exists(login.getRefreshCookie().getName()))
                 .andReturn();
 
         String newAccessToken = refreshResult.getResponse().getContentAsString();
@@ -332,13 +337,13 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("POST /auth/logout returns 200 and sets expired refresh cookie")
     void logoutClearsRefreshCookie() throws Exception {
-        LoginResult login = loginFull("user", "User#12345");
+        LoginResult login = authUtils.loginFull("user", "User#12345");
 
         mockMvc.perform(post("/auth/logout")
-                        .cookie(login.refreshCookie)
-                        .header("Authorization", "Bearer " + login.accessToken))
+                        .cookie(login.getRefreshCookie())
+                        .header("Authorization", "Bearer " + login.getAccessToken()))
                 .andExpect(status().isOk())
-                .andExpect(cookie().exists(login.refreshCookie.getName()));
+                .andExpect(cookie().exists(login.getRefreshCookie().getName()));
     }
 
     private String uniqueId() {
@@ -346,7 +351,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     private TestUser createIsolatedUser(String rawPassword) throws Exception {
-        String adminToken = loginAndGetAccessToken("admin", "Admin#12345");
+        String adminToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
 
         String uid = uniqueId();
         String email = "testuser_%s@example.com".formatted(uid);
@@ -377,51 +382,10 @@ class AuthIntegrationTest extends IntegrationTestBase {
         return tu;
     }
 
-    private String loginAndGetAccessToken(String username, String password) throws Exception {
-        LoginResult login = loginFull(username, password);
-        return login.accessToken;
-    }
-
-    private LoginResult loginFull(String username, String password) throws Exception {
-        String body = """
-                {
-                  "username": "%s",
-                  "password": "%s"
-                }
-                """.formatted(username, password);
-
-        MvcResult result = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String accessToken = result.getResponse().getContentAsString();
-
-        Cookie[] cookies = result.getResponse().getCookies();
-        Cookie refreshCookie = null;
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if (refreshCookie == null) {
-                    refreshCookie = c;
-                }
-            }
-        }
-
-        LoginResult lr = new LoginResult();
-        lr.accessToken = accessToken;
-        lr.refreshCookie = refreshCookie;
-        return lr;
-    }
-
     private static class TestUser {
         String email;
         String username;
         String rawPassword;
     }
 
-    private static class LoginResult {
-        String accessToken;
-        Cookie refreshCookie;
-    }
 }
