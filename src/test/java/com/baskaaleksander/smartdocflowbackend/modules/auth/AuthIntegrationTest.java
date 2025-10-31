@@ -6,7 +6,9 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
+import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataUtils;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.LoginResult;
+import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.TestUser;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import jakarta.servlet.http.Cookie;
@@ -46,6 +48,9 @@ class AuthIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private AuthTestUtils authUtils;
+
+    @Autowired
+    private TestDataUtils dataUtils;
 
     @BeforeAll
     void seed() {
@@ -183,9 +188,9 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("PUT /auth/update-password returns 200 and updates password when oldPassword is correct")
     void updatePasswordSucceedsWithValidOldPassword() throws Exception {
-        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
+        TestUser testUser = dataUtils.createIsolatedUser("OrigPass#" + uniqueId());
 
-        String accessToken = authUtils.loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String accessToken = authUtils.loginAndGetAccessToken(testUser.getUsername(), testUser.getRawPassword());
         String newPassword = "ChangedPass#" + uniqueId();
 
         String requestBody = """
@@ -193,7 +198,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
                   "oldPassword": "%s",
                   "newPassword": "%s"
                 }
-                """.formatted(testUser.rawPassword, newPassword);
+                """.formatted(testUser.getRawPassword(), newPassword);
 
         mockMvc.perform(put("/auth/update-password")
                         .header("Authorization", "Bearer " + accessToken)
@@ -201,16 +206,16 @@ class AuthIntegrationTest extends IntegrationTestBase {
                         .content(requestBody))
                 .andExpect(status().isOk());
 
-        UserEntity refreshed = userRepository.findByEmail(testUser.email).orElseThrow();
+        UserEntity refreshed = userRepository.findByEmail(testUser.getEmail()).orElseThrow();
         assertThat(passwordEncoder.matches(newPassword, refreshed.getPassword())).isTrue();
     }
 
     @Test
     @DisplayName("PUT /auth/update-password returns 401 and does not update password when oldPassword is wrong")
     void updatePasswordFailsWithWrongOldPassword() throws Exception {
-        TestUser testUser = createIsolatedUser("OrigPass#" + uniqueId());
+        TestUser testUser = dataUtils.createIsolatedUser("OrigPass#" + uniqueId());
 
-        String accessToken = authUtils.loginAndGetAccessToken(testUser.username, testUser.rawPassword);
+        String accessToken = authUtils.loginAndGetAccessToken(testUser.getUsername(), testUser.getRawPassword());
         String attemptedNewPassword = "ShouldNotApply#" + uniqueId();
 
         String requestBody = """
@@ -226,8 +231,8 @@ class AuthIntegrationTest extends IntegrationTestBase {
                         .content(requestBody))
                 .andExpect(status().isUnauthorized());
 
-        UserEntity refreshed = userRepository.findByEmail(testUser.email).orElseThrow();
-        assertThat(passwordEncoder.matches(testUser.rawPassword, refreshed.getPassword())).isTrue();
+        UserEntity refreshed = userRepository.findByEmail(testUser.getEmail()).orElseThrow();
+        assertThat(passwordEncoder.matches(testUser.getRawPassword(), refreshed.getPassword())).isTrue();
         assertThat(passwordEncoder.matches(attemptedNewPassword, refreshed.getPassword())).isFalse();
     }
 
@@ -258,13 +263,13 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("GET /auth/check-token returns 200 for an active reset token")
     void checkTokenReturnsOkForActiveToken() throws Exception {
-        TestUser testUser = createIsolatedUser("Start#" + uniqueId());
+        TestUser testUser = dataUtils.createIsolatedUser("Start#" + uniqueId());
 
         String requestBody = """
                 {
                   "email": "%s"
                 }
-                """.formatted(testUser.email);
+                """.formatted(testUser.getEmail());
 
         mockMvc.perform(post("/auth/request-password-reset")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -272,7 +277,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         PasswordResetTokenEntity token = resetTokenRepository
-                .findByUserEmailAndRevokedFalse(testUser.email)
+                .findByUserEmailAndRevokedFalse(testUser.getEmail())
                 .orElseThrow();
 
         mockMvc.perform(get("/auth/check-token")
@@ -284,13 +289,13 @@ class AuthIntegrationTest extends IntegrationTestBase {
     @Test
     @DisplayName("POST /auth/reset-password sets a new password using a valid reset token")
     void resetPasswordSetsNewPassword() throws Exception {
-        TestUser testUser = createIsolatedUser("Orig#" + uniqueId());
+        TestUser testUser = dataUtils.createIsolatedUser("Orig#" + uniqueId());
 
         String requestResetBody = """
                 {
                   "email": "%s"
                 }
-                """.formatted(testUser.email);
+                """.formatted(testUser.getEmail());
 
         mockMvc.perform(post("/auth/request-password-reset")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -298,7 +303,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         PasswordResetTokenEntity token = resetTokenRepository
-                .findByUserEmailAndRevokedFalse(testUser.email)
+                .findByUserEmailAndRevokedFalse(testUser.getEmail())
                 .orElseThrow();
 
         String newPassword = "NewPassword#" + uniqueId();
@@ -315,7 +320,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
                         .content(resetBody))
                 .andExpect(status().isOk());
 
-        UserEntity updated = userRepository.findByEmail(testUser.email).orElseThrow();
+        UserEntity updated = userRepository.findByEmail(testUser.getEmail()).orElseThrow();
         assertThat(passwordEncoder.matches(newPassword, updated.getPassword())).isTrue();
     }
 
@@ -348,44 +353,6 @@ class AuthIntegrationTest extends IntegrationTestBase {
 
     private String uniqueId() {
         return String.valueOf(System.nanoTime());
-    }
-
-    private TestUser createIsolatedUser(String rawPassword) throws Exception {
-        String adminToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
-
-        String uid = uniqueId();
-        String email = "testuser_%s@example.com".formatted(uid);
-        String username = "testuser_%s".formatted(uid);
-
-        String createUserBody = """
-                {
-                  "email": "%s",
-                  "username": "%s",
-                  "roles": ["ROLE_USER"]
-                }
-                """.formatted(email, username);
-
-        mockMvc.perform(post("/auth/register")
-                        .header("Authorization", "Bearer " + adminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(createUserBody))
-                .andExpect(status().isCreated());
-
-        UserEntity entity = userRepository.findByEmail(email).orElseThrow();
-        entity.setPassword(passwordEncoder.encode(rawPassword));
-        userRepository.save(entity);
-
-        TestUser tu = new TestUser();
-        tu.email = email;
-        tu.username = username;
-        tu.rawPassword = rawPassword;
-        return tu;
-    }
-
-    private static class TestUser {
-        String email;
-        String username;
-        String rawPassword;
     }
 
 }
