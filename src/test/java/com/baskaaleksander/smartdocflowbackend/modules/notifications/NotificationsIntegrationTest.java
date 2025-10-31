@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -115,5 +116,58 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                 )
                 .andExpect(status().isOk())
                 .andExpect(content().string("1"));
+    }
+
+
+    @Test
+    @DisplayName("PATCH /notifications with read=true marks all as read for this user")
+    void markAllAsReadMarksAllForUser() throws Exception {
+        String token = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        long beforeUnread = dataUtils.countUnreadForUser("reviewer");
+        assertThat(beforeUnread).isEqualTo(1L);
+
+        String body = """
+                {
+                  "read": true
+                }
+                """;
+
+        mockMvc.perform(patch("/notifications")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().string("1"));
+
+        long afterUnread = dataUtils.countUnreadForUser("reviewer");
+        assertThat(afterUnread).isEqualTo(0L);
+    }
+
+    @Test
+    @DisplayName("PATCH /notifications with read=false returns 0 and does nothing")
+    void markAllAsReadWithFalseDoesNothing() throws Exception {
+        String token = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        long beforeUnread = dataUtils.countUnreadForUser("user");
+        assertThat(beforeUnread).isEqualTo(1L);
+
+        String body = """
+                {
+                  "read": false
+                }
+                """;
+
+        mockMvc.perform(patch("/notifications")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+                )
+                .andExpect(status().isOk())
+                .andExpect(content().string("0"));
+
+        long afterUnread = dataUtils.countUnreadForUser("user");
+        assertThat(afterUnread).isEqualTo(1L);
     }
 }
