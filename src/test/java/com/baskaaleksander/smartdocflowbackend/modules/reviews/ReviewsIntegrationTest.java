@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews;
 
+import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.ReviewStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
@@ -158,5 +159,42 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(eventId.toString()))
                 .andExpect(jsonPath("$.eventType").exists());
+    }
+
+    @Test
+    @DisplayName("Normal USER cannot get single review event by id")
+    void normalUserCannotGetSingleReviewEvent() throws Exception {
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        UUID eventId = dataUtils.getAnyExistingReviewEventId();
+
+        mockMvc.perform(get("/reviews/event/{eventId}", eventId)
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("REVIEWER can claim a PENDING review (status -> IN_PROGRESS)")
+    void reviewerCanClaimPendingReview() throws Exception {
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+
+        String body = """
+                {
+                    "status": "IN_PROGRESS",
+                    "comment": null
+                }
+                """;
+
+        mockMvc.perform(patch("/reviews/{reviewId}", reviewId)
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(reviewId.toString()))
+                .andExpect(jsonPath("$.status").value(ReviewStatus.IN_PROGRESS.name()));
     }
 }
