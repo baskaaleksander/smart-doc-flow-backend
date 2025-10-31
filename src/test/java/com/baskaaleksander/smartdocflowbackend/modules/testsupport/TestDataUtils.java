@@ -3,6 +3,9 @@ package com.baskaaleksander.smartdocflowbackend.modules.testsupport;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.entity.NotificationEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.spring.SpringDataNotificationRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.NotificationType;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.entity.ReviewEventEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.persistence.spring.SpringDataReviewEventRepository;
@@ -43,6 +46,9 @@ public class TestDataUtils {
 
     @Autowired
     private SpringDataReviewEventRepository reviewEventRepository;
+
+    @Autowired
+    private SpringDataNotificationRepository notificationRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -212,7 +218,7 @@ public class TestDataUtils {
 
         return review.getId();
     }
-    
+
     @Transactional
     public ReviewWithEvents createReviewWithSomeEvents() {
         UserEntity owner = userRepository.findByUsername("user")
@@ -272,5 +278,32 @@ public class TestDataUtils {
         return anyEvent
                 .map(ReviewEventEntity::getId)
                 .orElseThrow(() -> new IllegalStateException("No review event in DB. Call seedBaseDataForReviews() first."));
+    }
+
+    @Transactional
+    public UUID createNotificationForUser(String username, boolean read, String message, NotificationType type) {
+        NotificationEntity n = new NotificationEntity();
+        n.setId(UUID.randomUUID());
+        n.setUsername(username);
+        n.setMessage(message);
+        n.setType(type);
+        n.setRead(read);
+        return notificationRepository.save(n).getId();
+    }
+
+    @Transactional
+    public void createSampleNotificationsForUser(String username) {
+        createNotificationForUser(username, false, "Doc ABC assigned to you", NotificationType.DOCUMENT_IN_REVIEW);
+        createNotificationForUser(username, true, "Doc XYZ approved", NotificationType.DOCUMENT_REVIEWED);
+    }
+
+    public long countUnreadForUser(String username) {
+        return notificationRepository.getNotificationsCountByUsernameAndRead(username, false);
+    }
+
+    public boolean isNotificationRead(UUID id) {
+        return notificationRepository.findById(id)
+                .orElseThrow()
+                .isRead();
     }
 }
