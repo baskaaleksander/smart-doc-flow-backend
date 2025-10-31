@@ -1,8 +1,10 @@
 package com.baskaaleksander.smartdocflowbackend.modules.auth;
 
+import com.baskaaleksander.smartdocflowbackend.common.config.QueueConfig;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.entity.PasswordResetTokenEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataPasswordResetTokenRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRefreshTokenRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
@@ -11,16 +13,26 @@ import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.LoginRe
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.TestUser;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.Duration;
+
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -47,6 +59,9 @@ class AuthIntegrationTest extends IntegrationTestBase {
     private SpringDataRefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private NotificationApplicationService notificationApplicationService;
+
+    @Autowired
     private AuthTestUtils authUtils;
 
     @Autowired
@@ -62,6 +77,14 @@ class AuthIntegrationTest extends IntegrationTestBase {
         resetTokenRepository.deleteAll();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
+    }
+
+    @TestConfiguration
+    static class OverrideBeansForTest {
+        @Bean
+        NotificationApplicationService notificationApplicationService() {
+            return Mockito.mock(NotificationApplicationService.class);
+        }
     }
 
     @Test
@@ -259,6 +282,33 @@ class AuthIntegrationTest extends IntegrationTestBase {
         assertThat(token).isNotNull();
         assertThat(token.getToken()).isNotBlank();
     }
+
+    @Test
+    @DisplayName("POST /auth/request-password-reset enqueues email notification event")
+    void requestPasswordResetCreatesEvent() throws Exception {
+        String email = "user@smartdocflow.local";
+
+        String body = """
+                {
+                  "email": "%s"
+                }
+                """.formatted(email);
+
+        mockMvc.perform(post("/auth/request-password-reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        await()
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> {
+                    verify(notificationApplicationService, atLeastOnce())
+                            .onPasswordReset(argThat(evt ->
+                                    evt.email().equals("user@smartdocflow.local")
+                            ));
+                });
+    }
+
 
     @Test
     @DisplayName("GET /auth/check-token returns 200 for an active reset token")
