@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,5 +22,8 @@ public interface SpringDataReviewEventRepository extends JpaRepository<ReviewEve
 
     @Query("select r from ReviewEventEntity r left join fetch r.reviewer left join fetch r.review where r.review.id = :reviewId and r.eventType = :eventType")
     Page<ReviewEventEntity> findByReviewIdWithType(Pageable pageable, UUID reviewId, ReviewEventType eventType);
+
+    @Query("select r from ReviewEventEntity r order by r.createdAt asc limit 1")
+    Optional<ReviewEventEntity> findFirst();
 
 }

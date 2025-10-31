@@ -28,5 +28,8 @@ public interface SpringDataReviewRepository extends JpaRepository<ReviewEntity, 
     Page<ReviewEntity> findAll(Pageable pageable);
 
     Page<ReviewEntity> findByStatus(Pageable pageable, ReviewStatus status);
+
+    @Query("select r from ReviewEntity r order by r.createdAt asc limit 1")
+    Optional<ReviewEntity> findFirst();
 //    void assignUser(long reviewId, long userId);
 }
