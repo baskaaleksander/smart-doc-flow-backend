@@ -276,4 +276,33 @@ public class UsersIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isForbidden());
     }
 
+
+    @Test
+    @DisplayName("DELETE /users/{userId} lets user deactivate self")
+    void userCanInactivateSelf() throws Exception {
+        TestUser tu = dataUtils.createIsolatedUser("KillMe#12345");
+
+        String token = authUtils.loginAndGetAccessToken(tu.getUsername(), tu.getRawPassword());
+
+        UserEntity selfEntity = userRepository.findByUsername(tu.getUsername()).orElseThrow();
+
+        mockMvc.perform(delete("/users/{userId}", selfEntity.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        UserEntity after = userRepository.findById(selfEntity.getId()).orElseThrow();
+        assertThat(after.isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("DELETE /users/{userId} forbids normal USER from deactivating someone else")
+    void userCannotInactivateOtherUser() throws Exception {
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+        UserEntity admin = userRepository.findByUsername("admin").orElseThrow();
+
+        mockMvc.perform(delete("/users/{userId}", admin.getId())
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
 }
