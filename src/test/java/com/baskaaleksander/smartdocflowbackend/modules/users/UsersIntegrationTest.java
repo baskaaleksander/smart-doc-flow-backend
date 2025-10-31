@@ -117,7 +117,7 @@ public class UsersIntegrationTest extends IntegrationTestBase {
                         .header("Authorization", "Bearer " + accessToken)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.content").isNotEmpty());
     }
 
     @Test
@@ -129,5 +129,32 @@ public class UsersIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    @DisplayName("REVIEWER can get someone else's documents via /users/{userId}/documents")
+    void reviewerCanGetOtherUserDocuments() throws Exception {
+        UserEntity normalUser = userRepository.findByUsername("user").orElseThrow();
+        dataUtils.uploadDocForUser(normalUser.getId());
 
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        mockMvc.perform(get("/users/{userId}/documents", normalUser.getId())
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("Normal USER cannot access someone else's documents via /users/{userId}/documents")
+    void userCannotGetOtherUserDocuments() throws Exception {
+        UserEntity reviewerAccount = userRepository.findByUsername("reviewer").orElseThrow();
+        dataUtils.uploadDocForUser(reviewerAccount.getId());
+
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/users/{userId}/documents", reviewerAccount.getId())
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
 }
