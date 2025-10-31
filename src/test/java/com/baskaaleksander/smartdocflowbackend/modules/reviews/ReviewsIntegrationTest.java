@@ -298,4 +298,72 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
                 .andExpect(jsonPath("$.status").value(ReviewStatus.REJECTED.name()))
                 .andExpect(jsonPath("$.comment").value("This is not acceptable"));
     }
+
+    @Test
+    @DisplayName("Other reviewer cannot approve review they do not own")
+    void otherReviewerCannotApproveForeignReview() throws Exception {
+        String ownerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        UUID reviewerId = userRepository.findByUsername("reviewer").orElseThrow().getId();
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+        dataUtils.forceAssignReviewToReviewer(reviewId, reviewerId);
+
+        String otherReviewerToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
+
+        String body = """
+                {
+                    "status": "APPROVED",
+                    "comment": "ok"
+                }
+                """;
+
+        mockMvc.perform(patch("/reviews/{reviewId}", reviewId)
+                        .header("Authorization", "Bearer " + otherReviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("Reviewer can add comment event to a review")
+    void reviewerCanCommentOnReview() throws Exception {
+        String reviewerToken = authUtils.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        UUID reviewerId = userRepository.findByUsername("reviewer").orElseThrow().getId();
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+        dataUtils.forceAssignReviewToReviewer(reviewId, reviewerId);
+
+        String body = """
+                {
+                    "comment": "Please update section 2.1"
+                }
+                """;
+
+        mockMvc.perform(post("/reviews/{reviewId}/comment", reviewId)
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.comment").value("Please update section 2.1"))
+                .andExpect(jsonPath("$.reviewId").value(reviewId.toString()));
+    }
+
+    @Test
+    @DisplayName("Normal USER cannot comment on review")
+    void normalUserCannotCommentOnReview() throws Exception {
+        String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+        UUID reviewerId = userRepository.findByUsername("reviewer").orElseThrow().getId();
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
+        dataUtils.forceAssignReviewToReviewer(reviewId, reviewerId);
+
+        String body = """
+                {
+                    "comment": "trying to inject comment"
+                }
+                """;
+
+        mockMvc.perform(post("/reviews/{reviewId}/comment", reviewId)
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+    }
 }
