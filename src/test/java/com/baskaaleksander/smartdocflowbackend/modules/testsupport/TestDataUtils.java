@@ -283,7 +283,6 @@ public class TestDataUtils {
     @Transactional
     public UUID createNotificationForUser(String username, boolean read, String message, NotificationType type) {
         NotificationEntity n = new NotificationEntity();
-        n.setId(UUID.randomUUID());
         n.setUsername(username);
         n.setMessage(message);
         n.setType(type);

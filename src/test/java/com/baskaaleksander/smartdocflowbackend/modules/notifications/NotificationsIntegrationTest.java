@@ -6,10 +6,16 @@ import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTe
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataUtils;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -51,5 +57,42 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                 "Please review Doc C",
                 NotificationType.DOCUMENT_IN_REVIEW
         );
+    }
+
+    @Test
+    @DisplayName("GET /notifications returns notifications for logged-in user")
+    void getNotificationsReturnsUserNotifications() throws Exception {
+        String token = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/notifications")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                // PagingResult shape
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].username").value("user"))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10));
+    }
+
+    @Test
+    @DisplayName("GET /notifications?read=false filters only unread notifications")
+    void getNotificationsCanFilterByReadFlag() throws Exception {
+        String token = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/notifications")
+                        .header("Authorization", "Bearer " + token)
+                        .param("read", "false")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].read").value(false))
+                .andExpect(jsonPath("$.content[0].username").value("user"))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 }
