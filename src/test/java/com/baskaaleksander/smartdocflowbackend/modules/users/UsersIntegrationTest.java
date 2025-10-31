@@ -75,4 +75,32 @@ public class UsersIntegrationTest extends IntegrationTestBase {
                 .header("Authorization", "Bearer " + accessToken)
         ).andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("ADMIN can get user statistics")
+    void adminCanGetUserStats() throws Exception {
+
+        String accessToken = authUtils.loginAndGetAccessToken("admin", "Admin#12345");
+
+        mockMvc.perform(get("/users/stats")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total").value(3))
+                .andExpect(jsonPath("$.active").value(3))
+                .andExpect(jsonPath("$.adminsReviewers").value(2));
+    }
+
+    @Test
+    @DisplayName("Normal USER cannot get user statistics")
+    void userCannotGetUserStats() throws Exception {
+
+        String accessToken = authUtils.loginAndGetAccessToken("user", "User#12345");
+
+        mockMvc.perform(get("/users/stats")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(status().isForbidden());
+    }
+
 }
