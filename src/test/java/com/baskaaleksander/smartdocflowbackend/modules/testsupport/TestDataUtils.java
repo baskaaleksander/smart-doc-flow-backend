@@ -296,6 +296,21 @@ public class TestDataUtils {
         createNotificationForUser(username, true, "Doc XYZ approved", NotificationType.DOCUMENT_REVIEWED);
     }
 
+    @Transactional
+    public UUID createDocumentWithStatus(UserEntity owner, DocumentStatus status) {
+        DocumentEntity doc = new DocumentEntity();
+        doc.setId(UUID.randomUUID());
+        doc.setFilename("seed-" + status.name().toLowerCase() + ".pdf");
+        doc.setMime("application/pdf");
+        doc.setSize(1.0);
+        doc.setStorageKey("seed-" + status.name().toLowerCase());
+        doc.setPageSize(0);
+        doc.setStatus(status);
+        doc.setOwner(owner);
+        documentRepository.save(doc);
+        return doc.getId();
+    }
+
     public long countUnreadForUser(String username) {
         return notificationRepository.getNotificationsCountByUsernameAndRead(username, false);
     }

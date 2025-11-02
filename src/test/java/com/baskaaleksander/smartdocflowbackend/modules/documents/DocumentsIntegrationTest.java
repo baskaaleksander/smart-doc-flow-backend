@@ -4,8 +4,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persis
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.DocumentQueryPort;
-import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.EmbeddingTaskConsumerPort;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.FileStoragePort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.port.OcrTaskConsumerPort;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.entity.NotificationEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.persistence.spring.SpringDataNotificationRepository;
@@ -13,6 +13,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.mode
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
+import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataUtils;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,6 +44,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,6 +91,9 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
 
     @Autowired
     private TestDataSeeder.TestSeeder seeder;
+
+    @Autowired
+    private TestDataUtils dataUtils;
 
     @Autowired
     private SpringDataDocumentRepository documentRepository;
@@ -207,4 +213,51 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
         assertThat(documentRepository.count()).isEqualTo(documentsBefore);
         assertThat(notificationRepository.count()).isEqualTo(notificationsBefore);
     }
+
+    @Test
+    void stats_roleMatrix() throws Exception {
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+        JsonNode baseStats = fetchStats(adminToken);
+
+        long basePending = baseStats.get("pendingReview").asLong();
+        long baseInReview = baseStats.get("inReview").asLong();
+        long baseReviewed = baseStats.get("reviewed").asLong();
+        long baseFailed = baseStats.get("failed").asLong();
+
+        Set<UUID> seededDocuments = new HashSet<>();
+        try {
+            UserEntity owner = userRepository.findByUsername("user")
+                    .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.PROCESSED));
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.REVIEW_PENDING));
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.IN_REVIEW));
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.OCR_FAILED));
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.EMBED_FAILED));
+
+            mockMvc.perform(get("/documents/stats")
+                            .header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.pendingReview").value(basePending + 1))
+                    .andExpect(jsonPath("$.inReview").value(baseInReview + 1))
+                    .andExpect(jsonPath("$.reviewed").value(baseReviewed))
+                    .andExpect(jsonPath("$.failed").value(baseFailed + 2));
+        } finally {
+            documentRepository.deleteAllById(seededDocuments);
+        }
+
+        String userToken = auth.loginAndGetAccessToken("user", "User#12345");
+        mockMvc.perform(get("/documents/stats")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    private JsonNode fetchStats(String token) throws Exception {
+        MvcResult result = mockMvc.perform(get("/documents/stats")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn();
+        return objectMapper.readTree(result.getResponse().getContentAsString());
+    }
+
 }
