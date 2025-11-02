@@ -169,6 +169,39 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    void upload_createsNotification() throws Exception {
+        String accessToken = auth.loginAndGetAccessToken("user", "User#12345");
+        Set<UUID> existingNotificationIds = notificationRepository.findAll().stream()
+                .map(NotificationEntity::getId)
+                .collect(Collectors.toSet());
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "test-notification.pdf",
+                "application/pdf",
+                "PDF for notification test".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart("/documents/upload")
+                        .file(file)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isCreated());
+
+        var newNotifications = notificationRepository.findAll().stream()
+                .filter(entity -> !existingNotificationIds.contains(entity.getId()))
+                .toList();
+
+        assertThat(newNotifications).hasSize(1);
+        NotificationEntity notification = newNotifications.get(0);
+        assertThat(notification.getUsername()).isEqualTo("user");
+        assertThat(notification.getType()).isEqualTo(NotificationType.DOCUMENT_UPLOADED);
+        assertThat(notification.isRead()).isFalse();
+        assertThat(notification.getMessage()).isNotEmpty();
+        assertThat(notification.getCreatedAt()).isNotNull();
+    }
+
+    @Test
     void upload_invalidMimeOrUnauthorized() throws Exception {
         uploadInvalidMime();
         uploadMissingToken();
