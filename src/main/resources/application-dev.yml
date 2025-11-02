@@ -1,4 +1,9 @@
 spring:
+  application:
+    name: smart-doc-flow
+  mvc:
+    servlet:
+      path: /api
   mail:
     host: smtp.gmail.com
     port: 587
@@ -81,6 +86,6 @@ management:
 app:
   frontend-url: ${FRONTEND_URL}
   rate-limit:
-    read: 100
-    write: 30
-    strict: 5
+    read: 1000
+    write: 300
+    strict: 25

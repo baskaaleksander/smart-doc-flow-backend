@@ -4,5 +4,92 @@ spring:
   mvc:
     servlet:
       path: /api
-  profiles:
-    active: dev
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  rabbitmq:
+    host: ${RABBIT_MQ_HOST:rabbitmq}
+    port: ${RABBIT_MQ_PORT:5672}
+    username: ${RABBIT_MQ_USERNAME}
+    password: ${RABBIT_MQ_PASS}
+    stream:
+      username: ${RABBIT_MQ_USERNAME}
+      password: ${RABBIT_MQ_PASS}
+      port: ${RABBIT_MQ_PORT:5672}
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  ai:
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+    vectorstore:
+      qdrant:
+        collection-name: documents
+    openai:
+      chat:
+        options:
+          model: gpt-5-nano-2025-08-07
+          temperature: 1.0
+      embedding:
+        options:
+          model: text-embedding-3-small
+      api-key: ${OPENAI_API_KEY}
+jwt:
+  access:
+    secret: ${JWT_ACCESS_SECRET}
+    expiration: ${JWT_ACCESS_EXPIRATION}
+  refresh:
+    secret: ${JWT_REFRESH_SECRET}
+    expiration: ${JWT_REFRESH_EXPIRATION}
+minio:
+  url: ${MINIO_URL}
+  access:
+    name: ${MINIO_ACCESS_NAME}
+    secret: ${MINIO_ACCESS_SECRET}
+  bucket:
+    name: smartdocflow
+crypto:
+  conversation:
+    secret: ${CONVERSATION_SECRET}
+    fingerprint-secret: ${CONVERSATION_FINGERPRINT_SECRET}
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,loggers,httpexchanges,threaddump
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  httpexchanges:
+    recording:
+      enabled: true
+  metrics:
+    tags:
+      application: smart-doc-flow
+      env: local
+app:
+  frontend-url: ${FRONTEND_URL}
+  rate-limit:
+    read: 1000
+    write: 300
+    strict: 25

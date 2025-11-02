@@ -67,7 +67,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         String path = request.getRequestURI();
 
-        if (path.startsWith("/api/auth") || path.startsWith("/api/documents/upload")) {
+        if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/login") || path.startsWith("/api/documents/upload")) {
             return RatePolicy.STRICT;
         }
 

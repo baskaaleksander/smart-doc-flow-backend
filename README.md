@@ -139,6 +139,7 @@ http://localhost:8080/api
 ```bash
 # Database
 DB_URL=jdbc:postgresql://localhost:5432/postgres
+POSTGRES_DB=postgres
 DB_USERNAME=docroot
 DB_PASSWORD=change-me
 
@@ -193,7 +194,7 @@ FRONTEND_URL=http://localhost:3000
 ## 🧪 Testing & Quality
 
 - **Unit Tests:** JUnit 5 + Mockito
-- **Integration Tests:** Testcontainers (PostgreSQL, RabbitMQ)
+- **Integration Tests:** Testcontainers (PostgreSQL, RabbitMQ, MinIO, Qdrant)
 - **Commands**
   ```bash
   ./mvnw test         # Run unit tests
@@ -205,7 +206,6 @@ FRONTEND_URL=http://localhost:3000
 
 ## 🚢 Deployment
 
-- **CI/CD:** (Planned) GitHub Actions or Jenkins pipelines for build → test → deploy.
 - **Containerization:** Build with Maven and deploy the generated fat JAR.
 - **Runtime:** Default port `8080`; base path `/api`.
 - **Scalability:** Horizontally scalable with shared PostgreSQL, RabbitMQ, Qdrant, and MinIO.
