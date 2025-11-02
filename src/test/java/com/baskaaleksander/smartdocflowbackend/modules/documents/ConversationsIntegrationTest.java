@@ -151,4 +151,39 @@ class ConversationsIntegrationTest extends IntegrationTestBase {
         conversationRepository.deleteAll(messages);
         dataUtils.deleteDocumentsWithRelations(Set.of(documentId));
     }
+
+    @Test
+    void create_forbiddenAndConflict() throws Exception {
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+        String reviewerToken = auth.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+        UserEntity reviewer = userRepository.findByUsername("reviewer")
+                .orElseThrow(() -> new IllegalStateException("Reviewer not found"));
+
+        UUID docNotAssigned = dataUtils.createDocumentWithStatus(owner, DocumentStatus.IN_REVIEW);
+        UUID docInvalidStatus = dataUtils.createDocumentAssignedToReviewer(owner, reviewer, DocumentStatus.UPLOADED);
+
+        try {
+            mockMvc.perform(post("/documents/{documentId}/conversations", docNotAssigned)
+                            .param("question", "Can I access?")
+                            .header("Authorization", "Bearer " + adminToken)
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                    .andExpect(status().isForbidden());
+
+            mockMvc.perform(post("/documents/{documentId}/conversations", docInvalidStatus)
+                            .param("question", "Is this processed?")
+                            .header("Authorization", "Bearer " + reviewerToken)
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                    .andExpect(status().isConflict());
+
+            List<ConversationMessageEntity> messages = conversationRepository.findAll().stream()
+                    .filter(msg -> msg.getDocumentId().equals(docNotAssigned) || msg.getDocumentId().equals(docInvalidStatus))
+                    .collect(Collectors.toList());
+            assertThat(messages).isEmpty();
+        } finally {
+            dataUtils.deleteDocumentsWithRelations(Set.of(docNotAssigned, docInvalidStatus));
+        }
+    }
 }
