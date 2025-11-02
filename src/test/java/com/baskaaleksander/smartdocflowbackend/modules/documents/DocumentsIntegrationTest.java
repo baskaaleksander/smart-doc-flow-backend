@@ -318,6 +318,47 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    void download_accessMatrix() throws Exception {
+        String ownerToken = auth.loginAndGetAccessToken("user", "User#12345");
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+        String reviewerToken = auth.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        TestUser otherUser = dataUtils.createIsolatedUser("Other#12345");
+        String otherToken = auth.loginAndGetAccessToken(otherUser.getUsername(), otherUser.getRawPassword());
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+
+        Set<UUID> seededDocuments = new HashSet<>();
+        try {
+            UUID documentId = dataUtils.createDocumentWithStatus(owner, DocumentStatus.PROCESSED);
+            seededDocuments.add(documentId);
+
+            mockMvc.perform(get("/documents/{id}/download", documentId)
+                            .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").value(equalTo("http://localhost/presigned")));
+
+            mockMvc.perform(get("/documents/{id}/download", documentId)
+                            .header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").value(equalTo("http://localhost/presigned")));
+
+            mockMvc.perform(get("/documents/{id}/download", documentId)
+                            .header("Authorization", "Bearer " + reviewerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").value(equalTo("http://localhost/presigned")));
+
+            mockMvc.perform(get("/documents/{id}/download", documentId)
+                            .header("Authorization", "Bearer " + otherToken))
+                    .andExpect(status().isForbidden());
+        } finally {
+            dataUtils.deleteDocumentsWithRelations(seededDocuments);
+            dataUtils.deleteUserWithTokens(otherUser.getUsername());
+        }
+    }
+
+    @Test
     void stats_roleMatrix() throws Exception {
         String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
         JsonNode baseStats = fetchStats(adminToken);
