@@ -38,6 +38,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.everyItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -144,7 +146,7 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
 
         Document persisted = documentQueryPort.getDocumentById(documentId)
                 .orElseThrow(() -> new IllegalStateException("Document not found in repository"));
-        assertThat(persisted.getStatus()).isEqualTo(DocumentStatus.TEXT_READY);
+        assertThat(persisted.getStatus()).isEqualTo(DocumentStatus.UPLOADED);
 
         UserEntity user = userRepository.findByUsername("user")
                 .orElseThrow(() -> new IllegalStateException("Seed user not found"));
@@ -215,6 +217,62 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
+    void list_documentsPagingAndReviewerFilter() throws Exception {
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+        String reviewerToken = auth.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        String userToken = auth.loginAndGetAccessToken("user", "User#12345");
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+        UserEntity reviewer = userRepository.findByUsername("reviewer")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'reviewer' not found"));
+
+        Set<UUID> seededDocuments = new HashSet<>();
+        try {
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.PROCESSED));
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.REVIEW_PENDING));
+            UUID assignedDocId = dataUtils.createDocumentAssignedToReviewer(owner, reviewer, DocumentStatus.IN_REVIEW);
+            seededDocuments.add(assignedDocId);
+
+            mockMvc.perform(get("/documents/")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.size").value(10))
+                    .andExpect(jsonPath("$.content[?(@.id=='" + assignedDocId + "')]").exists());
+
+            MvcResult reviewerResult = mockMvc.perform(get("/documents/")
+                            .param("assignedToMe", "true")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .header("Authorization", "Bearer " + reviewerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andExpect(jsonPath("$.content[?(@.id=='" + assignedDocId + "')]").exists())
+                    .andExpect(jsonPath("$.content[*].review.reviewer").value(everyItem(equalTo("reviewer"))))
+                    .andReturn();
+
+            JsonNode reviewerContent = objectMapper.readTree(reviewerResult.getResponse().getContentAsString())
+                    .get("content");
+
+            Set<UUID> reviewerDocumentIds = new HashSet<>();
+            reviewerContent.forEach(node -> reviewerDocumentIds.add(UUID.fromString(node.get("id").asText())));
+            assertThat(reviewerDocumentIds).contains(assignedDocId);
+
+            mockMvc.perform(get("/documents/")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .header("Authorization", "Bearer " + userToken))
+                    .andExpect(status().isForbidden());
+        } finally {
+            dataUtils.deleteDocumentsWithRelations(seededDocuments);
+        }
+    }
+
+    @Test
     void stats_roleMatrix() throws Exception {
         String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
         JsonNode baseStats = fetchStats(adminToken);
@@ -243,7 +301,7 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
                     .andExpect(jsonPath("$.reviewed").value(baseReviewed))
                     .andExpect(jsonPath("$.failed").value(baseFailed + 2));
         } finally {
-            documentRepository.deleteAllById(seededDocuments);
+            dataUtils.deleteDocumentsWithRelations(seededDocuments);
         }
 
         String userToken = auth.loginAndGetAccessToken("user", "User#12345");

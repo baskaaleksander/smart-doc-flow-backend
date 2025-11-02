@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -309,6 +310,50 @@ public class TestDataUtils {
         doc.setOwner(owner);
         documentRepository.save(doc);
         return doc.getId();
+    }
+
+    @Transactional
+    public UUID createDocumentAssignedToReviewer(UserEntity owner, UserEntity reviewer, DocumentStatus status) {
+        DocumentEntity doc = new DocumentEntity();
+        doc.setId(UUID.randomUUID());
+        doc.setFilename("assigned-" + status.name().toLowerCase() + ".pdf");
+        doc.setMime("application/pdf");
+        doc.setSize(1.0);
+        doc.setStorageKey("assigned-" + status.name().toLowerCase());
+        doc.setPageSize(0);
+        doc.setStatus(status);
+        doc.setOwner(owner);
+        documentRepository.save(doc);
+
+        DocumentEntity managedDoc = documentRepository.findById(doc.getId())
+                .orElseThrow(() -> new IllegalStateException("Document not persisted"));
+
+        ReviewEntity review = new ReviewEntity();
+        review.setStatus(ReviewStatus.IN_PROGRESS);
+        review.setDocument(managedDoc);
+        review.setReviewer(reviewer);
+        reviewRepository.save(review);
+
+        managedDoc.setReview(review);
+        documentRepository.save(managedDoc);
+
+        return managedDoc.getId();
+    }
+
+    @Transactional
+    public void deleteDocumentsWithRelations(Set<UUID> documentIds) {
+        for (UUID id : documentIds) {
+            documentRepository.findById(id).ifPresent(doc -> {
+                if (doc.getReview() != null) {
+                    ReviewEntity review = doc.getReview();
+                    if (review.getReviewEvents() != null) {
+                        reviewEventRepository.deleteAll(review.getReviewEvents());
+                    }
+                    reviewRepository.delete(review);
+                }
+                documentRepository.delete(doc);
+            });
+        }
     }
 
     public long countUnreadForUser(String username) {
