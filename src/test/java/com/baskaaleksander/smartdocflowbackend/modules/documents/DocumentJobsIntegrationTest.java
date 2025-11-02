@@ -266,25 +266,7 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
         PipelineTestConfig.setOcrFailure(false);
         recordingDocumentCommandPort.clear();
 
-        String userToken = auth.loginAndGetAccessToken("user", "User#12345");
-
-        byte[] pdfBytes = "fake pdf content".getBytes(StandardCharsets.UTF_8);
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "sample.pdf",
-                "application/pdf",
-                pdfBytes
-        );
-
-        MvcResult uploadResult = mockMvc.perform(multipart("/documents/upload")
-                        .file(file)
-                        .header("Authorization", "Bearer " + userToken)
-                        .contentType(MediaType.MULTIPART_FORM_DATA))
-                .andExpect(status().isCreated())
-                .andReturn();
-
-        JsonNode body = objectMapper.readTree(uploadResult.getResponse().getContentAsString());
-        UUID documentId = UUID.fromString(body.get("id").asText());
+        UUID documentId = uploadDocument();
 
         Awaitility.await()
                 .atMost(Duration.ofSeconds(15))
@@ -324,36 +306,16 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
         recordingDocumentCommandPort.clear();
 
         try {
-            String userToken = auth.loginAndGetAccessToken("user", "User#12345");
-
-            byte[] pdfBytes = "fake pdf content".getBytes(StandardCharsets.UTF_8);
-            MockMultipartFile file = new MockMultipartFile(
-                    "file",
-                    "sample.pdf",
-                    "application/pdf",
-                    pdfBytes
-            );
-
-            MvcResult uploadResult = mockMvc.perform(multipart("/documents/upload")
-                            .file(file)
-                            .header("Authorization", "Bearer " + userToken)
-                            .contentType(MediaType.MULTIPART_FORM_DATA))
-                    .andExpect(status().isCreated())
-                    .andReturn();
-
-            JsonNode body = objectMapper.readTree(uploadResult.getResponse().getContentAsString());
-            UUID documentId = UUID.fromString(body.get("id").asText());
+            UUID documentId = uploadDocument();
 
             Awaitility.await()
-                    .atMost(Duration.ofSeconds(10))
+                    .atMost(Duration.ofSeconds(15))
                     .pollInterval(Duration.ofMillis(100))
-                    .untilAsserted(() -> assertThat(recordingDocumentCommandPort.getStatuses(documentId))
-                            .contains(DocumentStatus.OCR_FAILED));
-
-            Document doc = documentQueryPort.getDocumentById(documentId)
-                    .orElseThrow(() -> new IllegalStateException("Document not found after OCR failure"));
-
-            assertThat(doc.getStatus()).isEqualTo(DocumentStatus.OCR_FAILED);
+                    .untilAsserted(() -> {
+                        Document doc = documentQueryPort.getDocumentById(documentId)
+                                .orElseThrow(() -> new IllegalStateException("Document not found after OCR failure"));
+                        assertThat(doc.getStatus()).isEqualTo(DocumentStatus.OCR_FAILED);
+                });
 
             List<DocumentStatus> statuses = recordingDocumentCommandPort.getStatuses(documentId);
             assertThat(statuses).contains(DocumentStatus.IN_PROGRESS_OCR);
@@ -371,5 +333,27 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
             PipelineTestConfig.setOcrFailure(false);
             recordingDocumentCommandPort.clear();
         }
+    }
+
+    private UUID uploadDocument() throws Exception {
+        String userToken = auth.loginAndGetAccessToken("user", "User#12345");
+
+        byte[] pdfBytes = "fake pdf content".getBytes(StandardCharsets.UTF_8);
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "sample.pdf",
+                "application/pdf",
+                pdfBytes
+        );
+
+        MvcResult uploadResult = mockMvc.perform(multipart("/documents/upload")
+                        .file(file)
+                        .header("Authorization", "Bearer " + userToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode body = objectMapper.readTree(uploadResult.getResponse().getContentAsString());
+        return UUID.fromString(body.get("id").asText());
     }
 }

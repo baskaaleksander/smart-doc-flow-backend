@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.EmbeddingTaskFailedException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
@@ -83,7 +84,8 @@ public class EmbeddingTaskConsumerService implements EmbeddingTaskConsumerPort {
         } catch (Exception e) {
             logger.error("EMBED_TASK FAILED reason=indexing_error docId=" + Slf4jLoggingAdapter.shortId(docId)
                     + " vectors=" + docs.size(), e);
-            throw e;
+            documentCommandPort.updateStatus(docId, DocumentStatus.EMBED_FAILED);
+            throw new EmbeddingTaskFailedException("Embedding processing failed", e);
         }
 
         documentCommandPort.updateStatus(docId, DocumentStatus.PROCESSED);

@@ -25,6 +25,7 @@ public class OcrRabbitListenerAdapter {
             consumer.handle(task);
             jobStatusService.markTextReady(task.documentId());
         } catch (OcrTaskFailedException ex) {
+            jobStatusService.markFailedOcr(task.documentId());
             log.warn("OCR task failed for document" + task.documentId() + " – " + ex.getMessage());
         }
     }
