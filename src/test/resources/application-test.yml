@@ -1,0 +1,91 @@
+spring:
+  mail:
+    host: localhost
+    port: 2525
+    username: test
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: test
+    password: test
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/test
+    username: test
+    password: test
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: false
+
+  ai:
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+    vectorstore:
+      qdrant:
+        collection-name: documents-test
+    openai:
+      chat:
+        options:
+          model: dummy-test-model
+          temperature: 0.0
+      embedding:
+        options:
+          model: dummy-embed-model
+      api-key: dummy-test-key
+
+jwt:
+  access:
+    secret: test-access-secret-32-bytes-min-length-AAA123
+    expiration: 3600000
+  refresh:
+    secret: test-refresh-secret-32-bytes-min-length-BBB123
+    expiration: 604800000
+
+minio:
+  url: http://localhost:9000
+  access:
+    name: minio
+    secret: minio12345
+  bucket:
+    name: smartdocflow-test
+
+crypto:
+  conversation:
+    secret: q83J4d1f6yq+W8m4V3nKk2lH0uB9x7a5r4d2c1b0e9g=
+    fingerprint-secret: Z0lPp2Q8s5N1b7Y4c2V9m3R6t8W0x1Q4r6T8u0W2y4A=
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics,prometheus,loggers,httpexchanges,threaddump
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  httpexchanges:
+    recording:
+      enabled: true
+  metrics:
+    tags:
+      application: smart-doc-flow
+      env: test
+
+app:
+  frontend-url: http://localhost:3000
