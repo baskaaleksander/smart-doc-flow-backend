@@ -159,4 +159,52 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
         assertThat(notification.getType()).isEqualTo(NotificationType.DOCUMENT_UPLOADED);
         assertThat(notification.isRead()).isFalse();
     }
+
+    @Test
+    void upload_invalidMimeOrUnauthorized() throws Exception {
+        uploadInvalidMime();
+        uploadMissingToken();
+    }
+
+    private void uploadInvalidMime() throws Exception {
+        String accessToken = auth.loginAndGetAccessToken("user", "User#12345");
+        long documentsBefore = documentRepository.count();
+        long notificationsBefore = notificationRepository.count();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "notes.txt",
+                "text/plain",
+                "plain text".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart("/documents/upload")
+                        .file(file)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isBadRequest());
+
+        assertThat(documentRepository.count()).isEqualTo(documentsBefore);
+        assertThat(notificationRepository.count()).isEqualTo(notificationsBefore);
+    }
+
+    private void uploadMissingToken() throws Exception {
+        long documentsBefore = documentRepository.count();
+        long notificationsBefore = notificationRepository.count();
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "sample.pdf",
+                "application/pdf",
+                "Test PDF content".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart("/documents/upload")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isUnauthorized());
+
+        assertThat(documentRepository.count()).isEqualTo(documentsBefore);
+        assertThat(notificationRepository.count()).isEqualTo(notificationsBefore);
+    }
 }
