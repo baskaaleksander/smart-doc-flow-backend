@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.users.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
@@ -41,6 +42,8 @@ class UserApplicationServiceTest {
     private UserRoleQueryPort roleQueryPort;
     @Mock
     private UserApiMapper mapper;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private UserApplicationService service;

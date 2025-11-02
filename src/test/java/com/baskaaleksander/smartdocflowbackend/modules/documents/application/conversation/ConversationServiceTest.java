@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.co
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.util.MakeConversationId;
@@ -41,6 +42,8 @@ class ConversationServiceTest {
     private VectorQueryPort vectorQueryPort;
     @Mock
     private ChatCompletionPort chatCompletionPort;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private ConversationService service;

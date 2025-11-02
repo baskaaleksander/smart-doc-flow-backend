@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewEventResponse;
@@ -29,6 +30,8 @@ class ReviewEventApplicationServiceTest {
     private ReviewEventQueryPort reviewEventQueryPort;
     @Mock
     private ReviewEventApiMapper mapper;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private ReviewEventApplicationService service;

@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.messaging.out;
 
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -19,6 +20,8 @@ class EmailSenderAdapterTest {
 
     @InjectMocks
     private EmailSenderAdapter adapter;
+    @Mock
+    private LoggingPort logger;
 
     @Test
     void sendEmail_sendsMessage() {

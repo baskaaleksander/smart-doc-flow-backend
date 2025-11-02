@@ -2,6 +2,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
@@ -55,6 +56,8 @@ class AuthApplicationServiceTest {
     private RoleQueryPort roleQueryPort;
     @Mock
     private AuthUserApiMapper mapper;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private AuthApplicationService service;

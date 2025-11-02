@@ -2,6 +2,8 @@ package com.baskaaleksander.smartdocflowbackend.modules.reviews.application;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.exception.UnauthorizedAccessException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
@@ -47,6 +49,8 @@ class ReviewApplicationServiceTest {
     private ReviewApiMapper mapper;
     @Mock
     private ReviewEventApiMapper eventMapper;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private ReviewApplicationService service;
@@ -158,7 +162,7 @@ class ReviewApplicationServiceTest {
         when(externalUserQueryPort.findById(reviewerId)).thenReturn(Optional.of("kate"));
 
         assertThatThrownBy(() -> service.releaseReview(reviewId, "john"))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(UnauthorizedAccessException.class);
     }
 
     @Test
@@ -215,7 +219,7 @@ class ReviewApplicationServiceTest {
         when(externalUserQueryPort.findById(reviewerId)).thenReturn(Optional.of("kate"));
 
         assertThatThrownBy(() -> service.approveDocument(rid, "john", "x"))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(UnauthorizedAccessException.class);
     }
 
     @Test

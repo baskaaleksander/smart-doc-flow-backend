@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.application.do
 import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidFileTypeException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
@@ -59,6 +60,8 @@ class DocumentServiceTest {
     private DocumentApiMapper mapper;
     @Mock
     private FileStoragePort fileStoragePort;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private DocumentService service;

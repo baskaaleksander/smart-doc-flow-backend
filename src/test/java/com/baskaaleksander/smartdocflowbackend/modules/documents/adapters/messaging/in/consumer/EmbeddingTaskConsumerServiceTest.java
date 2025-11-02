@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Chunk;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentOcrResult;
@@ -36,6 +37,8 @@ class EmbeddingTaskConsumerServiceTest {
     private DocumentCommandPort documentCommandPort;
     @Mock
     private VectorIndexPort vectorIndexPort;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private EmbeddingTaskConsumerService service;

@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidResetTokenException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.ResetPasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UpdatePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
@@ -50,7 +51,9 @@ class PasswordChangeApplicationServiceTest {
     private PasswordResetTokenCommandPort passwordResetTokenCommandPort;
     @Mock
     private PasswordResetTokenQueryPort passwordResetTokenQueryPort;
-
+    @Mock
+    private LoggingPort logger;
+    
     @InjectMocks
     private PasswordChangeApplicationService service;
 

@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.notifications.application;
 
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
@@ -41,6 +42,8 @@ class NotificationApplicationServiceTest {
     private NotificationQueryPort notificationQueryPort;
     @Mock
     private NotificationApiMapper mapper;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private NotificationApplicationService service;

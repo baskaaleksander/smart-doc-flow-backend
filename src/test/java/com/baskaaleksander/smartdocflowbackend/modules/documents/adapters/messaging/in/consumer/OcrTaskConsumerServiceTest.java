@@ -1,6 +1,7 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.consumer;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
+import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
@@ -41,6 +42,8 @@ class OcrTaskConsumerServiceTest {
     private OcrEnginePort ocrEnginePort;
     @Mock
     private PdfRendererPort pdfRendererPort;
+    @Mock
+    private LoggingPort logger;
 
     @InjectMocks
     private OcrTaskConsumerService service;
@@ -119,7 +122,7 @@ class OcrTaskConsumerServiceTest {
 
         assertThatThrownBy(() -> service.handle(new OcrTask(docId)))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("render failed");
+                .hasMessageContaining("processing failed");
 
         verify(documentCommandPort, never()).updateStatus(any(), any());
         verify(taskPublisher, never()).publish(any());
