@@ -441,4 +441,52 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
         return objectMapper.readTree(result.getResponse().getContentAsString());
     }
 
+    @Test
+    void myDocuments_isolated() throws Exception {
+        TestUser otherUser = dataUtils.createIsolatedUser("Other#12345");
+        String ownerToken = auth.loginAndGetAccessToken("user", "User#12345");
+        String otherToken = auth.loginAndGetAccessToken(otherUser.getUsername(), otherUser.getRawPassword());
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+        UserEntity other = userRepository.findByUsername(otherUser.getUsername())
+                .orElseThrow(() -> new IllegalStateException("Isolated user not found"));
+
+        Set<UUID> seededDocuments = new HashSet<>();
+        try {
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.PROCESSED));
+            seededDocuments.add(dataUtils.createDocumentWithStatus(owner, DocumentStatus.IN_REVIEW));
+            seededDocuments.add(dataUtils.createDocumentWithStatus(other, DocumentStatus.PROCESSED));
+
+            MvcResult result = mockMvc.perform(get("/users/me/documents")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").isArray())
+                    .andReturn();
+
+            JsonNode content = objectMapper.readTree(result.getResponse().getContentAsString()).get("content");
+            assertThat(content).isNotNull();
+            assertThat(content).isNotEmpty();
+            content.forEach(node -> assertThat(node.get("owner").get("username").asText()).isEqualTo("user"));
+
+            MvcResult otherResult = mockMvc.perform(get("/users/me/documents")
+                            .param("page", "0")
+                            .param("size", "10")
+                            .header("Authorization", "Bearer " + otherToken))
+                    .andExpect(status().isOk())
+                    .andReturn();
+
+            JsonNode otherContent = objectMapper.readTree(otherResult.getResponse().getContentAsString()).get("content");
+            assertThat(otherContent).isNotNull();
+            if (otherContent.size() > 0) {
+                otherContent.forEach(node -> assertThat(node.get("owner").get("username").asText()).isEqualTo(otherUser.getUsername()));
+            }
+        } finally {
+            dataUtils.deleteDocumentsWithRelations(seededDocuments);
+            dataUtils.deleteUserWithTokens(otherUser.getUsername());
+        }
+    }
+
 }

@@ -80,3 +80,7 @@ management:
       env: local
 app:
   frontend-url: ${FRONTEND_URL}
+  rate-limit:
+    read: 100
+    write: 30
+    strict: 5

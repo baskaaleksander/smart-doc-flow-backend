@@ -89,3 +89,7 @@ management:
 
 app:
   frontend-url: http://localhost:3000
+  rate-limit:
+    read: 1000
+    write: 3000
+    strict: 500
