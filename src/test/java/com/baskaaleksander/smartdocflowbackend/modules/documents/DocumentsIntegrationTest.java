@@ -47,8 +47,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -352,6 +351,44 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(get("/documents/{id}/download", documentId)
                             .header("Authorization", "Bearer " + otherToken))
                     .andExpect(status().isForbidden());
+        } finally {
+            dataUtils.deleteDocumentsWithRelations(seededDocuments);
+            dataUtils.deleteUserWithTokens(otherUser.getUsername());
+        }
+    }
+
+    @Test
+    void delete_accessMatrix() throws Exception {
+        String ownerToken = auth.loginAndGetAccessToken("user", "User#12345");
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+
+        TestUser otherUser = dataUtils.createIsolatedUser("Other#12345");
+        String otherToken = auth.loginAndGetAccessToken(otherUser.getUsername(), otherUser.getRawPassword());
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+
+        Set<UUID> seededDocuments = new HashSet<>();
+        try {
+            UUID documentId = dataUtils.createDocumentWithStatus(owner, DocumentStatus.PROCESSED);
+            seededDocuments.add(documentId);
+
+            mockMvc.perform(delete("/documents/{id}", documentId)
+                            .header("Authorization", "Bearer " + otherToken))
+                    .andExpect(status().isForbidden());
+
+            mockMvc.perform(delete("/documents/{id}", documentId)
+                            .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk());
+            assertThat(documentRepository.existsById(documentId)).isFalse();
+
+            UUID docForAdmin = dataUtils.createDocumentWithStatus(owner, DocumentStatus.PROCESSED);
+            seededDocuments.add(docForAdmin);
+
+            mockMvc.perform(delete("/documents/{id}", docForAdmin)
+                            .header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isOk());
+            assertThat(documentRepository.existsById(docForAdmin)).isFalse();
         } finally {
             dataUtils.deleteDocumentsWithRelations(seededDocuments);
             dataUtils.deleteUserWithTokens(otherUser.getUsername());
