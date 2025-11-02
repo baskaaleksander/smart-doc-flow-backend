@@ -2,6 +2,8 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.EmbeddingRabbitListenerAdapter;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messaging.in.OcrRabbitListenerAdapter;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.entity.DocumentOcrResultEntity;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentOcrResultRepository;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentStatus;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Image;
@@ -262,6 +264,12 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
     @Autowired
     private RecordingDocumentCommandPort recordingDocumentCommandPort;
 
+    @Autowired
+    private SpringDataDocumentOcrResultRepository documentOcrResultRepository;
+
+    @Autowired
+    private FileStoragePort fileStoragePort;
+
     @BeforeAll
     void seedUsersAndData() {
         seeder.seedAccountsIfNotExists();
@@ -379,6 +387,36 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
             PipelineTestConfig.setEmbedFailure(false);
             recordingDocumentCommandPort.clear();
         }
+    }
+
+    @Test
+    void ocrResult_persistedAndLinked() throws Exception {
+        recordingDocumentCommandPort.clear();
+        
+        UUID documentId = uploadDocument();
+
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(15))
+                .pollInterval(Duration.ofMillis(100))
+                .untilAsserted(() -> {
+                    List<DocumentStatus> statuses = recordingDocumentCommandPort.getStatuses(documentId);
+                    assertThat(statuses).contains(DocumentStatus.TEXT_READY);
+                });
+
+        DocumentOcrResultEntity ocrResult = documentOcrResultRepository.getOcrByDocId(documentId)
+                .orElseThrow(() -> new IllegalStateException("OCR result not found for document " + documentId));
+
+        assertThat(ocrResult).isNotNull();
+        assertThat(ocrResult.getDocument().getId()).isEqualTo(documentId);
+        assertThat(ocrResult.getStorageKey()).isEqualTo(documentId + "_ocr.json");
+
+        String ocrContent = fileStoragePort.getJsonFileValue(ocrResult.getStorageKey());
+        assertThat(ocrContent).isNotEmpty();
+        assertThat(ocrContent).contains("pages");
+        assertThat(ocrContent).contains("First page. Important content.");
+        assertThat(ocrContent).contains("Second page. More insights.");
+
+        recordingDocumentCommandPort.clear();
     }
 
     private UUID uploadDocument() throws Exception {
