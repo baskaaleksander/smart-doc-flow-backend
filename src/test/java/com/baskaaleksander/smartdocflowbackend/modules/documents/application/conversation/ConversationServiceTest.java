@@ -125,7 +125,7 @@ class ConversationServiceTest {
         UUID docId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID conversationId = UUID.randomUUID();
-        when(conversationMessageQueryPort.getIdByUserIdAndDocId(docId, userId)).thenReturn(Optional.of(conversationId));
+        when(conversationMessageQueryPort.getConversationIdByUserIdAndDocId(userId, docId)).thenReturn(Optional.of(conversationId));
 
         service.deleteConversation(docId, userId);
 
@@ -136,7 +136,7 @@ class ConversationServiceTest {
     void deleteConversation_notFound() {
         UUID docId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        when(conversationMessageQueryPort.getIdByUserIdAndDocId(docId, userId)).thenReturn(Optional.empty());
+        when(conversationMessageQueryPort.getConversationIdByUserIdAndDocId(userId, docId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.deleteConversation(docId, userId))
                 .isInstanceOf(ResourceNotFoundException.class);

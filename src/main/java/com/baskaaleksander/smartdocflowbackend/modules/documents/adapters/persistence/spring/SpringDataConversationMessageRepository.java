@@ -17,8 +17,8 @@ public interface SpringDataConversationMessageRepository extends JpaRepository<C
     @Query("select c.userId from ConversationMessageEntity c where c.documentId = :documentId")
     List<UUID> getUserIdByDocumentId(UUID documentId);
 
-    @Query("select c.id from ConversationMessageEntity c where c.userId = :userId and c.documentId = :documentId")
-    Optional<UUID> getIdByUserIdAndDocId(UUID userId, UUID documentId);
+    @Query("select distinct c.conversationId from ConversationMessageEntity c where c.userId = :userId and c.documentId = :documentId")
+    Optional<UUID> getConversationIdByUserIdAndDocId(UUID userId, UUID documentId);
 
     void deleteAllByConversationId(UUID conversationId);
 

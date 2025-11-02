@@ -10,6 +10,6 @@ import java.util.UUID;
 
 public interface ConversationMessageQueryPort {
     List<UUID> getUserIdByDocumentId(UUID documentId);
-    Optional<UUID> getIdByUserIdAndDocId(UUID userId, UUID documentId);
+    Optional<UUID> getConversationIdByUserIdAndDocId(UUID userId, UUID documentId);
     PagingResult<ConversationMessage> findAllByDocumentIdAndUserId(PaginationRequest request, UUID userId, UUID documentId);
 }

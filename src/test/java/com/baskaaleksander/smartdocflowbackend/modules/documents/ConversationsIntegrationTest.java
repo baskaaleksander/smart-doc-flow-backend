@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -252,5 +253,46 @@ class ConversationsIntegrationTest extends IntegrationTestBase {
 
         conversationRepository.deleteAll(messages);
         dataUtils.deleteDocumentsWithRelations(Set.of(documentId));
+    }
+
+    @Test
+    void delete_authorizedOnly() throws Exception {
+        String reviewerToken = auth.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+        UserEntity reviewer = userRepository.findByUsername("reviewer")
+                .orElseThrow(() -> new IllegalStateException("Reviewer not found"));
+
+        UUID documentId = dataUtils.createDocumentAssignedToReviewer(owner, reviewer, DocumentStatus.IN_REVIEW);
+
+        when(vectorQueryPort.searchByQuery(anyString(), anyDouble(), anyInt(), anyMap()))
+                .thenReturn(List.of(new SearchHit("Clause 1 summary.", 0.8, Map.of())));
+        when(chatCompletionPort.askWithContext(anyString(), anyString(), any(UUID.class), anyList(), anyMap()))
+                .thenReturn("Answer: Clause 1 confirms compliance.");
+
+        mockMvc.perform(post("/documents/{documentId}/conversations", documentId)
+                        .param("question", "Summarize clause 1")
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(status().isOk());
+
+        UUID unauthorizedDoc = dataUtils.createDocumentWithStatus(owner, DocumentStatus.IN_REVIEW);
+
+        mockMvc.perform(delete("/documents/{documentId}/conversations", unauthorizedDoc)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(delete("/documents/{documentId}/conversations", documentId)
+                        .header("Authorization", "Bearer " + reviewerToken))
+                .andExpect(status().isOk());
+
+        List<ConversationMessageEntity> remaining = conversationRepository.findAll().stream()
+                .filter(msg -> msg.getDocumentId().equals(documentId))
+                .collect(Collectors.toList());
+        assertThat(remaining).isEmpty();
+
+        dataUtils.deleteDocumentsWithRelations(Set.of(documentId, unauthorizedDoc));
     }
 }

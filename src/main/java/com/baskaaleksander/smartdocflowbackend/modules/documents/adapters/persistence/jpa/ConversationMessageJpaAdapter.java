@@ -61,8 +61,8 @@ public class ConversationMessageJpaAdapter implements ConversationMessageCommand
     }
 
     @Override
-    public Optional<UUID> getIdByUserIdAndDocId(UUID userId, UUID documentId) {
-        return conversationRepo.getIdByUserIdAndDocId(userId, documentId);
+    public Optional<UUID> getConversationIdByUserIdAndDocId(UUID userId, UUID documentId) {
+        return conversationRepo.getConversationIdByUserIdAndDocId(userId, documentId);
     }
 
     @Override

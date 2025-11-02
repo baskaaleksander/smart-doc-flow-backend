@@ -134,7 +134,7 @@ public class ConversationService {
         logger.info("CONV_DELETE START docId=" + Slf4jLoggingAdapter.shortId(documentId)
                 + " userId=" + Slf4jLoggingAdapter.shortId(userId));
 
-        UUID conversationId = conversationMessageQueryPort.getIdByUserIdAndDocId(documentId, userId)
+        UUID conversationId = conversationMessageQueryPort.getConversationIdByUserIdAndDocId(userId, documentId)
                 .orElseThrow(() -> {
                     logger.warn("CONV_DELETE FAILED reason=conversation_not_found docId=" + Slf4jLoggingAdapter.shortId(documentId)
                             + " userId=" + Slf4jLoggingAdapter.shortId(userId));
