@@ -16,6 +16,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.ReviewW
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.TestUser;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.persistence.spring.SpringDataRefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -56,6 +57,9 @@ public class TestDataUtils {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private SpringDataRefreshTokenRepository refreshTokenRepository;
 
     private String uniqueId() {
         return String.valueOf(System.nanoTime());
@@ -354,6 +358,17 @@ public class TestDataUtils {
                 documentRepository.delete(doc);
             });
         }
+    }
+
+    @Transactional
+    public void deleteUserWithTokens(String username) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            UUID userId = user.getId();
+            refreshTokenRepository.findAll().stream()
+                    .filter(token -> token.getUser().getId().equals(userId))
+                    .forEach(refreshTokenRepository::delete);
+            userRepository.delete(user);
+        });
     }
 
     public long countUnreadForUser(String username) {

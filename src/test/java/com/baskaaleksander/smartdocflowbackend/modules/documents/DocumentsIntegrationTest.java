@@ -14,6 +14,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.testsupport.AuthTestUtils
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.IntegrationTestBase;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataSeeder;
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.TestDataUtils;
+import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.TestUser;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -269,6 +270,50 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
                     .andExpect(status().isForbidden());
         } finally {
             dataUtils.deleteDocumentsWithRelations(seededDocuments);
+        }
+    }
+
+    @Test
+    void get_byId_accessRules() throws Exception {
+        String ownerToken = auth.loginAndGetAccessToken("user", "User#12345");
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+        String reviewerToken = auth.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+
+        TestUser otherUser = dataUtils.createIsolatedUser("Other#12345");
+        String otherToken = auth.loginAndGetAccessToken(otherUser.getUsername(), otherUser.getRawPassword());
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+
+        Set<UUID> seededDocuments = new HashSet<>();
+        try {
+            UUID documentId = dataUtils.createDocumentWithStatus(owner, DocumentStatus.PROCESSED);
+            seededDocuments.add(documentId);
+
+            mockMvc.perform(get("/documents/{id}", documentId)
+                            .header("Authorization", "Bearer " + ownerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(documentId.toString()))
+                    .andExpect(jsonPath("$.owner.username").value("user"));
+
+            mockMvc.perform(get("/documents/{id}", documentId)
+                            .header("Authorization", "Bearer " + adminToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(documentId.toString()))
+                    .andExpect(jsonPath("$.owner.username").value("user"));
+
+            mockMvc.perform(get("/documents/{id}", documentId)
+                            .header("Authorization", "Bearer " + reviewerToken))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(documentId.toString()))
+                    .andExpect(jsonPath("$.owner.username").value("user"));
+
+            mockMvc.perform(get("/documents/{id}", documentId)
+                            .header("Authorization", "Bearer " + otherToken))
+                    .andExpect(status().isForbidden());
+        } finally {
+            dataUtils.deleteDocumentsWithRelations(seededDocuments);
+            dataUtils.deleteUserWithTokens(otherUser.getUsername());
         }
     }
 
