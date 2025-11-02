@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.messa
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
+import com.baskaaleksander.smartdocflowbackend.common.exception.OcrTaskFailedException;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
@@ -85,6 +86,7 @@ public class OcrTaskConsumerService implements OcrTaskConsumerPort {
             logger.error("OCR_TASK FAILED docId=" + Slf4jLoggingAdapter.shortId(docId)
                     + " reason=" + e.getMessage(), e);
             documentCommandPort.updateStatus(docId, DocumentStatus.OCR_FAILED);
+            throw new OcrTaskFailedException("OCR processing failed", e);
         }
     }
 
