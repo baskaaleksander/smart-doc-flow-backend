@@ -63,6 +63,7 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
     static class PipelineTestConfig {
 
         private static final AtomicBoolean ocrShouldFail = new AtomicBoolean(false);
+        private static final AtomicBoolean embedShouldFail = new AtomicBoolean(false);
 
         @Bean
         @Primary
@@ -100,7 +101,11 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
         @Bean
         @Primary
         VectorIndexPort vectorIndexPort() {
-            return docs -> { /* no-op for deterministic tests */ };
+            return docs -> {
+                if (embedShouldFail.get()) {
+                    throw new RuntimeException("Simulated embedding failure");
+                }
+            };
         }
 
         @Bean
@@ -138,6 +143,10 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
 
         static void setOcrFailure(boolean fail) {
             ocrShouldFail.set(fail);
+        }
+
+        static void setEmbedFailure(boolean fail) {
+            embedShouldFail.set(fail);
         }
     }
 
@@ -331,6 +340,43 @@ class DocumentJobsIntegrationTest extends IntegrationTestBase {
             assertThat(pageCounts).isEmpty();
         } finally {
             PipelineTestConfig.setOcrFailure(false);
+            recordingDocumentCommandPort.clear();
+        }
+    }
+
+    @Test
+    void pipeline_embedFailure() throws Exception {
+        PipelineTestConfig.setEmbedFailure(true);
+        recordingDocumentCommandPort.clear();
+
+        try {
+            UUID documentId = uploadDocument();
+
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(15))
+                    .pollInterval(Duration.ofMillis(100))
+                    .untilAsserted(() -> {
+                        Document doc = documentQueryPort.getDocumentById(documentId)
+                                .orElseThrow(() -> new IllegalStateException("Document not found after embedding failure"));
+                        assertThat(doc.getStatus()).isEqualTo(DocumentStatus.EMBED_FAILED);
+                });
+
+            List<DocumentStatus> statuses = recordingDocumentCommandPort.getStatuses(documentId);
+            assertThat(statuses).containsSubsequence(
+                    DocumentStatus.IN_PROGRESS_OCR,
+                    DocumentStatus.TEXT_READY,
+                    DocumentStatus.IN_PROGRESS_EMBED
+            );
+            assertThat(statuses).contains(DocumentStatus.EMBED_FAILED);
+            assertThat(statuses).doesNotContain(
+                    DocumentStatus.PROCESSED,
+                    DocumentStatus.REVIEW_PENDING
+            );
+
+            List<Integer> pageCounts = recordingDocumentCommandPort.getPageCounts(documentId);
+            assertThat(pageCounts).isEmpty();
+        } finally {
+            PipelineTestConfig.setEmbedFailure(false);
             recordingDocumentCommandPort.clear();
         }
     }
