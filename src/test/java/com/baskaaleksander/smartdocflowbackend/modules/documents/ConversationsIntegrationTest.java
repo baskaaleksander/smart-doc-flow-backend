@@ -23,6 +23,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.hamcrest.Matchers;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -34,7 +35,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -145,8 +151,8 @@ class ConversationsIntegrationTest extends IntegrationTestBase {
                         .param("size", "10")
                         .header("Authorization", "Bearer " + reviewerToken))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("What is the next step?")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Answer: Please proceed with the legal review and signature collection.")));
+                .andExpect(content().string(Matchers.containsString("What is the next step?")))
+                .andExpect(content().string(Matchers.containsString("Answer: Please proceed with the legal review and signature collection.")));
 
         conversationRepository.deleteAll(messages);
         dataUtils.deleteDocumentsWithRelations(Set.of(documentId));
@@ -185,5 +191,66 @@ class ConversationsIntegrationTest extends IntegrationTestBase {
         } finally {
             dataUtils.deleteDocumentsWithRelations(Set.of(docNotAssigned, docInvalidStatus));
         }
+    }
+
+    @Test
+    void list_accessAndDecryption() throws Exception {
+        String reviewerToken = auth.loginAndGetAccessToken("reviewer", "Reviewer#12345");
+        String adminToken = auth.loginAndGetAccessToken("admin", "Admin#12345");
+        String userToken = auth.loginAndGetAccessToken("user", "User#12345");
+
+        UserEntity owner = userRepository.findByUsername("user")
+                .orElseThrow(() -> new IllegalStateException("Seed user 'user' not found"));
+        UserEntity reviewer = userRepository.findByUsername("reviewer")
+                .orElseThrow(() -> new IllegalStateException("Reviewer not found"));
+
+        UUID documentId = dataUtils.createDocumentAssignedToReviewer(owner, reviewer, DocumentStatus.IN_REVIEW);
+
+        when(vectorQueryPort.searchByQuery(anyString(), anyDouble(), anyInt(), anyMap()))
+                .thenReturn(List.of(
+                        new SearchHit("Clause 4 covers confidentiality.", 0.9, Map.of()),
+                        new SearchHit("Ensure client signs on page 12.", 0.85, Map.of())
+                ));
+
+        when(chatCompletionPort.askWithContext(anyString(), anyString(), any(UUID.class), anyList(), anyMap()))
+                .thenReturn("Answer: Please highlight clause 4 for the client.");
+
+        mockMvc.perform(post("/documents/{documentId}/conversations", documentId)
+                        .param("question", "What should I double check?")
+                        .header("Authorization", "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/documents/{documentId}/conversations", documentId)
+                        .param("page", "0")
+                        .param("size", "10")
+                        .header("Authorization", "Bearer " + reviewerToken))
+                .andExpect(status().isOk())
+                .andExpect(content().string(Matchers.containsString("What should I double check?")))
+                .andExpect(content().string(Matchers.containsString("Answer: Please highlight clause 4 for the client.")));
+
+        mockMvc.perform(get("/documents/{documentId}/conversations", documentId)
+                        .param("page", "0")
+                        .param("size", "10")
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/documents/{documentId}/conversations", documentId)
+                        .param("page", "0")
+                        .param("size", "10")
+                        .header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+
+        List<ConversationMessageEntity> messages = conversationRepository.findAll().stream()
+                .filter(msg -> msg.getDocumentId().equals(documentId) && msg.getUserId().equals(reviewer.getId()))
+                .collect(Collectors.toList());
+        Map<ConversationSide, String> decrypted = messages.stream()
+                .collect(Collectors.toMap(ConversationMessageEntity::getSide, msg -> encryptionService.decrypt(msg.getContent())));
+
+        assertThat(decrypted.get(ConversationSide.USER)).isEqualTo("What should I double check?");
+        assertThat(decrypted.get(ConversationSide.SYSTEM)).isEqualTo("Answer: Please highlight clause 4 for the client.");
+
+        conversationRepository.deleteAll(messages);
+        dataUtils.deleteDocumentsWithRelations(Set.of(documentId));
     }
 }
