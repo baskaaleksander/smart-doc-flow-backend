@@ -125,13 +125,6 @@ public class DocumentService {
         return mapper.toResponse(saved);
     }
 
-    // TODO: DELETE ONLY FOR DEBUG PURPOSES
-    public String startEmbedTask(UUID documentId) {
-        embeddingTaskPublisher.publish(new EmbedTask(documentId));
-
-        return "published";
-    }
-
     public DocumentResponse getById(UUID id) {
         logger.info("DOC_GET START docId=" + Slf4jLoggingAdapter.shortId(id));
         Document doc = documentQueryPort.findByIdWithReview(id)

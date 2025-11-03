@@ -42,7 +42,7 @@ spring:
     vectorstore:
       qdrant:
         collection-name: documents
-        host: ${SPRING_RABBITMQ_HOST}
+        host: ${QDRANT_HOST}
         initialize-schema: true
     openai:
       chat:
