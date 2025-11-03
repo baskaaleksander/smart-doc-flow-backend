@@ -9,6 +9,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.port.RoleQuer
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@Profile({"demo"})
 public class AuthDataSeeder implements ApplicationRunner {
 
     private final RoleCommandPort roleCommandPort;

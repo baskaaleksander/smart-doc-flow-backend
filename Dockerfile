@@ -20,6 +20,7 @@ COPY --from=builder /app/target/smart-doc-flow-backend-0.0.1-SNAPSHOT.jar /app/a
 
 EXPOSE 8080
 
+ENV SPRING_PROFILES_ACTIVE=demo
 
 USER app
 
