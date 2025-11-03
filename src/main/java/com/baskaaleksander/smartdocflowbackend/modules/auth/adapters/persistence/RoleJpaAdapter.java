@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,5 +39,10 @@ public class RoleJpaAdapter implements RoleQueryPort, RoleCommandPort {
     @Override
     public Set<Role> findAllByRoleIn(Set<String> roles) {
         return roleRepo.findAllByRoleIn(roles).stream().map(mapper::toDomain).collect(Collectors.toSet());
+    }
+
+    @Override
+    public Optional<Role> findByName(String roleName) {
+        return roleRepo.findByRole(roleName).map(mapper::toDomain);
     }
 }

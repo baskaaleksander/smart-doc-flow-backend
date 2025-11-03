@@ -75,4 +75,9 @@ public class AuthUserJpaAdapter implements AuthUserQueryPort, AuthUserCommandPor
     public Optional<AuthUser> findByEmail(String email) {
         return userRepo.findByEmail(email).map(mapper::toDomain);
     }
+
+    @Override
+    public Long count() {
+        return userRepo.count();
+    }
 }

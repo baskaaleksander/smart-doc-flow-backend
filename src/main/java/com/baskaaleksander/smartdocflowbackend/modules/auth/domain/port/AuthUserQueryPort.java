@@ -7,7 +7,12 @@ import java.util.UUID;
 
 public interface AuthUserQueryPort {
     Optional<AuthUser> findUserByUsernameWithRoles(String username);
+
     Optional<AuthUser> findByIdWithRoles(UUID id);
+
     Optional<AuthUser> findById(UUID id);
+
     Optional<AuthUser> findByEmail(String email);
+
+    Long count();
 }

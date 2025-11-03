@@ -30,12 +30,12 @@ public class S3ClientConfig {
         AwsBasicCredentials creds = AwsBasicCredentials.create(secret, accessKey);
 
         return S3Presigner.builder()
-                .endpointOverride(URI.create(url)) // np. http://smartdocflow.localhost:9000
+                .endpointOverride(URI.create(url))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(StaticCredentialsProvider.create(creds))
                 .serviceConfiguration(
                         S3Configuration.builder()
-                                .pathStyleAccessEnabled(true) // <- to jest krytyczne dla MinIO
+                                .pathStyleAccessEnabled(true)
                                 .build()
                 )
                 .build();

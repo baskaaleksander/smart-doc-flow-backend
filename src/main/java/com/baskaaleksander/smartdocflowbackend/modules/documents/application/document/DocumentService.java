@@ -11,6 +11,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEve
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.DocumentApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.Document;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.model.DocumentReviewBasic;
@@ -34,6 +35,7 @@ public class DocumentService {
 
     private final DocumentDomainEventPublisherPort publisher;
     private final OcrTaskPublisherPort taskPublisher;
+    private final EmbeddingTaskPublisherPort embeddingTaskPublisher;
     private final DocumentCommandPort documentCommandPort;
     private final DocumentQueryPort documentQueryPort;
     private final DocumentUserQueryPort documentUserQueryPort;
@@ -121,6 +123,13 @@ public class DocumentService {
                 + " took=" + took + "ms");
 
         return mapper.toResponse(saved);
+    }
+
+    // TODO: DELETE ONLY FOR DEBUG PURPOSES
+    public String startEmbedTask(UUID documentId) {
+        embeddingTaskPublisher.publish(new EmbedTask(documentId));
+
+        return "published";
     }
 
     public DocumentResponse getById(UUID id) {
