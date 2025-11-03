@@ -110,31 +110,26 @@ sequenceDiagram
 
 ---
 
-## 🧩 Getting Started
+## 🧰 Running Locally (Recommended)
+
+You **don’t need to install Java, PostgreSQL, RabbitMQ, MinIO or Qdrant manually**.  
+Everything runs via Docker with a single command.
 
 ### Prerequisites
 
-- Java 21
-- Maven (or `mvnw`)
-- PostgreSQL ≥ 14
-- RabbitMQ
-- MinIO (S3-compatible)
-- Qdrant (vector DB)
-- OpenAI API key (for Spring AI)
+- **Docker**
+- **Docker Compose** (v2+; often bundled with Docker Desktop)
 
-### Local Quickstart
+### 1. Clone the repo
 
 ```bash
-# 1. Start dependencies manually or via docker-compose (if available)
-# 2. Set required environment variables (see below)
-# 3. Run the backend
-./mvnw spring-boot:run
-
-# API available at:
-http://localhost:8080/api
+git clone https://github.com/your-org/smart-doc-flow-backend.git
+cd smart-doc-flow-backend
 ```
 
-### Environment Variables
+### 2. Configure environment
+
+Create a `.env` file in the project root (adapt values as needed):
 
 ```bash
 # Database
@@ -158,9 +153,13 @@ MINIO_ACCESS_NAME=minioadmin
 MINIO_ACCESS_SECRET=change-me
 
 # RabbitMQ
+RABBIT_MQ_HOST=localhost
 RABBIT_MQ_USERNAME=guest
 RABBIT_MQ_PASS=guest
 RABBIT_MQ_PORT=5672
+
+# Qdrant
+QDRANT_HOST=localhost
 
 # Cryptography (Conversations)
 CONVERSATION_SECRET=base64-encoded-key
@@ -173,6 +172,116 @@ EMAIL_PASSWORD=app-specific-password
 # CORS / Frontend
 FRONTEND_URL=http://localhost:3000
 ```
+
+> .env.local file is also provided if needed
+
+> The provided `docker-compose.yml` reads from this `.env` file.
+
+### 3. Start the whole stack
+
+```bash
+docker compose up --build
+```
+
+This single command will:
+
+- Build and run the **Smart Doc Flow backend** on `http://localhost:8080`
+- Start **PostgreSQL** on `localhost:5432`
+- Start **MinIO** (S3-compatible) on `http://localhost:9000` (console `:9001`)
+- Start **Qdrant** on `http://localhost:6333`
+- Start **RabbitMQ** on `amqp://localhost:5672` (management UI on `http://localhost:15672`)
+
+Once the containers are healthy, the API will be available at:
+
+```txt
+http://localhost:8080/api
+```
+
+To stop everything:
+
+```bash
+docker compose down
+```
+
+> Data for Postgres, MinIO and Qdrant is persisted in Docker volumes (`postgres_data`, `minio_data`, `qdrant_data`).
+
+---
+
+## 🧠 Optional: Manual (Non-Docker) Setup
+
+If you prefer to run services manually instead of Docker:
+
+### Prerequisites
+
+- Java 21
+- Maven (or `mvnw`)
+- PostgreSQL ≥ 14
+- RabbitMQ
+- MinIO (S3-compatible)
+- Qdrant (vector DB)
+- OpenAI API key (for Spring AI)
+
+### Local Quickstart (manual)
+
+```bash
+# 1. Start PostgreSQL, RabbitMQ, MinIO, Qdrant manually
+# 2. Set required environment variables (similar to .env above)
+# 3. Run the backend
+./mvnw spring-boot:run
+
+# API available at:
+http://localhost:8080/api
+```
+
+---
+
+## 🌍 Environment Variables (Summary)
+
+Key variables (whether from `.env` or your shell):
+
+```bash
+# Database
+DB_URL=jdbc:postgresql://localhost:5432/postgres
+POSTGRES_DB=postgres
+DB_USERNAME=docroot
+DB_PASSWORD=change-me
+
+# OpenAI / AI Providers
+OPENAI_API_KEY=sk-...
+
+# JWT Tokens
+JWT_ACCESS_SECRET=a-strong-secret
+JWT_ACCESS_EXPIRATION=900000          # 15 min
+JWT_REFRESH_SECRET=a-strong-secret
+JWT_REFRESH_EXPIRATION=604800000      # 7 days
+
+# Object Storage (MinIO)
+MINIO_URL=http://localhost:9000
+MINIO_ACCESS_NAME=minioadmin
+MINIO_ACCESS_SECRET=change-me
+
+# RabbitMQ
+RABBIT_MQ_HOST=localhost
+RABBIT_MQ_USERNAME=guest
+RABBIT_MQ_PASS=guest
+RABBIT_MQ_PORT=5672
+
+# Qdrant
+QDRANT_HOST=localhost
+
+# Cryptography (Conversations)
+CONVERSATION_SECRET=base64-encoded-key
+CONVERSATION_FINGERPRINT_SECRET=base64-encoded-key
+
+# Email (SMTP)
+EMAIL_USERNAME=your-email@example.com
+EMAIL_PASSWORD=app-specific-password
+
+# CORS / Frontend
+FRONTEND_URL=http://localhost:3000
+```
+
+> You can also use .env.local file
 
 ---
 
@@ -195,18 +304,21 @@ FRONTEND_URL=http://localhost:3000
 
 - **Unit Tests:** JUnit 5 + Mockito
 - **Integration Tests:** Testcontainers (PostgreSQL, RabbitMQ, MinIO, Qdrant)
-- **Commands**
-  ```bash
-  ./mvnw test         # Run unit tests
-  ./mvnw verify       # Run integration tests
-  ./mvnw package      # Build JAR
-  ```
+
+**Commands**
+
+```bash
+./mvnw test         # Run unit tests
+./mvnw verify       # Run integration tests
+./mvnw package      # Build JAR
+```
 
 ---
 
 ## 🚢 Deployment
 
-- **Containerization:** Build with Maven and deploy the generated fat JAR.
+- **Containerization:** Build with Maven and deploy the generated fat JAR, or reuse the Docker image from
+  `docker compose`.
 - **Runtime:** Default port `8080`; base path `/api`.
 - **Scalability:** Horizontally scalable with shared PostgreSQL, RabbitMQ, Qdrant, and MinIO.
 - **Reverse Proxy:** Recommended setup with Nginx and HTTPS (TLS).
