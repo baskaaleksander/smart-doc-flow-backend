@@ -98,6 +98,7 @@ springdoc:
     enabled: true
   swagger-ui:
     path: /swagger-ui.html
+  show-actuator: true
 server:
   servlet:
     context-path: /api
