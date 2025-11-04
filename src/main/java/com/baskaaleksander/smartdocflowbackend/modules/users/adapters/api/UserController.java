@@ -10,6 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.Ed
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.application.UserApplicationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "Endpoints for managing users")
 public class UserController {
 
     private final UserApplicationService userService;

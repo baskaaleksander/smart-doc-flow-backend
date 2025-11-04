@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/documents")
 @RequiredArgsConstructor
+@Tag(name = "Documents", description = "Endpoints for managing user documents")
 public class DocumentController {
 
     private final DocumentService documentService;

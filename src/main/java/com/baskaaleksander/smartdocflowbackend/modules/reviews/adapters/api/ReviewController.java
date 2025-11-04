@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.adapters.api.dto.ReviewResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewApplicationService;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.application.ReviewEventApplicationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @RequestMapping("/reviews")
 @PreAuthorize("hasAnyRole('ADMIN', 'REVIEW')")
 @RequiredArgsConstructor
+@Tag(name = "Reviews", description = "Endpoints for managing reviews and review events")
 public class ReviewController {
 
     private final ReviewApplicationService reviewService;

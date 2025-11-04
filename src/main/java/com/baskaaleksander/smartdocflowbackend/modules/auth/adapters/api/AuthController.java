@@ -5,6 +5,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.application.AuthApplicationService;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.application.PasswordChangeApplicationService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Auth", description = "Endpoints for authentication")
 public class AuthController {
 
     private final AuthApplicationService authService;
