@@ -295,7 +295,7 @@ FRONTEND_URL=http://localhost:3000
 ## 🧠 API Quick Tour
 
 > 📘 **Swagger UI:**  
-> Interactive documentation available at **`http://localhost:8080/swagger-ui.html`** (or `/swagger-ui/index.html`) once
+> Interactive documentation available at https://smartdocflowapi.baskaaleksander.com/api/swagger-ui/index.html (or `/api/swagger-ui/index.html`) once
 > the application is running.
 
 **Auth Notes:**
