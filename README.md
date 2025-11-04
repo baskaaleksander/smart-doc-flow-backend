@@ -148,7 +148,8 @@ JWT_REFRESH_SECRET=a-strong-secret
 JWT_REFRESH_EXPIRATION=604800000      # 7 days
 
 # Object Storage (MinIO)
-MINIO_URL=http://localhost:9000
+MINIO_INTERNAL_URL=http://localhost:9000
+MINIO_EXTERNAL_URL=http://localhost:9000
 MINIO_ACCESS_NAME=minioadmin
 MINIO_ACCESS_SECRET=change-me
 
