@@ -177,6 +177,12 @@ FRONTEND_URL=http://localhost:3000
 
 > The provided `docker-compose.yml` reads from this `.env` file.
 
+Select Spring profile in Dockerfile or delete that line to use a default one.
+
+```bash
+ENV SPRING_PROFILES_ACTIVE=demo
+```
+
 ### 3. Start the whole stack
 
 ```bash
