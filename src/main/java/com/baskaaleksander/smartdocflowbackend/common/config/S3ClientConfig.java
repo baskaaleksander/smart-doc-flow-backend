@@ -22,15 +22,18 @@ public class S3ClientConfig {
     @Value(value = "${minio.access.secret}")
     private String accessKey;
 
-    @Value(value = "${minio.url}")
-    private String url;
+    @Value(value = "${minio.internalurl}")
+    private String internalUrl;
+
+    @Value(value = "${minio.externalUrl}")
+    private String externalUrl;
 
     @Bean
     public S3Presigner s3Presigner() {
         AwsBasicCredentials creds = AwsBasicCredentials.create(secret, accessKey);
 
         return S3Presigner.builder()
-                .endpointOverride(URI.create(url))
+                .endpointOverride(URI.create(externalUrl))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(StaticCredentialsProvider.create(creds))
                 .serviceConfiguration(
@@ -46,7 +49,7 @@ public class S3ClientConfig {
         AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.create(secret, accessKey);
 
         return S3Client.builder()
-                .endpointOverride(URI.create(url))
+                .endpointOverride(URI.create(internalUrl))
                 .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
                 .region(Region.US_EAST_1)
                 .serviceConfiguration(

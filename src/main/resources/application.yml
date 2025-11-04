@@ -61,7 +61,8 @@ jwt:
     secret: ${JWT_REFRESH_SECRET}
     expiration: ${JWT_REFRESH_EXPIRATION}
 minio:
-  url: ${MINIO_URL}
+  internalUrl: ${MINIO_INTERNAL_URL}
+  externalUrl: ${MINIO_EXTERNAL_URL}
   access:
     name: ${MINIO_ACCESS_NAME}
     secret: ${MINIO_ACCESS_SECRET}
