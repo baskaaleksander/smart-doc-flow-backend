@@ -98,7 +98,10 @@ public class SecurityConfig {
                                         "/ws-sockjs/**",
                                         "/ws/**",
                                         "/actuator/health",
-                                        "/actuator/info"
+                                        "/actuator/info",
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html"
                                 ).permitAll()
                                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
