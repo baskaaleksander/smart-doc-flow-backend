@@ -28,7 +28,7 @@ Designed for production scalability, modular domain architecture, and enterprise
 
 ## 🌐 Live Demo / Screenshots
 
-- **Live Demo:** _TBD (add link if deployed)_
+- **Live Demo:** https://smartdocflow.baskaaleksander.com
 - **Screenshots:** _TBD (upload examples of upload/review/chat views)_
 
 ---
@@ -123,7 +123,7 @@ Everything runs via Docker with a single command.
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/your-org/smart-doc-flow-backend.git
+git clone https://github.com/baskaaleksander/smart-doc-flow-backend.git
 cd smart-doc-flow-backend
 ```
 
