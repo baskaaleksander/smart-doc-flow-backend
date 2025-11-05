@@ -1,8 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.modules.users.application.security;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
-import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.spring.SpringDataUserRepository;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.model.User;
+import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserQueryPort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,9 +14,9 @@ import java.util.UUID;
 @Component("userAccess")
 public class UserAccessEvaluation {
 
-    private final SpringDataUserRepository userRepository;
+    private final UserQueryPort userRepository;
 
-    public UserAccessEvaluation(SpringDataUserRepository userRepository) {
+    public UserAccessEvaluation(UserQueryPort userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -27,7 +27,7 @@ public class UserAccessEvaluation {
         if (roles.contains("ROLE_ADMIN")) return true;
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        UserEntity user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
 
         return UUID.fromString(userId).equals(user.getId());
