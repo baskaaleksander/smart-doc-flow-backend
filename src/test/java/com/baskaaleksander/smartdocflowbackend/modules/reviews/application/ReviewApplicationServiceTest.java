@@ -20,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +41,7 @@ class ReviewApplicationServiceTest {
     @Mock
     private ReviewEventCommandPort reviewEventCommandPort;
     @Mock
-    private DocumentCommandPort documentCommandPort;
+    private ReviewDocumentCommandPort documentCommandPort;
     @Mock
     private ExternalUserQueryPort externalUserQueryPort;
     @Mock

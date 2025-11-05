@@ -22,6 +22,9 @@ public interface SpringDataDocumentRepository extends JpaRepository<DocumentEnti
     @Modifying
     void updateStatus(UUID documentId, DocumentStatus status);
 
+    @Query("select d.owner.id from DocumentEntity d where d.review.id = :id")
+    Optional<UUID> getOwnerIdByReviewId(UUID reviewerId);
+
     @Query("update DocumentEntity d set d.pageSize = :count where d.id = :documentId")
     @Modifying
     void updatePageCount(UUID documentId, int count);
@@ -32,10 +35,10 @@ public interface SpringDataDocumentRepository extends JpaRepository<DocumentEnti
     Optional<String> getOwnerUsernameById(UUID documentId);
 
     @Query("""
-    select d from DocumentEntity d
-    left join fetch d.review
-    where d.id = :documentId
-""")
+                select d from DocumentEntity d
+                left join fetch d.review
+                where d.id = :documentId
+            """)
     Optional<DocumentEntity> findbyIdWithReview(UUID documentId);
 
     @Query("select d from DocumentEntity d where d.owner.id = :ownerId")

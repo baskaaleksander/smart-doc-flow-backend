@@ -17,7 +17,6 @@ import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.model.*;
 import com.baskaaleksander.smartdocflowbackend.modules.reviews.domain.port.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -32,7 +31,7 @@ public class ReviewApplicationService {
     private final ReviewCommandPort reviewCommandPort;
     private final ReviewQueryPort reviewQueryPort;
     private final ReviewEventCommandPort reviewEventCommandPort;
-    private final DocumentCommandPort documentCommandPort;
+    private final ReviewDocumentCommandPort documentCommandPort;
     private final ExternalUserQueryPort externalUserQueryPort;
     private final ReviewApiMapper mapper;
     private final ReviewEventApiMapper eventMapper;
