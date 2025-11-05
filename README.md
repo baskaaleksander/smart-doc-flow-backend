@@ -23,6 +23,8 @@ Designed for production scalability, modular domain architecture, and enterprise
 - Secure, JWT-based authentication with refresh rotation and role-based access control.
 - Modular, clean architecture built on **ports/adapters** for easy extensibility and testing.
 - Full observability via Prometheus, Actuator, and structured MDC logging.
+- Redis-backed caching for frequent user identity requests at `/auth/me` endpoint to improve response time under heavy
+  load.
 
 ---
 
@@ -48,6 +50,7 @@ flowchart LR
     MQ[("RabbitMQ")]
     S3[("MinIO / S3")]
     VDB[("Qdrant Vector DB")]
+    REDIS[("Redis Cache")]
     OAI[("OpenAI via Spring AI")]
     Obs[("Actuator / Prometheus")]
 
@@ -57,6 +60,7 @@ flowchart LR
     BE --> MQ
     BE --> S3
     BE --> VDB
+    BE --> REDIS
     BE --> OAI
     BE --> Obs
 ```
@@ -95,7 +99,7 @@ sequenceDiagram
 
 **Languages & Frameworks:** Java 21, Spring Boot 3.4, Spring Security, Web, Data JPA, WebSocket, Lombok, MapStruct  
 **AI & Retrieval:** Spring AI (OpenAI models + embeddings), Qdrant, JDBC Chat Memory  
-**Data & Infra:** PostgreSQL, RabbitMQ, MinIO/S3, Apache PDFBox, OCR adapters  
+**Data & Infra:** PostgreSQL, RabbitMQ, MinIO/S3, Redis, Apache PDFBox, OCR adapters  
 **DevOps & Observability:** Maven, Actuator, Micrometer Prometheus, Logback (MDC), JUnit 5, Mockito, Testcontainers
 
 ---
@@ -106,13 +110,15 @@ sequenceDiagram
 - 📄 **Document Lifecycle:** Upload, storage, metadata, presigned downloads, deletion, and statistics
 - 💬 **AI Conversations:** RAG-based per-document chat with contextual Q&A
 - 👥 **User Management:** Profile updates, password resets, and admin dashboards
+- ⚡ **Redis Cache:** Frequently used `/auth/me` endpoint is cached in Redis to reduce DB load and latency under high
+  concurrency.
 - 📊 **Observability:** Health metrics via Actuator & Prometheus, structured logs with correlation IDs
 
 ---
 
 ## 🧰 Running Locally (Recommended)
 
-You **don’t need to install Java, PostgreSQL, RabbitMQ, MinIO or Qdrant manually**.  
+You **don’t need to install Java, PostgreSQL, RabbitMQ, MinIO, Redis or Qdrant manually**.  
 Everything runs via Docker with a single command.
 
 ### Prerequisites
@@ -162,6 +168,11 @@ RABBIT_MQ_PORT=5672
 # Qdrant
 QDRANT_HOST=localhost
 
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=redis-password
+
 # Cryptography (Conversations)
 CONVERSATION_SECRET=base64-encoded-key
 CONVERSATION_FINGERPRINT_SECRET=base64-encoded-key
@@ -197,6 +208,7 @@ This single command will:
 - Start **MinIO** (S3-compatible) on `http://localhost:9000` (console `:9001`)
 - Start **Qdrant** on `http://localhost:6333`
 - Start **RabbitMQ** on `amqp://localhost:5672` (management UI on `http://localhost:15672`)
+- Start **Redis** on `localhost:6379`
 
 Once the containers are healthy, the API will be available at:
 
@@ -226,12 +238,13 @@ If you prefer to run services manually instead of Docker:
 - RabbitMQ
 - MinIO (S3-compatible)
 - Qdrant (vector DB)
+- Redis
 - OpenAI API key (for Spring AI)
 
 ### Local Quickstart (manual)
 
 ```bash
-# 1. Start PostgreSQL, RabbitMQ, MinIO, Qdrant manually
+# 1. Start PostgreSQL, RabbitMQ, MinIO, Qdrant, Redis manually
 # 2. Set required environment variables (similar to .env above)
 # 3. Run the backend
 ./mvnw spring-boot:run
@@ -276,6 +289,11 @@ RABBIT_MQ_PORT=5672
 # Qdrant
 QDRANT_HOST=localhost
 
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=redis-password
+
 # Cryptography (Conversations)
 CONVERSATION_SECRET=base64-encoded-key
 CONVERSATION_FINGERPRINT_SECRET=base64-encoded-key
@@ -283,7 +301,7 @@ CONVERSATION_FINGERPRINT_SECRET=base64-encoded-key
 # Email (SMTP)
 EMAIL_USERNAME=your-email@example.com
 EMAIL_PASSWORD=app-specific-password
-
+[SMART_DOC_FLOW_README.md](../../Downloads/SMART_DOC_FLOW_README.md)
 # CORS / Frontend
 FRONTEND_URL=http://localhost:3000
 ```
@@ -295,7 +313,8 @@ FRONTEND_URL=http://localhost:3000
 ## 🧠 API Quick Tour
 
 > 📘 **Swagger UI:**  
-> Interactive documentation available at https://smartdocflowapi.baskaaleksander.com/api/swagger-ui/index.html (or `/api/swagger-ui/index.html`) once
+> Interactive documentation available at https://smartdocflowapi.baskaaleksander.com/api/swagger-ui/index.html (or
+`/api/swagger-ui/index.html`) once
 > the application is running.
 
 **Auth Notes:**
@@ -350,6 +369,7 @@ FRONTEND_URL=http://localhost:3000
 - **Metrics:** Micrometer → Prometheus for monitoring.
 - **Logging:** Logback + MDC (requestId, user, clientIp) for full request tracing.
 - **Actuator:** Health, metrics, and system info endpoints enabled.
+- **Redis Cache:** Reduces latency and DB queries for frequent `/auth/me` requests
 
 ---
 
