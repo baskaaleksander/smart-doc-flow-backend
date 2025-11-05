@@ -21,6 +21,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -36,6 +38,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "auth:me")
 public class AuthApplicationService {
 
     private final AuthenticationManager authenticationManager;
@@ -128,6 +131,7 @@ public class AuthApplicationService {
         return "Logout successful";
     }
 
+    @Cacheable(key = "#userId")
     public UserResponse getMe(UUID userId) {
         logger.info("ME_GET START userId=" + Slf4jLoggingAdapter.shortId(userId));
         UserResponse resp = mapper.toResponse(
