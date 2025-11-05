@@ -12,6 +12,13 @@ spring:
           auth: true
           starttls:
             enable: true
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:password}
+  cache:
+    type: redis
   rabbitmq:
     host: ${RABBIT_MQ_HOST:rabbitmq}
     port: ${RABBIT_MQ_PORT:5672}
