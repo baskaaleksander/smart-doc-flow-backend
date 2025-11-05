@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.common.security.access;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.security;
 
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.persistence.spring.SpringDataDocumentRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.common.security.access;
+package com.baskaaleksander.smartdocflowbackend.modules.documents.application.conversation.security;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.UnauthorizedAccessException;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
@@ -40,6 +40,6 @@ public class ConversationAccessEvaluation {
 
         UUID userId = userDetails.getId();
 
-        return ((roles.contains("ROLE_REVIEW") || roles.contains("ROLE_ADMIN"))&& reviewerId.equals(userId));
+        return ((roles.contains("ROLE_REVIEW") || roles.contains("ROLE_ADMIN")) && reviewerId.equals(userId));
     }
 }

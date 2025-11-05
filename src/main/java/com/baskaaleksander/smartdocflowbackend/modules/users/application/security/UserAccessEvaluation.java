@@ -1,4 +1,4 @@
-package com.baskaaleksander.smartdocflowbackend.common.security.access;
+package com.baskaaleksander.smartdocflowbackend.modules.users.application.security;
 
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.persistence.entity.UserEntity;
