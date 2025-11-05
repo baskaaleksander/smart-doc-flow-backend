@@ -56,8 +56,12 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logoutUser(HttpServletRequest request, HttpServletResponse response) {
-        return new ResponseEntity<>(authService.logoutUser(request, response), HttpStatus.OK);
+    public ResponseEntity<String> logoutUser(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        return new ResponseEntity<>(authService.logoutUser(request, response, userDetails.getId()), HttpStatus.OK);
     }
 
     @GetMapping("/me")

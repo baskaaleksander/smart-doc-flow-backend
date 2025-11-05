@@ -22,6 +22,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -122,7 +123,8 @@ public class AuthApplicationService {
         return new TokenResponse(tokens.getAccessToken(), tokens.getRefreshToken());
     }
 
-    public String logoutUser(HttpServletRequest request, HttpServletResponse response) {
+    @CacheEvict(key = "#userId")
+    public String logoutUser(HttpServletRequest request, HttpServletResponse response, UUID userId) {
         logger.info("LOGOUT START");
         String refreshToken = cookieUtil.parseRefreshTokenCookie(request);
         cookieUtil.clearRefreshTokenCookie(response);

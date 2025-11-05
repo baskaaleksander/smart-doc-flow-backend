@@ -181,7 +181,7 @@ class AuthApplicationServiceTest {
         HttpServletResponse resp = mock(HttpServletResponse.class);
         when(cookieUtil.parseRefreshTokenCookie(req)).thenReturn("rtok");
 
-        String out = service.logoutUser(req, resp);
+        String out = service.logoutUser(req, resp, UUID.randomUUID());
 
         assertThat(out).isEqualTo("Logout successful");
         verify(cookieUtil).clearRefreshTokenCookie(resp);
