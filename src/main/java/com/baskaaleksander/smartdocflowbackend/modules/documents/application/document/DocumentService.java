@@ -1,5 +1,6 @@
 package com.baskaaleksander.smartdocflowbackend.modules.documents.application.document;
 
+import com.baskaaleksander.smartdocflowbackend.common.exception.DocumentUploadException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidFileTypeException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.S3UploadException;
@@ -108,8 +109,7 @@ public class DocumentService {
             fileStoragePort.delete(filename);
             logger.error("DOC_UPLOAD FAILED reason=db_save_error docId=" + Slf4jLoggingAdapter.shortId(docId)
                     + " key=" + filename, ex);
-            //TODO: throw adequate error
-            throw ex;
+            throw new DocumentUploadException("Failed to save document. Please try again later.");
         }
 
         publisher.publish(new NotificationEvent(username, "document_uploaded", "Document successfully uploaded!"));
