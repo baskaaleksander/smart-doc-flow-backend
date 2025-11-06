@@ -17,20 +17,25 @@ class DocumentApiMapperTest {
 
     @Test
     void toResponse_mapsAllBasicFieldsCorrectly() {
-        UUID id = UUID.randomUUID();
-        Document document = new Document();
-        document.setId(id);
-        document.setFilename("example.pdf");
-        document.setStatus(DocumentStatus.PROCESSED);
-        document.setCreatedAt(Instant.now());
+        UUID docId = UUID.randomUUID();
 
-        DocumentResponse response = mapper.toResponse(document);
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+
+        DocumentResponse response = mapper.toResponse(doc);
 
         assertThat(response).isNotNull();
-        assertThat(response.id()).isEqualTo(id);
-        assertThat(response.filename()).isEqualTo("example.pdf");
-        assertThat(response.status()).isEqualTo(DocumentStatus.PROCESSED);
-        assertThat(response.createdAt()).isEqualTo(document.getCreatedAt());
+        assertThat(response.id()).isEqualTo(docId);
+        assertThat(response.filename()).isEqualTo("file.pdf");
+        assertThat(response.status()).isEqualTo(DocumentStatus.UPLOADED);
+        assertThat(response.createdAt()).isEqualTo(doc.getCreatedAt());
     }
 
     @Test
