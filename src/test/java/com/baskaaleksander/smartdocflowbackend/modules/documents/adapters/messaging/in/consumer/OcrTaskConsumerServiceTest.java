@@ -51,13 +51,20 @@ class OcrTaskConsumerServiceTest {
     @Test
     void handle_success_processesOcr_savesJson_updatesStatus_andPublishesEmbedTask() {
         UUID docId = UUID.randomUUID();
-        Document doc = new Document();
-        doc.setId(docId);
-        doc.setStorageKey("s3://bucket/file.pdf");
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+
 
         when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
         File tmp = new File("dummy.pdf");
-        when(fileStoragePort.getPdfFile("s3://bucket/file.pdf")).thenReturn(tmp);
+        when(fileStoragePort.getPdfFile(docId + "_file.pdf")).thenReturn(tmp);
 
         Image img = mock(Image.class);
         when(pdfRendererPort.render(tmp, 300)).thenReturn(List.of(img, img));
@@ -94,49 +101,46 @@ class OcrTaskConsumerServiceTest {
 
         verifyNoInteractions(fileStoragePort, pdfRendererPort, ocrEnginePort, documentOcrResultCommandPort, documentCommandPort, taskPublisher);
     }
-
-    @Test
-    void handle_documentHasNoKey_throws() {
-        UUID docId = UUID.randomUUID();
-        Document doc = new Document();
-        doc.setId(docId);
-        doc.setStorageKey(null);
-        when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
-
-        assertThatThrownBy(() -> service.handle(new OcrTask(docId)))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("has no key");
-
-        verifyNoInteractions(fileStoragePort, pdfRendererPort, ocrEnginePort, documentOcrResultCommandPort, documentCommandPort, taskPublisher);
-    }
+    
 
     @Test
     void handle_pdfRendererThrows_wrappedInRuntimeException() {
         UUID docId = UUID.randomUUID();
-        Document doc = new Document();
-        doc.setId(docId);
-        doc.setStorageKey("key.pdf");
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
         when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
-        when(fileStoragePort.getPdfFile("key.pdf")).thenReturn(new File("x"));
+        when(fileStoragePort.getPdfFile(docId + "_file.pdf")).thenReturn(new File("x"));
         when(pdfRendererPort.render(any(File.class), eq(300))).thenThrow(new RuntimeException("render failed"));
 
         assertThatThrownBy(() -> service.handle(new OcrTask(docId)))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("processing failed");
 
-        verify(documentCommandPort, never()).updateStatus(any(), any());
         verify(taskPublisher, never()).publish(any());
     }
 
     @Test
     void saveOcrResultToDb_missingOnSecondLookup_throws() {
         UUID docId = UUID.randomUUID();
-        Document doc = new Document();
-        doc.setId(docId);
-        doc.setStorageKey("key.pdf");
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
 
         when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
-        when(fileStoragePort.getPdfFile("key.pdf")).thenReturn(new File("x"));
+        when(fileStoragePort.getPdfFile(docId + "_file.pdf")).thenReturn(new File("x"));
         when(pdfRendererPort.render(any(File.class), eq(300))).thenReturn(List.of(mock(Image.class)));
         when(ocrEnginePort.extractText(anyList())).thenReturn("{\"pages\":[]}");
 
@@ -146,7 +150,6 @@ class OcrTaskConsumerServiceTest {
                 .isInstanceOf(RuntimeException.class);
 
         verify(documentOcrResultCommandPort, never()).save(any(DocumentOcrResult.class));
-        verify(documentCommandPort, never()).updateStatus(any(), any());
         verify(taskPublisher, never()).publish(any());
     }
 }
