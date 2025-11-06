@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: smart-doc-flow
+
   mail:
     host: localhost
     port: 2525
@@ -11,11 +14,24 @@ spring:
           starttls:
             enable: false
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: password
+
+  cache:
+    type: redis
+
   rabbitmq:
     host: localhost
     port: 5672
     username: test
     password: test
+    stream:
+      username: test
+      password: test
+      port: 5672
 
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -37,6 +53,8 @@ spring:
     vectorstore:
       qdrant:
         collection-name: documents-test
+        host: localhost
+        initialize-schema: false
     openai:
       chat:
         options:
@@ -56,7 +74,8 @@ jwt:
     expiration: 604800000
 
 minio:
-  url: http://localhost:9000
+  internalUrl: http://localhost:9000
+  externalUrl: http://localhost:9000
   access:
     name: minio
     secret: minio12345
@@ -91,5 +110,16 @@ app:
   frontend-url: http://localhost:3000
   rate-limit:
     read: 1000
-    write: 3000
-    strict: 500
+    write: 300
+    strict: 25
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+  show-actuator: true
+
+server:
+  servlet:
+    context-path: /api
