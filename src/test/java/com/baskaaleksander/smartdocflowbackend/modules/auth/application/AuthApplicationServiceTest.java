@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.auth.application;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceConflictException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
+import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
@@ -82,10 +83,20 @@ class AuthApplicationServiceTest {
     @Test
     void loginUser_success() {
         UserLoginRequest req = new UserLoginRequest("john", "pwd");
-        UserDetails principal = org.springframework.security.core.userdetails.User
-                .withUsername("john").password("x").authorities(List.of()).build();
-        Authentication auth = new UsernamePasswordAuthenticationToken(principal, "x", principal.getAuthorities());
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
+
+        CustomUserDetails principal = mock(CustomUserDetails.class);
+        when(principal.getUsername()).thenReturn("john");
+        when(principal.getAuthorities()).thenReturn(List.of());
+
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                "x",
+                principal.getAuthorities()
+        );
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(auth);
+
         Tokens tokens = mock(Tokens.class);
         when(tokens.getAccessToken()).thenReturn("acc");
         when(tokens.getRefreshToken()).thenReturn("ref");
