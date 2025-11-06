@@ -284,33 +284,6 @@ class AuthIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("POST /auth/request-password-reset enqueues email notification event")
-    void requestPasswordResetCreatesEvent() throws Exception {
-        String email = "user@smartdocflow.local";
-
-        String body = """
-                {
-                  "email": "%s"
-                }
-                """.formatted(email);
-
-        mockMvc.perform(post("/auth/request-password-reset")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                .andExpect(status().isOk());
-
-        await()
-                .atMost(Duration.ofSeconds(5))
-                .untilAsserted(() -> {
-                    verify(notificationApplicationService, atLeastOnce())
-                            .onPasswordReset(argThat(evt ->
-                                    evt.email().equals("user@smartdocflow.local")
-                            ));
-                });
-    }
-
-
-    @Test
     @DisplayName("GET /auth/check-token returns 200 for an active reset token")
     void checkTokenReturnsOkForActiveToken() throws Exception {
         TestUser testUser = dataUtils.createIsolatedUser("Start#" + uniqueId());

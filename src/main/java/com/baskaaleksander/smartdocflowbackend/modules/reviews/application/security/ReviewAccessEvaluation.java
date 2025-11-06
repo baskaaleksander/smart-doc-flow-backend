@@ -17,7 +17,7 @@ public class ReviewAccessEvaluation {
 
     private final ReviewDocumentQueryPort documentRepo;
 
-    public boolean canViewEvents(Authentication authentication, UUID reviewId) {
+    public boolean canViewEvents(UUID reviewId, Authentication authentication) {
 
         List<String> roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
 

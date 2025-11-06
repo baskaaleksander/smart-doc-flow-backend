@@ -132,7 +132,7 @@ public class NotificationApplicationService implements NotificationEventIngressP
         logger.info("EMAIL_WELCOME START username=" + event.username() + " emailHash=" + emailHash);
         try {
             String body = "Your username: " + event.username()
-                    + " your password: " + "[REDACTED]"
+                    + " your password: " + event.password()
                     + " service url: " + frontendUrl;
             emailPort.sendEmail(event.email(), "Your password", body);
             logger.info("EMAIL_WELCOME SUCCESS username=" + event.username() + " emailHash=" + emailHash);

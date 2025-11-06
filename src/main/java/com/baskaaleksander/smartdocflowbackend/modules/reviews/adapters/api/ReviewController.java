@@ -75,7 +75,7 @@ public class ReviewController {
     }
 
     @GetMapping("/{reviewId}/events")
-    @PreAuthorize("@reviewAccess.canViewEvents(authentication, #reviewId)")
+    @PreAuthorize("@reviewAccess.canViewEvents(#reviewId, authentication)")
     public ResponseEntity<PagingResult<ReviewEventResponse>> getAllEventsForReview(
             @PathVariable("reviewId") UUID reviewId,
             @RequestParam(defaultValue = "0") Integer page,

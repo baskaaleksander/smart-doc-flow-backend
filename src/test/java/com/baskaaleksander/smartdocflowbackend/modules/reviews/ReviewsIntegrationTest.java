@@ -136,17 +136,17 @@ public class ReviewsIntegrationTest extends IntegrationTestBase {
 
 
     @Test
-    @DisplayName("Normal USER cannot get review events list")
+    @DisplayName("Normal USER can get his review events list")
     void normalUserCannotGetReviewEvents() throws Exception {
         String userToken = authUtils.loginAndGetAccessToken("user", "User#12345");
-        UUID reviewId = dataUtils.getAnyExistingReviewId();
+        UUID reviewId = dataUtils.createPendingReviewForDocumentOwnedByUser();
 
         mockMvc.perform(get("/reviews/{reviewId}/events", reviewId)
                         .header("Authorization", "Bearer " + userToken)
                         .param("eventType", "ALL")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
     }
 
     @Test

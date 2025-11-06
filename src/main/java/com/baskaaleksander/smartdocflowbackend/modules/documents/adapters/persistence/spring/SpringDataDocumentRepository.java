@@ -22,8 +22,8 @@ public interface SpringDataDocumentRepository extends JpaRepository<DocumentEnti
     @Modifying
     void updateStatus(UUID documentId, DocumentStatus status);
 
-    @Query("select d.owner.id from DocumentEntity d where d.review.id = :id")
-    Optional<UUID> getOwnerIdByReviewId(UUID reviewerId);
+    @Query("select d.owner.id from DocumentEntity d where d.review.id = :reviewId")
+    Optional<UUID> getOwnerIdByReviewId(UUID reviewId);
 
     @Query("update DocumentEntity d set d.pageSize = :count where d.id = :documentId")
     @Modifying
