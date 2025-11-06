@@ -88,18 +88,19 @@ public class DocumentService {
             throw new S3UploadException("Failed to upload file");
         }
 
-        Document document = new Document();
-        document.setId(docId);
-        document.setFilename(originalFilename);
-        document.setStorageKey(filename);
-        document.setMime(contentType);
-        document.setSize(file.getSize());
-        document.setPageSize(0);
-        document.setStatus(DocumentStatus.UPLOADED);
-        document.setOwner(user);
-
         DocumentReviewBasic review = new DocumentReviewBasic();
-        document.setReview(review);
+
+        Document document = new Document.Builder()
+                .id(docId)
+                .filename(originalFilename)
+                .storageKey(filename)
+                .mime(contentType)
+                .size(file.getSize())
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .owner(user)
+                .review(review)
+                .build();
 
         Document saved;
         try {
