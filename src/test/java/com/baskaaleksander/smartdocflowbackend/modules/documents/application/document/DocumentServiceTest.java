@@ -327,7 +327,7 @@ class DocumentServiceTest {
                 .build();
 
         when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
-        when(fileStoragePort.getPresignedUrl("key.pdf", "application/pdf", 3L)).thenReturn("url");
+        when(fileStoragePort.getPresignedUrl(docId + "_file.pdf", "application/pdf", 3L)).thenReturn("url");
 
         String url = service.downloadDocumentById(docId);
 
