@@ -155,13 +155,21 @@ class DocumentServiceTest {
 
     @Test
     void getById_success() {
-        UUID id = UUID.randomUUID();
-        Document doc = new Document();
-        when(documentQueryPort.findByIdWithReview(id)).thenReturn(Optional.of(doc));
+        UUID docId = UUID.randomUUID();
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+        when(documentQueryPort.findByIdWithReview(docId)).thenReturn(Optional.of(doc));
         DocumentResponse dto = mock(DocumentResponse.class);
         when(mapper.toResponse(doc)).thenReturn(dto);
 
-        DocumentResponse out = service.getById(id);
+        DocumentResponse out = service.getById(docId);
 
         assertThat(out).isEqualTo(dto);
     }
@@ -178,11 +186,32 @@ class DocumentServiceTest {
     @Test
     void getAllDocuments_all() {
         PaginationRequest req = new PaginationRequest(0, 2, null, null);
-        Document d1 = new Document();
-        PagingResult<Document> page = new PagingResult<>(List.of(d1), 1, 1L, 2, 0, true, false);
+        UUID docId1 = UUID.randomUUID();
+        Document doc1 = new Document.Builder()
+                .id(docId1)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId1 + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+
+        UUID docId2 = UUID.randomUUID();
+        Document doc2 = new Document.Builder()
+                .id(docId2)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId2 + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+
+        PagingResult<Document> page = new PagingResult<>(List.of(doc1), 1, 1L, 2, 0, true, false);
         when(documentQueryPort.findAll(req)).thenReturn(page);
         DocumentResponse r1 = mock(DocumentResponse.class);
-        when(mapper.toResponse(d1)).thenReturn(r1);
+        when(mapper.toResponse(doc1)).thenReturn(r1);
 
         PagingResult<DocumentResponse> out = service.getAllDocuments(req, false, UUID.randomUUID());
 
@@ -195,12 +224,32 @@ class DocumentServiceTest {
     void getAllDocuments_assignedToMe() {
         PaginationRequest req = new PaginationRequest(1, 5, "createdAt,desc", null);
         UUID reviewer = UUID.randomUUID();
-        Document d1 = new Document();
-        Document d2 = new Document();
-        PagingResult<Document> page = new PagingResult<>(List.of(d1, d2), 2, 2L, 5, 1, true, false);
+        UUID docId1 = UUID.randomUUID();
+        Document doc1 = new Document.Builder()
+                .id(docId1)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId1 + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+
+        UUID docId2 = UUID.randomUUID();
+        Document doc2 = new Document.Builder()
+                .id(docId2)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId2 + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+
+        PagingResult<Document> page = new PagingResult<>(List.of(doc1, doc2), 2, 2L, 5, 1, true, false);
         when(documentQueryPort.findAllByReviewer(reviewer, req)).thenReturn(page);
-        when(mapper.toResponse(d1)).thenReturn(mock(DocumentResponse.class));
-        when(mapper.toResponse(d2)).thenReturn(mock(DocumentResponse.class));
+        when(mapper.toResponse(doc1)).thenReturn(mock(DocumentResponse.class));
+        when(mapper.toResponse(doc2)).thenReturn(mock(DocumentResponse.class));
 
         PagingResult<DocumentResponse> out = service.getAllDocuments(req, true, reviewer);
 
@@ -212,11 +261,20 @@ class DocumentServiceTest {
     void getUserDocuments_success() {
         PaginationRequest req = new PaginationRequest(0, 3, null, null);
         UUID ownerId = UUID.randomUUID();
-        Document d1 = new Document();
-        PagingResult<Document> page = new PagingResult<>(List.of(d1), 1, 1L, 3, 0, true, false);
+        UUID docId = UUID.randomUUID();
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+        PagingResult<Document> page = new PagingResult<>(List.of(doc), 1, 1L, 3, 0, true, false);
         when(documentQueryPort.findAllByOwner(ownerId, req)).thenReturn(page);
         DocumentResponse r1 = mock(DocumentResponse.class);
-        when(mapper.toResponse(d1)).thenReturn(r1);
+        when(mapper.toResponse(doc)).thenReturn(r1);
 
         PagingResult<DocumentResponse> out = service.getUserDocuments(req, ownerId);
 
@@ -226,16 +284,23 @@ class DocumentServiceTest {
 
     @Test
     void deleteById_success() {
-        UUID id = UUID.randomUUID();
-        Document doc = new Document();
-        doc.setId(id);
-        doc.setStorageKey("key.pdf");
-        when(documentQueryPort.getDocumentById(id)).thenReturn(Optional.of(doc));
+        UUID docId = UUID.randomUUID();
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
 
-        service.deleteById(id);
+        when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
 
-        verify(fileStoragePort).delete("key.pdf");
-        verify(documentCommandPort).deleteById(id);
+        service.deleteById(docId);
+
+        verify(fileStoragePort).delete(docId + "_file.pdf");
+        verify(documentCommandPort).deleteById(docId);
     }
 
     @Test
@@ -250,14 +315,21 @@ class DocumentServiceTest {
 
     @Test
     void downloadDocumentById_success() {
-        UUID id = UUID.randomUUID();
-        Document doc = new Document();
-        doc.setStorageKey("key.pdf");
-        doc.setMime("application/pdf");
-        when(documentQueryPort.getDocumentById(id)).thenReturn(Optional.of(doc));
+        UUID docId = UUID.randomUUID();
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
+
+        when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
         when(fileStoragePort.getPresignedUrl("key.pdf", "application/pdf", 3L)).thenReturn("url");
 
-        String url = service.downloadDocumentById(id);
+        String url = service.downloadDocumentById(docId);
 
         assertThat(url).isEqualTo("url");
     }
