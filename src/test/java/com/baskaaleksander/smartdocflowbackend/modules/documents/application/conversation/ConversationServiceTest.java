@@ -53,9 +53,15 @@ class ConversationServiceTest {
         UUID docId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
-        Document doc = new Document();
-        doc.setId(docId);
-        doc.setStatus(DocumentStatus.PROCESSED);
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.PROCESSED)
+                .build();
         when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
 
         SearchHit h1 = mock(SearchHit.class);
@@ -102,9 +108,15 @@ class ConversationServiceTest {
     void askQuestion_docNotProcessed_conflict() {
         UUID docId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        Document doc = new Document();
-        doc.setId(docId);
-        doc.setStatus(DocumentStatus.UPLOADED);
+        Document doc = new Document.Builder()
+                .id(docId)
+                .filename("file.pdf")
+                .mime("application/pdf")
+                .size(2.0)
+                .storageKey(docId + "_file.pdf")
+                .pageSize(0)
+                .status(DocumentStatus.UPLOADED)
+                .build();
         when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
 
         assertThatThrownBy(() -> service.askQuestion("Q", docId, userId))
