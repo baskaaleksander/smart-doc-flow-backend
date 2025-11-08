@@ -6,10 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserRegisterRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Tokens;
@@ -192,9 +189,9 @@ class AuthApplicationServiceTest {
         HttpServletResponse resp = mock(HttpServletResponse.class);
         when(cookieUtil.parseRefreshTokenCookie(req)).thenReturn("rtok");
 
-        String out = service.logoutUser(req, resp, UUID.randomUUID());
+        AuthActionResponse out = service.logoutUser(req, resp, UUID.randomUUID());
 
-        assertThat(out).isEqualTo("Logout successful");
+        assertThat(out.completed()).isTrue();
         verify(cookieUtil).clearRefreshTokenCookie(resp);
         verify(tokenUtil).invalidateRefreshToken("rtok");
     }
