@@ -5,7 +5,7 @@ spring:
     servlet:
       path: /api
   mail:
-    host: smtp.resend.com
+    host: ${EMAIL_SMTP}
     port: 587
     username: ${EMAIL_USERNAME}
     password: ${EMAIL_PASSWORD}
