@@ -5,8 +5,10 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFound
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.AuthActionResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.AccountActionResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
@@ -101,9 +103,9 @@ class UserApplicationServiceTest {
     void inactivateUser_success() {
         when(userQueryPort.getUserStatusById(userId)).thenReturn(Optional.of(true));
 
-        String result = service.inactivateUser(userId.toString());
+        AccountActionResponse result = service.inactivateUser(userId.toString());
 
-        assertThat(result).isEqualTo("User inactivated");
+        assertThat(result.completed()).isTrue();
         verify(userCommandPort).setIsActive(userId, false);
     }
 
@@ -127,9 +129,9 @@ class UserApplicationServiceTest {
     void activateUser_success() {
         when(userQueryPort.getUserStatusById(userId)).thenReturn(Optional.of(false));
 
-        String result = service.activateUser(userId.toString());
+        AccountActionResponse result = service.activateUser(userId.toString());
 
-        assertThat(result).isEqualTo("User activated");
+        assertThat(result.completed()).isTrue();
         verify(userCommandPort).setIsActive(userId, true);
     }
 

@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.DocumentApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentDownloadResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.OcrTask;
@@ -329,9 +330,9 @@ class DocumentServiceTest {
         when(documentQueryPort.getDocumentById(docId)).thenReturn(Optional.of(doc));
         when(fileStoragePort.getPresignedUrl(docId + "_file.pdf", "application/pdf", 3L)).thenReturn("url");
 
-        String url = service.downloadDocumentById(docId);
+        DocumentDownloadResponse res = service.downloadDocumentById(docId);
 
-        assertThat(url).isEqualTo("url");
+        assertThat(res.url()).isEqualTo("url");
     }
 
     @Test
