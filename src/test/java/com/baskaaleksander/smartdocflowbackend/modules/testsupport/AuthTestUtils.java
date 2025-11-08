@@ -1,6 +1,8 @@
 package com.baskaaleksander.smartdocflowbackend.modules.testsupport;
 
 import com.baskaaleksander.smartdocflowbackend.modules.testsupport.model.LoginResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -36,7 +38,11 @@ public class AuthTestUtils {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String accessToken = result.getResponse().getContentAsString();
+        String json = result.getResponse().getContentAsString();
+        ObjectMapper mapper = new ObjectMapper();
+
+        JsonNode node = mapper.readTree(json);
+        String accessToken = node.get("accessToken").asText();
 
         Cookie[] cookies = result.getResponse().getCookies();
         Cookie refreshCookie = null;

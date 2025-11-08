@@ -369,17 +369,17 @@ class DocumentsIntegrationTest extends IntegrationTestBase {
             mockMvc.perform(get("/documents/{id}/download", documentId)
                             .header("Authorization", "Bearer " + ownerToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").value(equalTo("http://localhost/presigned")));
+                    .andExpect(jsonPath("$.url").value(equalTo("http://localhost/presigned")));
 
             mockMvc.perform(get("/documents/{id}/download", documentId)
                             .header("Authorization", "Bearer " + adminToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").value(equalTo("http://localhost/presigned")));
+                    .andExpect(jsonPath("$.url").value(equalTo("http://localhost/presigned")));
 
             mockMvc.perform(get("/documents/{id}/download", documentId)
                             .header("Authorization", "Bearer " + reviewerToken))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$").value(equalTo("http://localhost/presigned")));
+                    .andExpect(jsonPath("$.url").value(equalTo("http://localhost/presigned")));
 
             mockMvc.perform(get("/documents/{id}/download", documentId)
                             .header("Authorization", "Bearer " + otherToken))
