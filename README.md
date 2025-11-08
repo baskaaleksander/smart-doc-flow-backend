@@ -301,7 +301,9 @@ CONVERSATION_FINGERPRINT_SECRET=base64-encoded-key
 # Email (SMTP)
 EMAIL_USERNAME=your-email@example.com
 EMAIL_PASSWORD=app-specific-password
-[SMART_DOC_FLOW_README.md](../../Downloads/SMART_DOC_FLOW_README.md)
+EMAIL_ADDRESS=no-reply@example.com
+EMAIL_SMTP=smtp.resend.com
+
 # CORS / Frontend
 FRONTEND_URL=http://localhost:3000
 ```
