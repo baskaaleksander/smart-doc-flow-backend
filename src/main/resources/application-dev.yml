@@ -1,21 +1,30 @@
 spring:
   application:
     name: smart-doc-flow
-  mvc:
-    servlet:
-      path: /api
   mail:
     host: ${EMAIL_SMTP}
     port: 587
     username: ${EMAIL_USERNAME}
     password: ${EMAIL_PASSWORD}
+    address: ${EMAIL_ADDRESS}
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:password}
+  cache:
+    type: redis
   rabbitmq:
+    host: ${RABBIT_MQ_HOST:rabbitmq}
+    port: ${RABBIT_MQ_PORT:5672}
+    username: ${RABBIT_MQ_USERNAME}
+    password: ${RABBIT_MQ_PASS}
     stream:
       username: ${RABBIT_MQ_USERNAME}
       password: ${RABBIT_MQ_PASS}
@@ -38,6 +47,8 @@ spring:
     vectorstore:
       qdrant:
         collection-name: documents
+        host: ${QDRANT_HOST}
+        initialize-schema: true
     openai:
       chat:
         options:
@@ -55,7 +66,8 @@ jwt:
     secret: ${JWT_REFRESH_SECRET}
     expiration: ${JWT_REFRESH_EXPIRATION}
 minio:
-  url: ${MINIO_URL}
+  internalUrl: ${MINIO_INTERNAL_URL}
+  externalUrl: ${MINIO_EXTERNAL_URL}
   access:
     name: ${MINIO_ACCESS_NAME}
     secret: ${MINIO_ACCESS_SECRET}
@@ -89,3 +101,12 @@ app:
     read: 1000
     write: 300
     strict: 25
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+  show-actuator: true
+server:
+  servlet:
+    context-path: /api

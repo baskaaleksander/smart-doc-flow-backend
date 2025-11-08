@@ -4,6 +4,8 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.InvalidResetToke
 import com.baskaaleksander.smartdocflowbackend.common.exception.ResourceNotFoundException;
 import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordException;
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.AuthActionResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.IsTokenValidResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.ResetPasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UpdatePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
@@ -53,7 +55,7 @@ class PasswordChangeApplicationServiceTest {
     private PasswordResetTokenQueryPort passwordResetTokenQueryPort;
     @Mock
     private LoggingPort logger;
-    
+
     @InjectMocks
     private PasswordChangeApplicationService service;
 
@@ -78,9 +80,9 @@ class PasswordChangeApplicationServiceTest {
             when(passwordEncoder.matches("old", "ENC_OLD")).thenReturn(true);
             when(passwordEncoder.encode("new")).thenReturn("ENC_NEW");
 
-            String res = service.updatePassword(id, new UpdatePasswordRequest("old", "new"));
+            AuthActionResponse res = service.updatePassword(id, new UpdatePasswordRequest("old", "new"));
 
-            assertThat(res).isEqualTo("Password changed");
+            assertThat(res.completed()).isTrue();
             verify(authUserCommandPort).save(argThat(u -> "ENC_NEW".equals(u.getPassword())));
         }
 
@@ -125,9 +127,9 @@ class PasswordChangeApplicationServiceTest {
             when(authUserQueryPort.findById(uid)).thenReturn(Optional.of(user));
             when(passwordEncoder.encode("N3w!Pass")).thenReturn("ENC_NEW");
 
-            String res = service.resetPassword(new ResetPasswordRequest("tok123", "N3w!Pass"));
+            AuthActionResponse res = service.resetPassword(new ResetPasswordRequest("tok123", "N3w!Pass"));
 
-            assertThat(res).isEqualTo("Password changed");
+            assertThat(res.completed()).isTrue();
             verify(authUserCommandPort).save(argThat(u -> "ENC_NEW".equals(u.getPassword())));
             verify(passwordResetTokenCommandPort).save(argThat(t -> t.isRevoked()));
         }
@@ -187,9 +189,9 @@ class PasswordChangeApplicationServiceTest {
             token.setExpiresAt(now.plusSeconds(60));
             when(passwordResetTokenQueryPort.findByToken("ok")).thenReturn(Optional.of(token));
 
-            Boolean res = service.checkToken("ok");
+            IsTokenValidResponse res = service.checkToken("ok");
 
-            assertThat(res).isTrue();
+            assertThat(res.isValid()).isTrue();
         }
 
         @Test
@@ -245,9 +247,9 @@ class PasswordChangeApplicationServiceTest {
             ArgumentCaptor<PasswordResetToken> tokenCaptor = ArgumentCaptor.forClass(PasswordResetToken.class);
             when(passwordResetTokenCommandPort.save(any(PasswordResetToken.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            String res = service.requestPasswordReset(email);
+            AuthActionResponse res = service.requestPasswordReset(email);
 
-            assertThat(res).isEqualTo("If user exists token will be sent.");
+            assertThat(res.completed()).isTrue();
             verify(passwordResetTokenCommandPort).invalidateAllTokens(user.getId());
             verify(passwordResetTokenCommandPort).save(tokenCaptor.capture());
             PasswordResetToken saved = tokenCaptor.getValue();
@@ -268,9 +270,9 @@ class PasswordChangeApplicationServiceTest {
             String email = "absent@ex.com";
             when(authUserQueryPort.findByEmail(email)).thenReturn(Optional.empty());
 
-            String res = service.requestPasswordReset(email);
+            AuthActionResponse res = service.requestPasswordReset(email);
 
-            assertThat(res).isEqualTo("If user exists token will be sent.");
+            assertThat(res.completed()).isTrue();
             verify(passwordResetTokenCommandPort, never()).invalidateAllTokens(any());
             verify(passwordResetTokenCommandPort, never()).save(any());
 

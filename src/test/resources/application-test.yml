@@ -1,49 +1,43 @@
 spring:
   application:
     name: smart-doc-flow
-
   mail:
-    host: localhost
-    port: 2525
-    username: test
-    password: test
+    host: ${EMAIL_SMTP}
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    address: ${EMAIL_ADDRESS}
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true
           starttls:
-            enable: false
-
+            enable: true
   data:
     redis:
-      host: localhost
-      port: 6379
-      password: password
-
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:password}
   cache:
     type: redis
-
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: test
-    password: test
+    host: ${RABBIT_MQ_HOST:rabbitmq}
+    port: ${RABBIT_MQ_PORT:5672}
+    username: ${RABBIT_MQ_USERNAME}
+    password: ${RABBIT_MQ_PASS}
     stream:
-      username: test
-      password: test
-      port: 5672
-
+      username: ${RABBIT_MQ_USERNAME}
+      password: ${RABBIT_MQ_PASS}
+      port: ${RABBIT_MQ_PORT:5672}
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/test
-    username: test
-    password: test
-
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: false
-
   ai:
     chat:
       memory:
@@ -52,41 +46,37 @@ spring:
             initialize-schema: always
     vectorstore:
       qdrant:
-        collection-name: documents-test
-        host: localhost
-        initialize-schema: false
+        collection-name: documents
+        host: ${QDRANT_HOST}
+        initialize-schema: true
     openai:
       chat:
         options:
-          model: dummy-test-model
-          temperature: 0.0
+          model: gpt-5-nano-2025-08-07
+          temperature: 1.0
       embedding:
         options:
-          model: dummy-embed-model
-      api-key: dummy-test-key
-
+          model: text-embedding-3-small
+      api-key: ${OPENAI_API_KEY}
 jwt:
   access:
-    secret: test-access-secret-32-bytes-min-length-AAA123
-    expiration: 3600000
+    secret: ${JWT_ACCESS_SECRET}
+    expiration: ${JWT_ACCESS_EXPIRATION}
   refresh:
-    secret: test-refresh-secret-32-bytes-min-length-BBB123
-    expiration: 604800000
-
+    secret: ${JWT_REFRESH_SECRET}
+    expiration: ${JWT_REFRESH_EXPIRATION}
 minio:
-  internalUrl: http://localhost:9000
-  externalUrl: http://localhost:9000
+  internalUrl: ${MINIO_INTERNAL_URL}
+  externalUrl: ${MINIO_EXTERNAL_URL}
   access:
-    name: minio
-    secret: minio12345
+    name: ${MINIO_ACCESS_NAME}
+    secret: ${MINIO_ACCESS_SECRET}
   bucket:
-    name: smartdocflow-test
-
+    name: ${MINIO_BUCKET_NAME}
 crypto:
   conversation:
-    secret: q83J4d1f6yq+W8m4V3nKk2lH0uB9x7a5r4d2c1b0e9g=
-    fingerprint-secret: Z0lPp2Q8s5N1b7Y4c2V9m3R6t8W0x1Q4r6T8u0W2y4A=
-
+    secret: ${CONVERSATION_SECRET}
+    fingerprint-secret: ${CONVERSATION_FINGERPRINT_SECRET}
 management:
   endpoints:
     web:
@@ -104,22 +94,19 @@ management:
   metrics:
     tags:
       application: smart-doc-flow
-      env: test
-
+      env: local
 app:
-  frontend-url: http://localhost:3000
+  frontend-url: ${FRONTEND_URL}
   rate-limit:
     read: 1000
     write: 300
     strict: 25
-
 springdoc:
   api-docs:
     enabled: true
   swagger-ui:
     path: /swagger-ui.html
   show-actuator: true
-
 server:
   servlet:
     context-path: /api
