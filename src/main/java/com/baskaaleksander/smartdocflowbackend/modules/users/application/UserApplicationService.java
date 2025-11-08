@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.UserApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.AccountActionResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
@@ -71,7 +72,7 @@ public class UserApplicationService {
     }
 
     @Transactional
-    public String inactivateUser(String userId) {
+    public AccountActionResponse inactivateUser(String userId) {
         UUID userUUID = UUID.fromString(userId);
 
         logger.info("USR_INACTIVATE START userId=" + Slf4jLoggingAdapter.shortId(userUUID));
@@ -88,11 +89,11 @@ public class UserApplicationService {
 
         userCommandPort.setIsActive(userUUID, false);
         logger.info("USR_INACTIVATE SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userUUID));
-        return "User inactivated";
+        return new AccountActionResponse(true);
     }
 
     @Transactional
-    public String activateUser(String userId) {
+    public AccountActionResponse activateUser(String userId) {
         UUID userUUID = UUID.fromString(userId);
 
         logger.info("USR_ACTIVATE START userId=" + Slf4jLoggingAdapter.shortId(userUUID));
@@ -109,7 +110,7 @@ public class UserApplicationService {
 
         userCommandPort.setIsActive(userUUID, true);
         logger.info("USR_ACTIVATE SUCCESS userId=" + Slf4jLoggingAdapter.shortId(userUUID));
-        return "User activated";
+        return new AccountActionResponse(true);
     }
 
     @Transactional

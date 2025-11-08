@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
+import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.AccountActionResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountAdminRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.EditUserAccountRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.users.adapters.api.dto.UserStatsResponse;
@@ -103,13 +104,13 @@ public class UserController {
 
     @DeleteMapping("/{userId}")
     @PreAuthorize("@userAccess.canManage(#userId, authentication)")
-    public ResponseEntity<String> inactivateUserAccount(@PathVariable("userId") String userId) {
+    public ResponseEntity<AccountActionResponse> inactivateUserAccount(@PathVariable("userId") String userId) {
         return new ResponseEntity<>(userService.inactivateUser(userId), HttpStatus.OK);
     }
 
     @PostMapping("/{userId}/restore")
     @PreAuthorize("@userAccess.canManage(#userId, authentication)")
-    public ResponseEntity<String> restoreUserAccount(@PathVariable("userId") String userId) {
+    public ResponseEntity<AccountActionResponse> restoreUserAccount(@PathVariable("userId") String userId) {
         return new ResponseEntity<>(userService.activateUser(userId), HttpStatus.OK);
     }
 
