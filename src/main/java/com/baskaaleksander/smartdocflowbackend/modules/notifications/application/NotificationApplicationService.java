@@ -8,6 +8,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEve
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.NotificationApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationCountResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.Notification;
@@ -60,35 +61,35 @@ public class NotificationApplicationService implements NotificationEventIngressP
         );
     }
 
-    public Integer getUnreadNotificationsCount(String username) {
+    public NotificationCountResponse getUnreadNotificationsCount(String username) {
         logger.info("NOTIF_UNREAD_COUNT START username=" + username);
         Integer count = notificationQueryPort.getNotificationsCountByUsernameAndRead(username, false);
         logger.info("NOTIF_UNREAD_COUNT SUCCESS username=" + username + " count=" + count);
-        return count;
+        return new NotificationCountResponse(count);
     }
 
     @Transactional
-    public Integer markAllAsRead(String username, ReadNotificationRequest body) {
+    public NotificationCountResponse markAllAsRead(String username, ReadNotificationRequest body) {
         logger.info("NOTIF_MARK_ALL START username=" + username + " read=" + body.read());
         if (body.read()) {
             int updated = notificationCommandPort.markAllRead(username);
             logger.info("NOTIF_MARK_ALL SUCCESS username=" + username + " updated=" + updated);
-            return updated;
+            return new NotificationCountResponse(updated);
         }
         logger.info("NOTIF_MARK_ALL NOOP username=" + username + " read=false");
-        return 0;
+        return new NotificationCountResponse(0);
     }
 
     @Transactional
-    public Integer markOneAsRead(String username, UUID id, ReadNotificationRequest body) {
+    public NotificationCountResponse markOneAsRead(String username, UUID id, ReadNotificationRequest body) {
         logger.info("NOTIF_MARK_ONE START username=" + username + " id=" + Slf4jLoggingAdapter.shortId(id) + " read=" + body.read());
         if (body.read()) {
             int updated = notificationCommandPort.markOneRead(username, id);
             logger.info("NOTIF_MARK_ONE SUCCESS username=" + username + " id=" + Slf4jLoggingAdapter.shortId(id) + " updated=" + updated);
-            return updated;
+            return new NotificationCountResponse(updated);
         }
         logger.info("NOTIF_MARK_ONE NOOP username=" + username + " id=" + Slf4jLoggingAdapter.shortId(id) + " read=false");
-        return 0;
+        return new NotificationCountResponse(0);
     }
 
     @Override

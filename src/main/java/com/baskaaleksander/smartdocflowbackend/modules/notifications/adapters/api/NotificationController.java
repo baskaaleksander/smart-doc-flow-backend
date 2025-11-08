@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.a
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationCountResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.application.NotificationApplicationService;
@@ -39,17 +40,17 @@ public class NotificationController {
     }
 
     @GetMapping("/unread-count")
-    public ResponseEntity<Integer> getUnreadNotificationsCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<NotificationCountResponse> getUnreadNotificationsCount(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return new ResponseEntity<>(notificationService.getUnreadNotificationsCount(userDetails.getUsername()), HttpStatus.OK);
     }
 
     @PatchMapping("")
-    public ResponseEntity<Integer> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<NotificationCountResponse> markAllAsRead(@RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return new ResponseEntity<>(notificationService.markAllAsRead(userDetails.getUsername(), body), HttpStatus.OK);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Integer> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<NotificationCountResponse> markAsRead(@PathVariable("id") UUID id, @RequestBody @Valid ReadNotificationRequest body, @AuthenticationPrincipal CustomUserDetails userDetails) {
         return new ResponseEntity<>(notificationService.markOneAsRead(userDetails.getUsername(), id, body), HttpStatus.OK);
     }
 
