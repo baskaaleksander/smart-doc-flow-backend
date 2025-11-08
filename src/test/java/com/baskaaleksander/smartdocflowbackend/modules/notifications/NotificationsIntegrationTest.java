@@ -117,7 +117,7 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("1"));
+                .andExpect(jsonPath("$.count").value(1));
     }
 
 
@@ -140,7 +140,7 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                         .content(body)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string(String.valueOf(beforeUnread)));
+                .andExpect(jsonPath("$.count").value(beforeUnread));
 
         long afterUnread = dataUtils.countUnreadForUser("reviewer");
         assertThat(afterUnread).isEqualTo(0L);
@@ -166,7 +166,7 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                         .content(body)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("0"));
+                .andExpect(jsonPath("$.count").value(0));
 
         long afterUnread = dataUtils.countUnreadForUser("user");
         assertThat(afterUnread).isEqualTo(1L);
@@ -198,7 +198,7 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                         .content(body)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("1"));
+                .andExpect(jsonPath("$.count").value(1));
 
         assertThat(dataUtils.isNotificationRead(notifId)).isTrue();
     }
@@ -229,7 +229,7 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                         .content(body)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("0"));
+                .andExpect(jsonPath("$.count").value(0));
 
         assertThat(dataUtils.isNotificationRead(notifId)).isFalse();
     }
@@ -258,7 +258,7 @@ public class NotificationsIntegrationTest extends IntegrationTestBase {
                         .content(body)
                 )
                 .andExpect(status().isOk())
-                .andExpect(content().string("0"));
+                .andExpect(jsonPath("$.count").value(0));
 
         assertThat(dataUtils.isNotificationRead(foreignNotif)).isFalse();
     }
