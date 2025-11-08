@@ -10,6 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.DocumentApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentActionResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentDownloadResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
@@ -187,7 +188,7 @@ public class DocumentService {
     }
 
     @Transactional
-    public void deleteById(UUID id) {
+    public DocumentActionResponse deleteById(UUID id) {
         logger.info("DOC_DELETE START docId=" + Slf4jLoggingAdapter.shortId(id));
         Document document = documentQueryPort.getDocumentById(id)
                 .orElseThrow(() -> {
@@ -207,6 +208,7 @@ public class DocumentService {
 
         documentCommandPort.deleteById(id);
         logger.info("DOC_DELETE SUCCESS docId=" + Slf4jLoggingAdapter.shortId(id));
+        return new DocumentActionResponse(true);
     }
 
     public DocumentDownloadResponse downloadDocumentById(UUID id) {
