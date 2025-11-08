@@ -306,7 +306,7 @@ class AuthIntegrationTest extends IntegrationTestBase {
         mockMvc.perform(get("/auth/check-token")
                         .param("token", token.getToken()))
                 .andExpect(status().isOk())
-                .andExpect(content().string("true"));
+                .andExpect(jsonPath("$.isValid").value(true));
     }
 
     @Test
