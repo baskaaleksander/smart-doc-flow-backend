@@ -3,6 +3,7 @@ package com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationRequest;
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentDownloadResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.application.document.DocumentService;
@@ -59,7 +60,7 @@ public class DocumentController {
 
     @PreAuthorize("@docAccess.canView(#id, authentication)")
     @GetMapping("/{id}/download")
-    public ResponseEntity<String> downloadDocumentById(@PathVariable UUID id) {
+    public ResponseEntity<DocumentDownloadResponse> downloadDocumentById(@PathVariable UUID id) {
         return new ResponseEntity<>(documentService.downloadDocumentById(id), HttpStatus.OK);
     }
 

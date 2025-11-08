@@ -10,6 +10,7 @@ import com.baskaaleksander.smartdocflowbackend.common.pagination.PaginationReque
 import com.baskaaleksander.smartdocflowbackend.common.pagination.PagingResult;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.DocumentApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentDownloadResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.adapters.api.dto.DocumentStatsResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.documents.domain.event.EmbedTask;
@@ -208,7 +209,7 @@ public class DocumentService {
         logger.info("DOC_DELETE SUCCESS docId=" + Slf4jLoggingAdapter.shortId(id));
     }
 
-    public String downloadDocumentById(UUID id) {
+    public DocumentDownloadResponse downloadDocumentById(UUID id) {
         logger.info("DOC_DOWNLOAD START docId=" + Slf4jLoggingAdapter.shortId(id));
         Document document = documentQueryPort.getDocumentById(id)
                 .orElseThrow(() -> {
@@ -219,7 +220,7 @@ public class DocumentService {
         String url = fileStoragePort.getPresignedUrl(document.getStorageKey(), document.getMime(), 3L);
         logger.info("DOC_DOWNLOAD SUCCESS docId=" + Slf4jLoggingAdapter.shortId(id)
                 + " key=" + document.getStorageKey());
-        return url;
+        return new DocumentDownloadResponse(url);
     }
 
     public DocumentStatsResponse getDocumentStats() {
