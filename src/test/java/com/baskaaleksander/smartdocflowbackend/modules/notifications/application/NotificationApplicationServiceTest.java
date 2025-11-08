@@ -7,6 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.modules.contracts.NotificationEve
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.PasswordResetEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.contracts.UserRegisteredEvent;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.NotificationApiMapper;
+import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationCountResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.NotificationResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.adapters.api.dto.ReadNotificationRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.notifications.domain.model.Notification;
@@ -100,26 +101,26 @@ class NotificationApplicationServiceTest {
     void getUnreadNotificationsCount_returnsValue() {
         when(notificationQueryPort.getNotificationsCountByUsernameAndRead("john", false)).thenReturn(7);
 
-        Integer out = service.getUnreadNotificationsCount("john");
+        NotificationCountResponse out = service.getUnreadNotificationsCount("john");
 
-        assertThat(out).isEqualTo(7);
+        assertThat(out.count()).isEqualTo(7);
     }
 
     @Test
     void markAllAsRead_trueMarksAll() {
         when(notificationCommandPort.markAllRead("john")).thenReturn(5);
 
-        Integer out = service.markAllAsRead("john", new ReadNotificationRequest(true));
+        NotificationCountResponse out = service.markAllAsRead("john", new ReadNotificationRequest(true));
 
-        assertThat(out).isEqualTo(5);
+        assertThat(out.count()).isEqualTo(5);
         verify(notificationCommandPort).markAllRead("john");
     }
 
     @Test
     void markAllAsRead_falseNoop() {
-        Integer out = service.markAllAsRead("john", new ReadNotificationRequest(false));
+        NotificationCountResponse out = service.markAllAsRead("john", new ReadNotificationRequest(false));
 
-        assertThat(out).isEqualTo(0);
+        assertThat(out.count()).isEqualTo(0);
         verify(notificationCommandPort, never()).markAllRead(anyString());
     }
 
@@ -128,9 +129,9 @@ class NotificationApplicationServiceTest {
         UUID id = UUID.randomUUID();
         when(notificationCommandPort.markOneRead("john", id)).thenReturn(1);
 
-        Integer out = service.markOneAsRead("john", id, new ReadNotificationRequest(true));
+        NotificationCountResponse out = service.markOneAsRead("john", id, new ReadNotificationRequest(true));
 
-        assertThat(out).isEqualTo(1);
+        assertThat(out.count()).isEqualTo(1);
         verify(notificationCommandPort).markOneRead("john", id);
     }
 
@@ -138,9 +139,9 @@ class NotificationApplicationServiceTest {
     void markOneAsRead_falseNoop() {
         UUID id = UUID.randomUUID();
 
-        Integer out = service.markOneAsRead("john", id, new ReadNotificationRequest(false));
+        NotificationCountResponse out = service.markOneAsRead("john", id, new ReadNotificationRequest(false));
 
-        assertThat(out).isEqualTo(0);
+        assertThat(out.count()).isEqualTo(0);
         verify(notificationCommandPort, never()).markOneRead(anyString(), any());
     }
 
