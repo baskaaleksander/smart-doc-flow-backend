@@ -7,10 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapte
 import com.baskaaleksander.smartdocflowbackend.common.security.CustomUserDetails;
 import com.baskaaleksander.smartdocflowbackend.common.util.CookieUtil;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.AuthUserApiMapper;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.TokenResponse;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserLoginRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserRegisterRequest;
-import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UserResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.*;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Role;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.Tokens;
@@ -124,13 +121,13 @@ public class AuthApplicationService {
     }
 
     @CacheEvict(key = "#userId")
-    public String logoutUser(HttpServletRequest request, HttpServletResponse response, UUID userId) {
+    public AuthActionResponse logoutUser(HttpServletRequest request, HttpServletResponse response, UUID userId) {
         logger.info("LOGOUT START");
         String refreshToken = cookieUtil.parseRefreshTokenCookie(request);
         cookieUtil.clearRefreshTokenCookie(response);
         tokenUtil.invalidateRefreshToken(refreshToken);
         logger.info("LOGOUT SUCCESS");
-        return "Logout successful";
+        return new AuthActionResponse(true);
     }
 
     @Cacheable(key = "#userId")

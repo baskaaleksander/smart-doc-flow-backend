@@ -6,6 +6,7 @@ import com.baskaaleksander.smartdocflowbackend.common.exception.WrongPasswordExc
 import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
 import com.baskaaleksander.smartdocflowbackend.common.util.TokenGenerator;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.AuthActionResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.ResetPasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UpdatePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
@@ -49,7 +50,7 @@ public class PasswordChangeApplicationService {
         authUserCommandPort.save(user);
     }
 
-    public String updatePassword(UUID userId, UpdatePasswordRequest passwordRequest) {
+    public AuthActionResponse updatePassword(UUID userId, UpdatePasswordRequest passwordRequest) {
         logger.info("PASSWORD_UPDATE START userId=" + Slf4jLoggingAdapter.shortId(userId));
 
         AuthUser user = authUserQueryPort.findById(userId)
@@ -66,10 +67,10 @@ public class PasswordChangeApplicationService {
             throw new WrongPasswordException("Old password is wrong");
         }
 
-        return "Password changed";
+        return new AuthActionResponse(true);
     }
 
-    public String resetPassword(ResetPasswordRequest changePasswordRequest) {
+    public AuthActionResponse resetPassword(ResetPasswordRequest changePasswordRequest) {
         String maskedToken = Slf4jLoggingAdapter.maskToken(changePasswordRequest.token());
         logger.info("PASSWORD_RESET START token=" + maskedToken);
 
@@ -100,7 +101,7 @@ public class PasswordChangeApplicationService {
         passwordResetTokenCommandPort.save(resetToken);
 
         logger.info("PASSWORD_RESET SUCCESS userId=" + Slf4jLoggingAdapter.shortId(user.getId()) + " token=" + maskedToken);
-        return "Password changed";
+        return new AuthActionResponse(true);
     }
 
     public Boolean checkToken(String token) {
@@ -127,7 +128,7 @@ public class PasswordChangeApplicationService {
         return true;
     }
 
-    public String requestPasswordReset(String email) {
+    public AuthActionResponse requestPasswordReset(String email) {
         String emailHash = Slf4jLoggingAdapter.hashEmail(email);
         logger.info("PASSWORD_RESET_REQUEST START emailHash=" + emailHash + " ttlHours=" + ttlHours);
 
@@ -165,6 +166,6 @@ public class PasswordChangeApplicationService {
             logger.info("PASSWORD_RESET_REQUEST ACCEPTED emailHash=" + emailHash + " user=unknown");
         }
 
-        return "If user exists token will be sent.";
+        return new AuthActionResponse(true);
     }
 }

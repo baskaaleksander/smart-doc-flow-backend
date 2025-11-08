@@ -56,7 +56,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logoutUser(
+    public ResponseEntity<AuthActionResponse> logoutUser(
             HttpServletRequest request,
             HttpServletResponse response,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -71,7 +71,7 @@ public class AuthController {
     }
 
     @PutMapping("/update-password")
-    public ResponseEntity<String> updatePassword(
+    public ResponseEntity<AuthActionResponse> updatePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest
     ) {
@@ -79,7 +79,7 @@ public class AuthController {
     }
 
     @PostMapping("/request-password-reset")
-    public ResponseEntity<String> requestPasswordReset(
+    public ResponseEntity<AuthActionResponse> requestPasswordReset(
             @Valid @RequestBody PasswordResetRequest passwordResetRequest
     ) {
         return new ResponseEntity<>(passwordChangeService.requestPasswordReset(passwordResetRequest.email()), HttpStatus.OK);
@@ -91,7 +91,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<String> resetPassword(
+    public ResponseEntity<AuthActionResponse> resetPassword(
             @Valid @RequestBody ResetPasswordRequest resetPasswordRequest
     ) {
         return new ResponseEntity<>(passwordChangeService.resetPassword(resetPasswordRequest), HttpStatus.OK);
