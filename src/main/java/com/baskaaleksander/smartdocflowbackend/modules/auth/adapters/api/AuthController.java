@@ -29,12 +29,12 @@ public class AuthController {
     private final PasswordChangeApplicationService passwordChangeService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> loginUser(@RequestBody @Valid UserLoginRequest user, HttpServletResponse response) {
+    public ResponseEntity<AccessTokenResponse> loginUser(@RequestBody @Valid UserLoginRequest user, HttpServletResponse response) {
         TokenResponse res = authService.loginUser(user);
 
         cookieUtil.sendRefreshTokenCookie(res.refreshToken(), response);
 
-        return new ResponseEntity<>(res.accessToken(), HttpStatus.OK);
+        return new ResponseEntity<>(new AccessTokenResponse(res.accessToken()), HttpStatus.OK);
     }
 
     @PostMapping("/register")
@@ -44,7 +44,7 @@ public class AuthController {
     }
 
     @GetMapping("/refresh")
-    public ResponseEntity<String> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<AccessTokenResponse> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
 
         String refreshCookie = cookieUtil.parseRefreshTokenCookie(request);
 
@@ -52,7 +52,7 @@ public class AuthController {
 
         cookieUtil.sendRefreshTokenCookie(tokenResponse.refreshToken(), response);
 
-        return new ResponseEntity<>(tokenResponse.accessToken(), HttpStatus.OK);
+        return new ResponseEntity<>(new AccessTokenResponse(tokenResponse.accessToken()), HttpStatus.OK);
     }
 
     @PostMapping("/logout")
