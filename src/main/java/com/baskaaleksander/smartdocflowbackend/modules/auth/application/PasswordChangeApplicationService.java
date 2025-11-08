@@ -7,6 +7,7 @@ import com.baskaaleksander.smartdocflowbackend.common.logging.LoggingPort;
 import com.baskaaleksander.smartdocflowbackend.common.logging.Slf4jLoggingAdapter;
 import com.baskaaleksander.smartdocflowbackend.common.util.TokenGenerator;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.AuthActionResponse;
+import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.IsTokenValidResponse;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.ResetPasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.adapters.api.dto.UpdatePasswordRequest;
 import com.baskaaleksander.smartdocflowbackend.modules.auth.domain.model.AuthUser;
@@ -104,7 +105,7 @@ public class PasswordChangeApplicationService {
         return new AuthActionResponse(true);
     }
 
-    public Boolean checkToken(String token) {
+    public IsTokenValidResponse checkToken(String token) {
         String maskedToken = Slf4jLoggingAdapter.maskToken(token);
         logger.info("PASSWORD_TOKEN_CHECK START token=" + maskedToken);
 
@@ -125,7 +126,7 @@ public class PasswordChangeApplicationService {
         }
 
         logger.info("PASSWORD_TOKEN_CHECK SUCCESS token=" + maskedToken + " userId=" + Slf4jLoggingAdapter.shortId(resetToken.getUserId()));
-        return true;
+        return new IsTokenValidResponse(true);
     }
 
     public AuthActionResponse requestPasswordReset(String email) {

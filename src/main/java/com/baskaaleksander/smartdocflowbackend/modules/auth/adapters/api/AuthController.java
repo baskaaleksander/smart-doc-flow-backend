@@ -86,7 +86,7 @@ public class AuthController {
     }
 
     @GetMapping("/check-token")
-    public ResponseEntity<Boolean> checkPasswordResetToken(@RequestParam("token") String token) {
+    public ResponseEntity<IsTokenValidResponse> checkPasswordResetToken(@RequestParam("token") String token) {
         return new ResponseEntity<>(passwordChangeService.checkToken(token), HttpStatus.OK);
     }
 
