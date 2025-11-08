@@ -2,7 +2,7 @@ spring:
   application:
     name: smart-doc-flow
   mail:
-    host: smtp.gmail.com
+    host: smtp.resend.com
     port: 587
     username: ${EMAIL_USERNAME}
     password: ${EMAIL_PASSWORD}

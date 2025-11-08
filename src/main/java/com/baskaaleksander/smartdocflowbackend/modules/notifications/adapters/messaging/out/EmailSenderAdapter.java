@@ -21,6 +21,7 @@ public class EmailSenderAdapter implements EmailSenderPort {
         logger.info("EMAIL_SEND START emailHash=" + emailHash + " subject=" + subject);
         try {
             SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("no-reply@smartdocflow.baskaaleksander.com");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);
