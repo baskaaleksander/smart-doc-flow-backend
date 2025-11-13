@@ -19,6 +19,8 @@ import com.baskaaleksander.smartdocflowbackend.modules.users.domain.port.UserRol
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserRoleCount;
 import com.baskaaleksander.smartdocflowbackend.modules.users.domain.view.UserStatusCount;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "auth:me")
 public class UserApplicationService {
 
     private final UserQueryPort userQueryPort;
@@ -72,6 +75,7 @@ public class UserApplicationService {
     }
 
     @Transactional
+    @CacheEvict(key = "#userId")
     public AccountActionResponse inactivateUser(String userId) {
         UUID userUUID = UUID.fromString(userId);
 
@@ -114,6 +118,7 @@ public class UserApplicationService {
     }
 
     @Transactional
+    @CacheEvict(key = "#userId")
     public UserResponse editUserAccount(UUID userId, EditUserAccountAdminRequest editRequest) {
         logger.info("USR_EDIT_ADMIN START userId=" + Slf4jLoggingAdapter.shortId(userId)
                 + " emailHash=" + Slf4jLoggingAdapter.hashEmail(editRequest.email())
@@ -152,6 +157,7 @@ public class UserApplicationService {
     }
 
     @Transactional
+    @CacheEvict(key = "#userId")
     public UserResponse editSelfAccount(EditUserAccountRequest editRequest, UUID userId) {
         logger.info("USR_EDIT_SELF START userId=" + Slf4jLoggingAdapter.shortId(userId)
                 + " emailProvided=" + (editRequest.email() != null));
