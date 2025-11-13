@@ -31,7 +31,8 @@ Designed for production scalability, modular domain architecture, and enterprise
 ## 🌐 Live Demo / Screenshots
 
 - **Live Demo:** https://smartdocflow.baskaaleksander.com
-- **Screenshots:** _TBD (upload examples of upload/review/chat views)_
+- **Screenshots:**
+  ![SmartDocFlow Demo](https://raw.githubusercontent.com/baskaaleksander/smart-doc-flow-backend/main/assets/smartdocflowshowcase.gif)
 
 ---
 
